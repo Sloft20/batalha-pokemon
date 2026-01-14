@@ -2,7 +2,7 @@ import streamlit as st
 import datetime
 import random 
 
-st.set_page_config(page_title="PokéBattle 2.3 (Status)", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="PokéBattle 2.4 (Treinador)", page_icon="🧪", layout="wide")
 
 # --- 1. CLASSE POKEMON ---
 class Pokemon:
@@ -13,8 +13,7 @@ class Pokemon:
         self.imagem_url = imagem_url if imagem_url else "https://tcg.pokemon.com/assets/img/global/tcg-card-back-2x.jpg"
         self.id_unico = datetime.datetime.now().timestamp()
         
-        # ### NOVO ### Memória de Status
-        # Começa "Saudável". Pode mudar para "Envenenado", "Queimado", etc.
+        # Memória de Status
         self.status = "Saudável" 
 
     def receber_dano(self, dano):
@@ -22,7 +21,6 @@ class Pokemon:
         if self.hp_atual < 0: self.hp_atual = 0
         if self.hp_atual > self.hp_max: self.hp_atual = self.hp_max
 
-    # ### NOVO ### Função para aplicar o dano automático do status
     def aplicar_dano_status(self):
         dano = 0
         msg = ""
@@ -41,10 +39,10 @@ class Pokemon:
 
 # --- 2. GERENCIAMENTO DE ESTADO ---
 def inicializar_jogo():
-    if 'jogadores' not in st.session_state:
-        st.session_state.jogadores = {
-            "Jogador 1": {"ativo": None, "banco": [], "descarte": []},
-            "Jogador 2": {"ativo": None, "banco": [], "descarte": []}
+    if 'Treinadores' not in st.session_state:
+        st.session_state.Treinadores = {
+            "Treinador 1": {"ativo": None, "banco": [], "descarte": []},
+            "Treinador 2": {"ativo": None, "banco": [], "descarte": []}
         }
     if 'log' not in st.session_state:
         st.session_state.log = []
@@ -59,15 +57,27 @@ inicializar_jogo()
 with st.sidebar:
     st.header("⚙️ Controle da Mesa")
     
-    # ### NOVO ### Botão Mestre de Checkup
+    # --- AQUI ESTÁ A MOEDA DE VOLTA! ---
+    st.subheader("🪙 Moeda")
+    if st.button("Jogar Moeda"):
+        resultado = random.choice(["CARA (Heads)", "COROA (Tails)"])
+        adicionar_log(f"A moeda caiu em: {resultado}")
+        if "CARA" in resultado:
+            st.success(f"Resultado: {resultado}")
+        else:
+            st.error(f"Resultado: {resultado}")
+    
+    st.divider()
+    # -----------------------------------
+    
+    # Botão Mestre de Checkup
     st.info("Fim de Turno / Checkup")
     if st.button("☣️ Aplicar Danos de Status"):
         logs_status = []
-        # Varre todos os jogadores para aplicar veneno/queimadura
-        for nome_jog in ["Jogador 1", "Jogador 2"]:
-            ativo = st.session_state.jogadores[nome_jog]['ativo']
+        for nome_jog in ["Treinador 1", "Treinador 2"]:
+            ativo = st.session_state.Treinadores[nome_jog]['ativo']
             if ativo:
-                resultado = ativo.aplicar_dano_status() # O objeto se cura/fere sozinho
+                resultado = ativo.aplicar_dano_status()
                 if resultado:
                     logs_status.append(resultado)
         
@@ -83,19 +93,19 @@ with st.sidebar:
 
     st.subheader("➕ Novo Pokémon")
     with st.form("add_poke"):
-        dono = st.selectbox("Para quem?", ["Jogador 1", "Jogador 2"])
+        dono = st.selectbox("Para quem?", ["Treinador 1", "Treinador 2"])
         nome = st.text_input("Nome (ex: Charizard ex)")
         hp = st.number_input("HP Máximo", value=60, step=10)
         img = st.text_input("Link da Imagem (URL)")
-        destino = st.radio("Colocar onde?", ["Automático", "Forçar no Banco"])
+        destino = st.radio("Colocar onde?", ["Ativo", "Banco"])
         
         btn_add = st.form_submit_button("Adicionar Carta")
 
         if btn_add and nome:
             novo_poke = Pokemon(nome, hp, img)
-            player_data = st.session_state.jogadores[dono]
+            player_data = st.session_state.Treinadores[dono]
             
-            if destino == "Forçar no Banco":
+            if destino == "Banco":
                  if len(player_data['banco']) < 5:
                     player_data['banco'].append(novo_poke)
                     adicionar_log(f"{nome} entrou no Banco do {dono}.")
@@ -118,12 +128,12 @@ with st.sidebar:
 
 # --- 4. FUNÇÃO DE DESENHO ---
 def renderizar_mesa_jogador(nome_jogador):
-    player = st.session_state.jogadores[nome_jogador]
-    cor = "blue" if nome_jogador == "Jogador 1" else "red"
+    player = st.session_state.Treinadores[nome_jogador]
+    cor = "blue" if nome_jogador == "Treinador 1" else "red"
     
     # Busca oponente para ataque
-    nome_oponente = "Jogador 2" if nome_jogador == "Jogador 1" else "Jogador 1"
-    player_oponente = st.session_state.jogadores[nome_oponente]
+    nome_oponente = "Treinador 2" if nome_jogador == "Treinador 1" else "Treinador 1"
+    player_oponente = st.session_state.Treinadores[nome_oponente]
     ativo_oponente = player_oponente['ativo'] 
     
     st.markdown(f":{cor}[**ÁREA DO {nome_jogador.upper()}**]")
@@ -136,7 +146,6 @@ def renderizar_mesa_jogador(nome_jogador):
             with col_img:
                 st.image(ativo.imagem_url, use_container_width=True)
                 
-                # ### NOVO ### Mostra o Status visualmente embaixo da foto
                 if ativo.status != "Saudável":
                     st.warning(f"Estado: {ativo.status}")
             
@@ -156,14 +165,11 @@ def renderizar_mesa_jogador(nome_jogador):
                     st.write("**Ações:**")
                     
                     # --- BOTÕES DE STATUS ---
-                    # ### NOVO ### Seletor de Status
                     lista_status = ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"]
-                    # O index serve para o seletor começar já marcado com o status atual do pokemon
                     index_atual = lista_status.index(ativo.status) if ativo.status in lista_status else 0
                     
                     novo_status = st.selectbox("Alterar Condição Especial:", lista_status, index=index_atual, key=f"status_{ativo.id_unico}")
                     
-                    # Se o usuário mudou o selectbox, atualizamos o objeto
                     if novo_status != ativo.status:
                         ativo.status = novo_status
                         adicionar_log(f"{ativo.nome} agora está {novo_status}")
@@ -171,7 +177,7 @@ def renderizar_mesa_jogador(nome_jogador):
 
                     st.divider()
 
-                    # Ataque e Dano (Igual anterior)
+                    # Ataque e Dano
                     col_atk_oponente, col_atk_self = st.columns(2)
                     with col_atk_oponente:
                         dano_ataque = st.number_input("Dano no Oponente", value=0, step=10, key=f"input_atk_{ativo.id_unico}")
@@ -189,7 +195,6 @@ def renderizar_mesa_jogador(nome_jogador):
                             ativo.receber_dano(10)
                             st.rerun()
                         if c2.button("🏃 Recuar", key=f"recuar_{ativo.id_unico}"):
-                            # Ao recuar, remove status especiais! (Regra do TCG)
                             ativo.status = "Saudável" 
                             if len(player['banco']) > 0:
                                 player['banco'].append(ativo)
@@ -202,7 +207,7 @@ def renderizar_mesa_jogador(nome_jogador):
     else:
         st.info(f"Sem Pokémon Ativo.")
 
-    # --- BANCO E DESCARTE (Iguais) ---
+    # --- BANCO E DESCARTE ---
     if player['banco']:
         with st.expander(f"Ver Banco ({len(player['banco'])})", expanded=True):
             cols_banco = st.columns(5)
@@ -227,8 +232,8 @@ def renderizar_mesa_jogador(nome_jogador):
 # --- 5. TELA PRINCIPAL ---
 st.title("🏆 Arena Pokémon TCG (Com Status)")
 c1, c2 = st.columns(2)
-with c1: renderizar_mesa_jogador("Jogador 1")
-with c2: renderizar_mesa_jogador("Jogador 2")
+with c1: renderizar_mesa_jogador("Treinador 1")
+with c2: renderizar_mesa_jogador("Treinador 2")
 
 st.divider()
 with st.expander("Histórico de Ações"):
