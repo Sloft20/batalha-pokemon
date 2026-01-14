@@ -2,8 +2,7 @@ import streamlit as st
 import datetime
 import random 
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="PokéBattle 2.2", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 2.3 (Status)", page_icon="🧪", layout="wide")
 
 # --- 1. CLASSE POKEMON ---
 class Pokemon:
@@ -13,16 +12,36 @@ class Pokemon:
         self.hp_atual = int(hp_max)
         self.imagem_url = imagem_url if imagem_url else "https://tcg.pokemon.com/assets/img/global/tcg-card-back-2x.jpg"
         self.id_unico = datetime.datetime.now().timestamp()
+        
+        # ### NOVO ### Memória de Status
+        # Começa "Saudável". Pode mudar para "Envenenado", "Queimado", etc.
+        self.status = "Saudável" 
 
     def receber_dano(self, dano):
         self.hp_atual -= dano
         if self.hp_atual < 0: self.hp_atual = 0
         if self.hp_atual > self.hp_max: self.hp_atual = self.hp_max
 
+    # ### NOVO ### Função para aplicar o dano automático do status
+    def aplicar_dano_status(self):
+        dano = 0
+        msg = ""
+        
+        if self.status == "Envenenado 🧪":
+            dano = 10
+            msg = f"{self.nome} sofreu 10 de veneno."
+        elif self.status == "Queimado 🔥":
+            dano = 20
+            msg = f"{self.nome} sofreu 20 de queimadura."
+            
+        if dano > 0:
+            self.receber_dano(dano)
+            return msg
+        return None
+
 # --- 2. GERENCIAMENTO DE ESTADO ---
 def inicializar_jogo():
     if 'jogadores' not in st.session_state:
-        # AGORA TEMOS A LISTA 'DESCARTE'
         st.session_state.jogadores = {
             "Jogador 1": {"ativo": None, "banco": [], "descarte": []},
             "Jogador 2": {"ativo": None, "banco": [], "descarte": []}
@@ -40,11 +59,25 @@ inicializar_jogo()
 with st.sidebar:
     st.header("⚙️ Controle da Mesa")
     
-    st.subheader("🪙 Moeda")
-    if st.button("Jogar Moeda"):
-        resultado = random.choice(["CARA (Heads)", "COROA (Tails)"])
-        adicionar_log(f"A moeda caiu em: {resultado}")
-        st.success(f"Resultado: {resultado}")
+    # ### NOVO ### Botão Mestre de Checkup
+    st.info("Fim de Turno / Checkup")
+    if st.button("☣️ Aplicar Danos de Status"):
+        logs_status = []
+        # Varre todos os jogadores para aplicar veneno/queimadura
+        for nome_jog in ["Jogador 1", "Jogador 2"]:
+            ativo = st.session_state.jogadores[nome_jog]['ativo']
+            if ativo:
+                resultado = ativo.aplicar_dano_status() # O objeto se cura/fere sozinho
+                if resultado:
+                    logs_status.append(resultado)
+        
+        if logs_status:
+            for log in logs_status:
+                adicionar_log(log)
+            st.success("Danos de status aplicados!")
+            st.rerun()
+        else:
+            st.toast("Ninguém tem status de dano.")
 
     st.divider()
 
@@ -88,6 +121,11 @@ def renderizar_mesa_jogador(nome_jogador):
     player = st.session_state.jogadores[nome_jogador]
     cor = "blue" if nome_jogador == "Jogador 1" else "red"
     
+    # Busca oponente para ataque
+    nome_oponente = "Jogador 2" if nome_jogador == "Jogador 1" else "Jogador 1"
+    player_oponente = st.session_state.jogadores[nome_oponente]
+    ativo_oponente = player_oponente['ativo'] 
+    
     st.markdown(f":{cor}[**ÁREA DO {nome_jogador.upper()}**]")
     
     # --- ÁREA DO ATIVO ---
@@ -97,47 +135,74 @@ def renderizar_mesa_jogador(nome_jogador):
             col_img, col_infos = st.columns([1, 2])
             with col_img:
                 st.image(ativo.imagem_url, use_container_width=True)
+                
+                # ### NOVO ### Mostra o Status visualmente embaixo da foto
+                if ativo.status != "Saudável":
+                    st.warning(f"Estado: {ativo.status}")
             
             with col_infos:
                 st.subheader(ativo.nome)
                 st.progress(ativo.hp_atual / ativo.hp_max)
                 st.write(f"HP: **{ativo.hp_atual}** / {ativo.hp_max}")
                 
-                # --- LÓGICA DE ABATE + DESCARTE ---
                 if ativo.hp_atual == 0:
                     st.error("💀 POKÉMON ABATIDO!")
                     if st.button("Enviar para o Descarte 🗑️", key=f"ko_{ativo.id_unico}"):
-                        # 1. Adiciona na lista de descarte
                         player['descarte'].append(ativo)
-                        # 2. Remove do ativo
                         player['ativo'] = None
                         adicionar_log(f"☠️ {ativo.nome} ({nome_jogador}) foi para o descarte!")
                         st.rerun()
                 else:
-                    c1, c2, c3 = st.columns(3)
-                    if c1.button("💥 -10", key=f"d10_{ativo.id_unico}"):
-                        ativo.receber_dano(10)
-                        st.rerun()
-                    if c2.button("🔥 -30", key=f"d30_{ativo.id_unico}"):
-                        ativo.receber_dano(30)
-                        st.rerun()
-                    if c3.button("💣 -50", key=f"d50_{ativo.id_unico}"):
-                        ativo.receber_dano(50)
-                        st.rerun()
+                    st.write("**Ações:**")
                     
-                    if st.button("Recuar / Sair", key=f"recuar_{ativo.id_unico}"):
-                        if len(player['banco']) > 0:
-                            player['banco'].append(ativo)
-                            player['ativo'] = None
-                            adicionar_log(f"{ativo.nome} recuou para o banco.")
-                        else:
-                            player['ativo'] = None
-                            adicionar_log(f"{ativo.nome} saiu do campo.")
+                    # --- BOTÕES DE STATUS ---
+                    # ### NOVO ### Seletor de Status
+                    lista_status = ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"]
+                    # O index serve para o seletor começar já marcado com o status atual do pokemon
+                    index_atual = lista_status.index(ativo.status) if ativo.status in lista_status else 0
+                    
+                    novo_status = st.selectbox("Alterar Condição Especial:", lista_status, index=index_atual, key=f"status_{ativo.id_unico}")
+                    
+                    # Se o usuário mudou o selectbox, atualizamos o objeto
+                    if novo_status != ativo.status:
+                        ativo.status = novo_status
+                        adicionar_log(f"{ativo.nome} agora está {novo_status}")
                         st.rerun()
+
+                    st.divider()
+
+                    # Ataque e Dano (Igual anterior)
+                    col_atk_oponente, col_atk_self = st.columns(2)
+                    with col_atk_oponente:
+                        dano_ataque = st.number_input("Dano no Oponente", value=0, step=10, key=f"input_atk_{ativo.id_unico}")
+                        if st.button("⚔️ ATACAR", key=f"btn_atk_{ativo.id_unico}", type="primary"):
+                            if ativo_oponente is not None:
+                                ativo_oponente.receber_dano(dano_ataque)
+                                adicionar_log(f"⚔️ {ativo.nome} atacou {ativo_oponente.nome} ({dano_ataque})!")
+                                st.rerun()
+                            else:
+                                st.error("Sem alvo!")
+
+                    with col_atk_self:
+                        c1, c2 = st.columns(2)
+                        if c1.button("💥 Self-10", key=f"d10_{ativo.id_unico}"):
+                            ativo.receber_dano(10)
+                            st.rerun()
+                        if c2.button("🏃 Recuar", key=f"recuar_{ativo.id_unico}"):
+                            # Ao recuar, remove status especiais! (Regra do TCG)
+                            ativo.status = "Saudável" 
+                            if len(player['banco']) > 0:
+                                player['banco'].append(ativo)
+                                player['ativo'] = None
+                                adicionar_log(f"{ativo.nome} recuou e curou status.")
+                            else:
+                                player['ativo'] = None
+                                adicionar_log(f"{ativo.nome} saiu.")
+                            st.rerun()
     else:
         st.info(f"Sem Pokémon Ativo.")
 
-    # --- ÁREA DO BANCO ---
+    # --- BANCO E DESCARTE (Iguais) ---
     if player['banco']:
         with st.expander(f"Ver Banco ({len(player['banco'])})", expanded=True):
             cols_banco = st.columns(5)
@@ -145,29 +210,22 @@ def renderizar_mesa_jogador(nome_jogador):
                 with cols_banco[i]:
                     st.image(poke.imagem_url, caption=poke.nome, use_container_width=True)
                     st.caption(f"HP: {poke.hp_atual}")
-                    
                     if st.button("⬆️", key=f"promover_{poke.id_unico}"):
                         if player['ativo'] is None:
                             player['ativo'] = player['banco'].pop(i)
                             adicionar_log(f"{poke.nome} subiu para o Ativo.")
                             st.rerun()
-                        else:
-                            st.toast("Já tem ativo!")
-                    
+                        else: st.toast("Já tem ativo!")
                     if st.button("💔 -10", key=f"dano_banco_{poke.id_unico}"):
                         poke.receber_dano(10)
                         st.rerun()
     
-    # --- ÁREA DO DESCARTE (NOVA) ---
-    # Só aparece se tiver cartas lá
     if player['descarte']:
-        with st.expander(f"🗑️ Ver Pilha de Descarte ({len(player['descarte'])})"):
-            for carta in player['descarte']:
-                # Mostra o nome e um ícone de caveira
-                st.write(f"💀 {carta.nome}")
+        with st.expander(f"🗑️ Descarte ({len(player['descarte'])})"):
+            for carta in player['descarte']: st.write(f"💀 {carta.nome}")
 
 # --- 5. TELA PRINCIPAL ---
-st.title("🏆 Arena Pokémon TCG")
+st.title("🏆 Arena Pokémon TCG (Com Status)")
 c1, c2 = st.columns(2)
 with c1: renderizar_mesa_jogador("Jogador 1")
 with c2: renderizar_mesa_jogador("Jogador 2")
