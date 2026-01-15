@@ -98,13 +98,13 @@ POKEDEX = {
     "Moltres": {"hp": 120, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_021_R_EN_PNG.png"},
 
     # --- DECK GARDEVOIR EX (Psíquico) ---
-    "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_086_R_EN_PNG.png"},
-    "Kirlia": {"hp": 80, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_085_R_EN_PNG.png"},
-    "Ralts": {"hp": 60, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_084_R_EN_PNG.png"},
-    "Drifloon": {"hp": 70, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_089_R_EN_PNG.png"},
-    "Cresselia": {"hp": 120, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/LOR/LOR_074_R_EN_PNG.png"},
-    "Mew ex": {"hp": 180, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/MEW/MEW_151_R_EN_PNG.png"},
-    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/ASR/ASR_046_R_EN_PNG.png"},
+    "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://repositorio.sbrauble.com/arquivos/in/pokemon_bkp/cd/343/1640s_086.jpg"},
+    "Kirlia": {"hp": 80, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://repositorio.sbrauble.com/arquivos/in/pokemon_bkp/cd/286/75s_068.jpg"},
+    "Ralts": {"hp": 60, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://repositorio.sbrauble.com/arquivos/in/pokemon_bkp/cd/286/74s_067.jpg"},
+    "Drifloon": {"hp": 70, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://repositorio.sbrauble.com/arquivos/in/pokemon_bkp/cd/343/393s_089.jpg"},
+    "Cresselia": {"hp": 120, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://repositorio.sbrauble.com/arquivos/in/pokemon_bkp/cd/278/149s_074.jpg"},
+    "Mew ex": {"hp": 180, "tipo": "Psíquico 🔮", "fraq": "Escuridão 🌑", "res": "Luta 👊", "img": "https://repositorio.sbrauble.com/arquivos/in/pokemon_bkp/cd/411/476s_151.jpg"},
+    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "img": "https://repositorio.sbrauble.com/arquivos/in/pokemon_bkp/cd/526/65a992bc19258-8xsro-px0ed-b30a9be639100643633b71d0a31c115c.jpg"},
 }
 
 # --- 2. CLASSE POKEMON ---
