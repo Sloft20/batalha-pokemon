@@ -174,8 +174,8 @@ def inicializar_jogo():
     if 'Treinadores' not in st.session_state:
         # Adicionei 'premios' aqui
         st.session_state.Treinadores = {
-            "Treinador 1": {"ativo": None, "banco": [], "descarte": [], "premios": 3},
-            "Treinador 2": {"ativo": None, "banco": [], "descarte": [], "premios": 3}
+            "Treinador 1": {"ativo": None, "banco": [], "descarte": [], "premios": 6},
+            "Treinador 2": {"ativo": None, "banco": [], "descarte": [], "premios": 6}
         }
     if 'log' not in st.session_state:
         st.session_state.log = []
@@ -466,3 +466,4 @@ else:
     # Log com HTML
     log_html = "".join(st.session_state.log)
     st.markdown(f"<div style='max-height: 200px; overflow-y: auto; background-color: rgba(0,0,0,0.5); border-radius: 10px;'>{log_html}</div>", unsafe_allow_html=True)
+
