@@ -114,7 +114,7 @@ configurar_visual()
 POKEDEX = {
     # --- DECK DRAGAPULT EX ---
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
-    "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "hab": "Reconnaissance (Olhar Topo)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
+    "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "hab": "Reconnaissance (Olhar Topo)", "img": "https://repositorio.sbrauble.com/arquivos/in/pokemon_bkp/cd/649/678a967bd1518-jil3f-br0ju-4359ccc37706d80d5ae766a57d5be016.jpg"},
     "Dreepy": {"hp": 70, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN_PNG.png"},
     "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "hab": "Clairvoyant Sense (Ligar + Draw 2)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
     "Natu": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_071_R_EN_PNG.png"},
@@ -589,3 +589,4 @@ else:
     st.subheader("📜 Log de Batalha")
     log_html = "".join(st.session_state.log)
     st.markdown(f"<div style='max-height: 200px; overflow-y: auto; background-color: rgba(0,0,0,0.5); border-radius: 10px;'>{log_html}</div>", unsafe_allow_html=True)
+
