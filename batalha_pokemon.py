@@ -3,9 +3,9 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 5.11 (KO Banco)", page_icon="💀", layout="wide")
+st.set_page_config(page_title="PokéBattle 6.0 (Habilidades)", page_icon="✨", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (VISUAL 5.10 - LIMPO) ---
+# --- 0. CONFIGURAÇÃO VISUAL (MANTIDA A PERFEITA DA v5.11) ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -23,7 +23,6 @@ def configurar_visual():
         
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
 
-        /* Caixas de Vidro */
         div[data-testid="stVerticalBlockBorderWrapper"] {
             background-color: rgba(0, 0, 0, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -37,7 +36,6 @@ def configurar_visual():
             text-shadow: 2px 2px 4px #000000;
         }
 
-        /* Inputs e Selects sem borda branca */
         .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
             background-color: rgba(255, 255, 255, 0.15) !important;
             color: white !important;
@@ -49,7 +47,7 @@ def configurar_visual():
              box-shadow: none !important;
         }
 
-        /* Botões sem borda branca (Nuclear CSS) */
+        /* BOTÕES PERFEITOS (AMARELOS) */
         .stButton > button {
             background-color: #FFCB05 !important;
             color: #2a3b96 !important;
@@ -77,6 +75,15 @@ def configurar_visual():
             background-color: #FFCB05 !important;
         }
 
+        /* BOTÃO DE HABILIDADE (AZUL DIFERENCIADO) */
+        .hab-btn > button {
+            background-color: #3b4cca !important; /* Azul Pokemon */
+            color: white !important;
+        }
+        .hab-btn > button:hover {
+            background-color: #536dfe !important;
+        }
+
         .log-entry {
             padding: 5px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -87,31 +94,33 @@ def configurar_visual():
 
 configurar_visual()
 
-# --- 1. BANCO DE DADOS ---
+# --- 1. BANCO DE DADOS (AGORA COM HABILIDADES) ---
+# Adicionei o campo "hab" (Habilidade) nos Pokémons que tem.
 POKEDEX = {
     # --- DECK DRAGAPULT EX ---
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
-    "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
+    "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "hab": "Reconnaissance (Olhar Topo)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
     "Dreepy": {"hp": 70, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN_PNG.png"},
-    "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
+    "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "hab": "Clairvoyant Sense (Ligar + Draw 2)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
     "Natu": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_071_R_EN_PNG.png"},
-    "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SFA/SFA_038_R_EN_PNG.png"},
+    "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "hab": "Flip the Script (Draw 3)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SFA/SFA_038_R_EN_PNG.png"},
 
     # --- DECK CHARIZARD EX ---
-    "Charizard ex": {"hp": 330, "tipo": "Escuridão 🌙", "fraq": "Planta 🌱", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_125_R_EN_PNG.png"},
+    "Charizard ex": {"hp": 330, "tipo": "Escuridão 🌙", "fraq": "Planta 🌱", "res": "Nenhuma", "hab": "Infernal Reign (Buscar 3 Energias)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_125_R_EN_PNG.png"},
     "Charmeleon": {"hp": 90, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_027_R_EN_PNG.png"},
     "Charmander": {"hp": 70, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_026_R_EN_PNG.png"},
-    "Pidgeot ex": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_164_R_EN_PNG.png"},
-    "Pidgey": {"hp": 60, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_162_R_EN_PNG.png"},
-    "Moltres": {"hp": 120, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_021_R_EN_PNG.png"},
+    "Pidgeot ex": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "hab": "Quick Search (Buscar Qualquer Carta)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_164_R_EN_PNG.png"},
+    "Pidgey": {"hp": 60, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "hab": "Call for Family (Buscar Básico)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_162_R_EN_PNG.png"},
+    "Moltres": {"hp": 120, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "hab": "Flare Symbol (+10 Dano Fogo)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_021_R_EN_PNG.png"},
 
     # --- DECK GARDEVOIR EX ---
-    "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_086_R_EN_PNG.png"},
-    "Kirlia": {"hp": 80, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_085_R_EN_PNG.png"},
+    "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "hab": "Psychic Embrace (Ligar do Descarte)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_086_R_EN_PNG.png"},
+    "Kirlia": {"hp": 80, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "hab": "Refinement (Descarta 1, Draw 2)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_085_R_EN_PNG.png"},
     "Ralts": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_084_R_EN_PNG.png"},
     "Drifloon": {"hp": 70, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_089_R_EN_PNG.png"},
     "Scream Tail": {"hp": 90, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_086_R_EN_PNG.png"},
-    "Mew ex": {"hp": 180, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/MEW/MEW_151_R_EN_PNG.png"},
+    "Mew ex": {"hp": 180, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "hab": "Restart (Comprar até ter 3)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/MEW/MEW_151_R_EN_PNG.png"},
+    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "hab": "Concealed Cards (Descarta Energia, Draw 2)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/ASR/ASR_046_R_EN_PNG.png"},
 }
 
 TOOLS_DB = {
@@ -127,7 +136,7 @@ TOOLS_DB = {
 
 # --- 2. CLASSE POKEMON ---
 class Pokemon:
-    def __init__(self, nome, hp_max, tipo, fraqueza, resistencia, imagem_url=""):
+    def __init__(self, nome, hp_max, tipo, fraqueza, resistencia, imagem_url="", habilidade=None):
         self.nome = nome
         self.hp_base = int(hp_max)
         self.hp_max = int(hp_max)
@@ -143,6 +152,12 @@ class Pokemon:
         self.status = "Saudável"
         self.energias = {}
         self.ferramenta = "Nenhuma"
+        # Se veio no construtor, usa. Se não, tenta achar no DB.
+        if habilidade:
+            self.habilidade = habilidade
+        else:
+            # Tenta pegar do POKEDEX automaticamente
+            self.habilidade = POKEDEX[nome].get("hab") if nome in POKEDEX else None
 
     def equipar_ferramenta(self, nome_ferramenta):
         if self.ferramenta in TOOLS_DB:
@@ -186,7 +201,7 @@ class Pokemon:
                 logs.append(f"🪙 Deu COROA! {self.nome} continua dormindo.")
         return logs
 
-    def evoluir_para(self, novo_nome, novo_hp, novo_tipo, nova_fraqueza, nova_resistencia, nova_img):
+    def evoluir_para(self, novo_nome, novo_hp, novo_tipo, nova_fraqueza, nova_resistencia, nova_img, nova_hab=None):
         dano_sofrido = self.hp_max - self.hp_atual
         self.nome = novo_nome
         self.hp_base = int(novo_hp)
@@ -196,6 +211,10 @@ class Pokemon:
         self.fraqueza = nova_fraqueza
         self.resistencia = nova_resistencia
         if nova_img: self.imagem_url = nova_img
+        
+        # Atualiza habilidade na evolução
+        self.habilidade = nova_hab if nova_hab else (POKEDEX[novo_nome].get("hab") if novo_nome in POKEDEX else None)
+        
         self.hp_atual = self.hp_max - dano_sofrido
         if self.hp_atual < 0: self.hp_atual = 0
         self.status = "Saudável"
@@ -215,20 +234,8 @@ class Pokemon:
 def inicializar_jogo():
     if 'Treinadores' not in st.session_state:
         st.session_state.Treinadores = {
-            "Treinador 1": {
-                "nome": "Treinador 1",
-                "ativo": None, 
-                "banco": [], 
-                "descarte": [], 
-                "premios": 6
-            },
-            "Treinador 2": {
-                "nome": "Treinador 2",
-                "ativo": None, 
-                "banco": [], 
-                "descarte": [], 
-                "premios": 6
-            }
+            "Treinador 1": {"nome": "Treinador 1", "ativo": None, "banco": [], "descarte": [], "premios": 6},
+            "Treinador 2": {"nome": "Treinador 2", "ativo": None, "banco": [], "descarte": [], "premios": 6}
         }
     if 'log' not in st.session_state:
         st.session_state.log = []
@@ -250,7 +257,6 @@ inicializar_jogo()
 # --- 4. BARRA LATERAL ---
 with st.sidebar:
     st.header("⚙️ Controle")
-    
     with st.expander("👤 Personalizar Nomes", expanded=True):
         nome_t1_input = st.text_input("Nome Jogador 1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
         nome_t2_input = st.text_input("Nome Jogador 2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
@@ -263,12 +269,10 @@ with st.sidebar:
     p1 = st.session_state.Treinadores["Treinador 1"]["premios"]
     n2 = st.session_state.Treinadores["Treinador 2"]["nome"]
     p2 = st.session_state.Treinadores["Treinador 2"]["premios"]
-    
     c1.metric(n1, f"{p1} 🎴")
     c2.metric(n2, f"{p2} 🎴")
     
     st.divider()
-
     st.subheader("🪙 Moeda")
     if st.button("Jogar Moeda"):
         resultado = random.choice(["CARA (Heads)", "COROA (Tails)"])
@@ -277,7 +281,6 @@ with st.sidebar:
         else: st.error(f"{resultado}")
 
     st.divider()
-    
     st.info("Fim de Turno")
     if st.button("🔄 Fase de Checkup (Auto)"):
         logs_totais = []
@@ -294,55 +297,32 @@ with st.sidebar:
             st.toast("Nenhum status para resolver.")
 
     st.divider()
-    
     st.subheader("💾 Salvar Registro")
     if st.session_state.log:
         texto_log = "REGISTRO DE BATALHA POKEMON TCG\n"
         texto_log += f"Data: {datetime.datetime.now().strftime('%d/%m/%Y')}\n"
-        texto_log += f"Jogadores: {n1} vs {n2}\n"
-        texto_log += "-----------------------------------\n"
+        texto_log += f"Jogadores: {n1} vs {n2}\n-----------------------------------\n"
         log_reverso = st.session_state.log[::-1]
         for linha in log_reverso:
             texto_limpo = re.sub('<[^<]+?>', '', linha)
             texto_log += texto_limpo + "\n"
-        st.download_button(
-            label="📄 Baixar Arquivo .txt",
-            data=texto_log,
-            file_name="registro_batalha.txt",
-            mime="text/plain"
-        )
+        st.download_button(label="📄 Baixar Arquivo .txt", data=texto_log, file_name="registro_batalha.txt", mime="text/plain")
     else:
         st.caption("O registro está vazio.")
 
     st.divider()
-
     st.subheader("➕ Gerenciar Cartas")
-    
-    dono_key = st.selectbox(
-        "Treinador:", 
-        ["Treinador 1", "Treinador 2"], 
-        format_func=lambda x: st.session_state.Treinadores[x]['nome']
-    )
-    
+    dono_key = st.selectbox("Treinador:", ["Treinador 1", "Treinador 2"], format_func=lambda x: st.session_state.Treinadores[x]['nome'])
     modo = st.radio("Modo de Criação:", ["📚 Pokedex (Rápido)", "✍️ Manual (Customizado)"], horizontal=True)
     
-    nome_final = ""
-    hp_final = 0
-    tipo_final = ""
-    fraq_final = ""
-    res_final = ""
-    img_final = ""
+    nome_final, hp_final, tipo_final, fraq_final, res_final, img_final, hab_final = "", 0, "", "", "", "", None
     
     if "Pokedex" in modo:
         escolha_pokedex = st.selectbox("Escolha o Pokémon:", list(POKEDEX.keys()))
         dados = POKEDEX[escolha_pokedex]
         st.image(dados["img"], width=100)
-        nome_final = escolha_pokedex
-        hp_final = dados["hp"]
-        tipo_final = dados["tipo"]
-        fraq_final = dados["fraq"]
-        res_final = dados["res"]
-        img_final = dados["img"]
+        nome_final, hp_final, tipo_final, fraq_final, res_final, img_final = escolha_pokedex, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados["img"]
+        hab_final = dados.get("hab") # Pega habilidade se tiver
     else:
         nome_final = st.text_input("Nome do Pokémon")
         hp_final = st.number_input("HP Máximo", value=60, step=10)
@@ -351,45 +331,40 @@ with st.sidebar:
         tipo_final = st.selectbox("Tipo", lista_tipos)
         fraq_final = st.selectbox("Fraqueza", lista_tipos)
         res_final = st.selectbox("Resistência", ["Nenhuma"] + lista_tipos)
+        hab_final = st.text_input("Habilidade (Opcional):") or None
 
     player_temp = st.session_state.Treinadores[dono_key]
     nome_dono_display = player_temp['nome']
-
     opcoes_evolucao = []
     if player_temp['ativo']: opcoes_evolucao.append(f"[Ativo] {player_temp['ativo'].nome}")
     for i, p in enumerate(player_temp['banco']): opcoes_evolucao.append(f"[Banco {i+1}] {p.nome}")
     
     acao = st.radio("Ação:", ["Novo Básico", "Evoluir"], horizontal=True)
-    
     alvo_evolucao = None
     if acao == "Evoluir":
         if opcoes_evolucao: alvo_evolucao = st.selectbox("Quem evolui?", opcoes_evolucao)
         else: st.warning("Ninguém para evoluir.")
     
     destino = "Banco"
-    if acao == "Novo Básico":
-        destino = st.radio("Onde colocar?", ["Ativo", "Banco"], horizontal=True)
+    if acao == "Novo Básico": destino = st.radio("Onde colocar?", ["Ativo", "Banco"], horizontal=True)
 
     if st.button("✨ Criar Carta", type="primary"):
         if acao == "Novo Básico":
             if nome_final:
-                novo = Pokemon(nome_final, hp_final, tipo_final, fraq_final, res_final, img_final)
+                novo = Pokemon(nome_final, hp_final, tipo_final, fraq_final, res_final, img_final, hab_final)
                 if destino == "Ativo" and player_temp['ativo'] is None:
                     player_temp['ativo'] = novo
                     adicionar_log(f"🆕 {nome_final} entrou como Ativo de {nome_dono_display}.", "neutro")
                 elif len(player_temp['banco']) < 5:
                     player_temp['banco'].append(novo)
                     adicionar_log(f"🆕 {nome_final} entrou no Banco de {nome_dono_display}.", "neutro")
-                else:
-                    st.error("Sem espaço!")
+                else: st.error("Sem espaço!")
                 st.rerun()
-            else:
-                st.error("O Pokémon precisa de um nome!")
-        
+            else: st.error("O Pokémon precisa de um nome!")
         elif acao == "Evoluir" and alvo_evolucao:
             obj = player_temp['ativo'] if "[Ativo]" in alvo_evolucao else player_temp['banco'][int(alvo_evolucao.split("]")[0].split(" ")[1])-1]
             antigo = obj.nome
-            obj.evoluir_para(nome_final, hp_final, tipo_final, fraq_final, res_final, img_final)
+            obj.evoluir_para(nome_final, hp_final, tipo_final, fraq_final, res_final, img_final, hab_final)
             adicionar_log(f"🧬 {antigo} evoluiu para {nome_final}!", "energia")
             st.balloons()
             st.rerun()
@@ -408,7 +383,6 @@ def checar_vitoria(id_oponente_chave):
 def renderizar_mesa_jogador(id_jogador_chave):
     player = st.session_state.Treinadores[id_jogador_chave]
     nome_display = player['nome']
-    
     cor_texto = "#89CFF0" if id_jogador_chave == "Treinador 1" else "#FF6961"
     border_color = "#89CFF0" if id_jogador_chave == "Treinador 1" else "#FF6961"
     
@@ -432,39 +406,39 @@ def renderizar_mesa_jogador(id_jogador_chave):
                 st.image(ativo.imagem_url, use_container_width=True)
                 st.caption(f"{ativo.tipo} | Fraco: {ativo.fraqueza}")
                 if ativo.status != "Saudável": st.warning(ativo.status)
-                
                 txt_en = "".join([f"{k.split()[-1]}x{v} " for k,v in ativo.energias.items()])
                 if txt_en: st.markdown(f"**⚡ {txt_en}**")
+                if ativo.ferramenta != "Nenhuma": st.info(f"🛠️ {ativo.ferramenta}")
                 
-                if ativo.ferramenta != "Nenhuma":
-                    st.info(f"🛠️ {ativo.ferramenta}")
-            
+                # --- BOTÃO DE HABILIDADE (ATIVO) ---
+                if ativo.habilidade:
+                    # Div especial para botão azul
+                    st.markdown('<div class="hab-btn">', unsafe_allow_html=True)
+                    if st.button(f"✨ {ativo.habilidade}", key=f"hab_{ativo.id_unico}"):
+                        adicionar_log(f"✨ **{ativo.nome}** ativou a habilidade: **{ativo.habilidade}**!", "tool")
+                    st.markdown('</div>', unsafe_allow_html=True)
+
             with col_infos:
                 st.subheader(ativo.nome)
                 st.progress(ativo.hp_atual / ativo.hp_max)
                 st.write(f"HP: {ativo.hp_atual}/{ativo.hp_max}")
-                
                 if ativo.hp_atual == 0:
                     st.error("💀 NOCAUTEADO!")
                     if st.button("Enviar p/ Descarte 💀", key=f"ko_{ativo.id_unico}"):
                         player['descarte'].append(ativo)
                         player['ativo'] = None
                         adicionar_log(f"☠️ {ativo.nome} ({nome_display}) foi nocauteado!", "ko")
-                        
                         qtd_premios = 2 if "ex" in ativo.nome.lower() else 1
                         player_oponente['premios'] -= qtd_premios
                         pl = "s" if qtd_premios > 1 else ""
                         adicionar_log(f"🏆 {nome_oponente_display} pegou {qtd_premios} carta{pl} prêmio!", "ko")
-                        
-                        if checar_vitoria(id_jogador_chave):
-                            st.session_state.vencedor = nome_oponente_display
+                        if checar_vitoria(id_jogador_chave): st.session_state.vencedor = nome_oponente_display
                         st.rerun()
                 else:
                     novo_status = st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}")
                     if novo_status != ativo.status:
                         ativo.status = novo_status
                         st.rerun()
-                    
                     with st.popover("⚡ Energia / 🛠️ Tool"):
                         t1, t2, t3 = st.tabs(["Ligar Energia", "Tirar Energia", "Equipar Tool"])
                         with t1:
@@ -487,7 +461,6 @@ def renderizar_mesa_jogador(id_jogador_chave):
                                 ativo.equipar_ferramenta(escolha_tool)
                                 adicionar_log(f"🛠️ {ativo.nome} equipou {escolha_tool}.", "tool")
                                 st.rerun()
-
                     st.divider()
                     c_atk, c_self = st.columns(2)
                     with c_atk:
@@ -498,7 +471,6 @@ def renderizar_mesa_jogador(id_jogador_chave):
                                 red = 30 if ativo.tipo == ativo_oponente.resistencia else 0
                                 final = (dano * mult) - red
                                 if final < 0: final = 0
-                                
                                 ativo_oponente.receber_dano(final)
                                 msg_extra = " (x2)" if mult > 1 else " (-30)" if red > 0 else ""
                                 adicionar_log(f"⚔️ {ativo.nome} atacou {ativo_oponente.nome} causando {final} de dano{msg_extra}!", "ataque")
@@ -513,8 +485,7 @@ def renderizar_mesa_jogador(id_jogador_chave):
                                 player['banco'].append(ativo)
                                 player['ativo'] = None
                                 adicionar_log(f"🏃 {ativo.nome} recuou para o banco.", "neutro")
-                            else:
-                                player['ativo'] = None
+                            else: player['ativo'] = None
                             st.rerun()
 
     if player['banco']:
@@ -525,27 +496,19 @@ def renderizar_mesa_jogador(id_jogador_chave):
                     st.image(p.imagem_url, caption=p.nome)
                     st.caption(f"HP: {p.hp_atual}")
                     
-                    # --- LÓGICA DE NOCAUTE NO BANCO ---
                     if p.hp_atual == 0:
                         st.error("💀")
                         if st.button("💀 Descartar", key=f"ko_banco_{p.id_unico}"):
-                            # 1. Remove do banco
                             player['banco'].pop(i)
                             player['descarte'].append(p)
                             adicionar_log(f"💀 {p.nome} (Banco) foi nocauteado!", "ko")
-                            
-                            # 2. Prêmios (Check ex)
                             qtd_premios = 2 if "ex" in p.nome.lower() else 1
                             player_oponente['premios'] -= qtd_premios
                             pl = "s" if qtd_premios > 1 else ""
                             adicionar_log(f"🏆 {nome_oponente_display} pegou {qtd_premios} carta{pl} prêmio (Banco)!", "ko")
-                            
-                            # 3. Vitória
-                            if checar_vitoria(id_jogador_chave):
-                                st.session_state.vencedor = nome_oponente_display
+                            if checar_vitoria(id_jogador_chave): st.session_state.vencedor = nome_oponente_display
                             st.rerun()
                     else:
-                        # Se não está morto, mostra botões normais
                         if st.button("⬆️", key=f"up_{p.id_unico}"):
                             if not player['ativo']:
                                 player['ativo'] = player['banco'].pop(i)
@@ -554,6 +517,14 @@ def renderizar_mesa_jogador(id_jogador_chave):
                         if st.button("💔", key=f"db_{p.id_unico}"):
                             p.receber_dano(10)
                             st.rerun()
+                        
+                        # --- BOTÃO DE HABILIDADE (BANCO) ---
+                        if p.habilidade:
+                            # Botão pequeno para caber no banco
+                            st.markdown('<div class="hab-btn">', unsafe_allow_html=True)
+                            if st.button("✨", key=f"hab_banco_{p.id_unico}", help=p.habilidade):
+                                adicionar_log(f"✨ **{p.nome}** (Banco) ativou: **{p.habilidade}**!", "tool")
+                            st.markdown('</div>', unsafe_allow_html=True)
     
     if player['descarte']:
         with st.expander(f"🗑️ Descarte ({len(player['descarte'])})"):
@@ -567,9 +538,8 @@ if st.session_state.vencedor:
         st.session_state.clear()
         st.rerun()
 else:
-    st.title("🏆 Arena PokéBattle 5.11 (KO Banco)")
+    st.title("🏆 Arena PokéBattle 6.0 (Habilidades)")
     c1, c2 = st.columns(2)
-    # Passamos as chaves fixas ("Treinador 1"), a função vai buscar o nome bonito lá dentro
     with c1: renderizar_mesa_jogador("Treinador 1")
     with c2: renderizar_mesa_jogador("Treinador 2")
 
