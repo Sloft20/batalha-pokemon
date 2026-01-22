@@ -3,9 +3,9 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 5.10 (Visual Limpo)", page_icon="💎", layout="wide")
+st.set_page_config(page_title="PokéBattle 5.11 (KO Banco)", page_icon="💀", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (REMOÇÃO TOTAL DE BORDAS/LINHAS) ---
+# --- 0. CONFIGURAÇÃO VISUAL (VISUAL 5.10 - LIMPO) ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -23,7 +23,7 @@ def configurar_visual():
         
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
 
-        /* Caixas de Vidro (Fundo dos jogadores) */
+        /* Caixas de Vidro */
         div[data-testid="stVerticalBlockBorderWrapper"] {
             background-color: rgba(0, 0, 0, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -37,32 +37,26 @@ def configurar_visual():
             text-shadow: 2px 2px 4px #000000;
         }
 
-        /* --- 1. REMOVENDO LINHAS BRANCAS DOS INPUTS E SELECTS (Sua Imagem) --- */
-        /* Isso arruma a caixa "Saudável", inputs de Dano e HP */
+        /* Inputs e Selects sem borda branca */
         .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
             background-color: rgba(255, 255, 255, 0.15) !important;
             color: white !important;
-            border: 0px solid transparent !important; /* Tira a borda */
-            box-shadow: none !important;              /* Tira o brilho branco */
+            border: 0px solid transparent !important;
+            box-shadow: none !important;
         }
-        
-        /* Garante que não apareça linha branca quando clica no menu */
         .stSelectbox div[data-baseweb="select"]:focus-within > div {
              border-color: transparent !important;
              box-shadow: none !important;
         }
 
-        /* --- 2. REMOVENDO LINHAS BRANCAS DOS BOTÕES (Seu pedido) --- */
+        /* Botões sem borda branca (Nuclear CSS) */
         .stButton > button {
             background-color: #FFCB05 !important;
             color: #2a3b96 !important;
             border-radius: 12px;
-            
-            /* O SEGRED0: Remove borda e sombra */
             border: none !important;
             outline: none !important;
             box-shadow: none !important;
-            
             font-weight: bold;
             width: 100%;
             padding: 10px 20px;
@@ -70,19 +64,15 @@ def configurar_visual():
             margin-top: 5px;
             transition: transform 0.1s;
         }
-
-        /* Mouse em cima (Aumenta um pouco) */
         .stButton > button:hover {
             transform: scale(1.02);
             color: black !important;
             background-color: #ffdb4d !important;
         }
-
-        /* Clicando ou Focado (Onde a linha branca costuma aparecer) */
         .stButton > button:focus, .stButton > button:active {
             border: none !important;
             outline: none !important;
-            box-shadow: none !important; /* Mata o brilho */
+            box-shadow: none !important;
             color: #2a3b96 !important;
             background-color: #FFCB05 !important;
         }
@@ -534,14 +524,36 @@ def renderizar_mesa_jogador(id_jogador_chave):
                 with cols[i]:
                     st.image(p.imagem_url, caption=p.nome)
                     st.caption(f"HP: {p.hp_atual}")
-                    if st.button("⬆️", key=f"up_{p.id_unico}"):
-                        if not player['ativo']:
-                            player['ativo'] = player['banco'].pop(i)
-                            adicionar_log(f"🆙 {p.nome} subiu para o Ativo!", "neutro")
+                    
+                    # --- LÓGICA DE NOCAUTE NO BANCO ---
+                    if p.hp_atual == 0:
+                        st.error("💀")
+                        if st.button("💀 Descartar", key=f"ko_banco_{p.id_unico}"):
+                            # 1. Remove do banco
+                            player['banco'].pop(i)
+                            player['descarte'].append(p)
+                            adicionar_log(f"💀 {p.nome} (Banco) foi nocauteado!", "ko")
+                            
+                            # 2. Prêmios (Check ex)
+                            qtd_premios = 2 if "ex" in p.nome.lower() else 1
+                            player_oponente['premios'] -= qtd_premios
+                            pl = "s" if qtd_premios > 1 else ""
+                            adicionar_log(f"🏆 {nome_oponente_display} pegou {qtd_premios} carta{pl} prêmio (Banco)!", "ko")
+                            
+                            # 3. Vitória
+                            if checar_vitoria(id_jogador_chave):
+                                st.session_state.vencedor = nome_oponente_display
                             st.rerun()
-                    if st.button("💔", key=f"db_{p.id_unico}"):
-                        p.receber_dano(10)
-                        st.rerun()
+                    else:
+                        # Se não está morto, mostra botões normais
+                        if st.button("⬆️", key=f"up_{p.id_unico}"):
+                            if not player['ativo']:
+                                player['ativo'] = player['banco'].pop(i)
+                                adicionar_log(f"🆙 {p.nome} subiu para o Ativo!", "neutro")
+                                st.rerun()
+                        if st.button("💔", key=f"db_{p.id_unico}"):
+                            p.receber_dano(10)
+                            st.rerun()
     
     if player['descarte']:
         with st.expander(f"🗑️ Descarte ({len(player['descarte'])})"):
@@ -555,7 +567,7 @@ if st.session_state.vencedor:
         st.session_state.clear()
         st.rerun()
 else:
-    st.title("🏆 Arena PokéBattle 5.10 (Visual Limpo)")
+    st.title("🏆 Arena PokéBattle 5.11 (KO Banco)")
     c1, c2 = st.columns(2)
     # Passamos as chaves fixas ("Treinador 1"), a função vai buscar o nome bonito lá dentro
     with c1: renderizar_mesa_jogador("Treinador 1")
