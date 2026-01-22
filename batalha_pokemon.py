@@ -3,9 +3,9 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 5.8 (Oficial)", page_icon="🏆", layout="wide")
+st.set_page_config(page_title="PokéBattle 5.9 (Final)", page_icon="✨", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (AGORA SEM LINHAS BRANCAS MESMO) ---
+# --- 0. CONFIGURAÇÃO VISUAL (CORREÇÃO DA SOMBRA TEIMOSA) ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -43,39 +43,40 @@ def configurar_visual():
             border: 1px solid rgba(255,255,255,0.5);
         }
 
-        /* --- CSS NUCLEAR PARA REMOVER BORDAS BRANCAS --- */
-        div.stButton > button {
+        /* --- O SEGREDO PARA MATAR A LINHA BRANCA --- */
+        /* O Streamlit usa box-shadow para o foco, não border. Vamos zerar tudo. */
+        
+        .stButton > button {
             background-color: #FFCB05 !important;
             color: #2a3b96 !important;
-            border-radius: 15px;
-            
-            /* Remove todas as bordas e brilhos */
-            border: 0px solid transparent !important;
+            border-radius: 12px;
+            border: none !important;
             outline: none !important;
-            box-shadow: none !important; 
-            
             font-weight: bold;
             width: 100%;
             padding: 10px 20px;
             font-size: 16px;
             margin-top: 5px;
             transition: transform 0.1s;
+            
+            /* REMOVE QUALQUER SOMBRA PADRÃO */
+            box-shadow: none !important;
         }
 
-        /* Mouse em cima */
-        div.stButton > button:hover {
-            transform: scale(1.03);
-            color: black !important;
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.3) !important; /* Sombra preta suave, nada de branco */
-        }
-
-        /* Quando clica (Foco/Active) - AQUI ESTAVA O PROBLEMA */
-        div.stButton > button:focus, div.stButton > button:active, div.stButton > button:focus-visible {
-            border: 0px solid transparent !important;
+        /* Tira a borda vermelha/branca chata quando clica */
+        .stButton > button:focus, .stButton > button:active, .stButton > button:focus-visible {
+            box-shadow: none !important;
+            border: none !important;
             outline: none !important;
-            box-shadow: none !important; /* Mata o brilho branco do Streamlit */
-            background-color: #e6b800 !important; /* Levemente mais escuro para feedback */
+            background-color: #FFCB05 !important; /* Mantém amarelo */
             color: #2a3b96 !important;
+        }
+
+        .stButton > button:hover {
+            transform: scale(1.02);
+            color: black !important;
+            /* Sombra suave preta apenas no hover */
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.5) !important;
         }
 
         .log-entry {
@@ -212,7 +213,7 @@ class Pokemon:
             return True
         return False
 
-# --- 3. GERENCIAMENTO DE ESTADO (AGORA COM 6 PRÊMIOS) ---
+# --- 3. GERENCIAMENTO DE ESTADO ---
 def inicializar_jogo():
     if 'Treinadores' not in st.session_state:
         st.session_state.Treinadores = {
@@ -221,14 +222,14 @@ def inicializar_jogo():
                 "ativo": None, 
                 "banco": [], 
                 "descarte": [], 
-                "premios": 6  # <-- AQUI: MUDADO PARA 6 CARTAS PRÊMIO
+                "premios": 6 # AJUSTADO PARA 6
             },
             "Treinador 2": {
                 "nome": "Treinador 2",
                 "ativo": None, 
                 "banco": [], 
                 "descarte": [], 
-                "premios": 6  # <-- AQUI: MUDADO PARA 6 CARTAS PRÊMIO
+                "premios": 6 # AJUSTADO PARA 6
             }
         }
     if 'log' not in st.session_state:
