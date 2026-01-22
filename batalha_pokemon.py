@@ -3,16 +3,15 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 5.6 (Botões Limpos)", page_icon="✨", layout="wide")
+st.set_page_config(page_title="PokéBattle 5.7 (Visual 5.3)", page_icon="✨", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (BOTÕES SEM LINHA BRANCA) ---
+# --- 0. CONFIGURAÇÃO VISUAL (REVERTIDO PARA O ESTILO DA V5.3) ---
 def configurar_visual():
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
         html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
 
-        /* Fundo da Arena */
         [data-testid="stAppViewContainer"] {
             background-image: url("https://pokemonrevolution.net/forum/uploads/monthly_2021_03/DVMT-6OXcAE2rZY.jpg.afab972f972bd7fbd4253bc7aa1cf27f.jpg");
             background-size: cover;
@@ -23,7 +22,6 @@ def configurar_visual():
         
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
 
-        /* Caixas de Vidro */
         div[data-testid="stVerticalBlockBorderWrapper"] {
             background-color: rgba(0, 0, 0, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -43,41 +41,21 @@ def configurar_visual():
             border: 1px solid rgba(255,255,255,0.5);
         }
 
-        /* --- CORREÇÃO AGRESSIVA DOS BOTÕES --- */
-        div.stButton > button {
-            background-color: #FFCB05 !important;   /* Amarelo Pokémon */
-            color: #2a3b96 !important;              /* Azul Ash */
-            
-            /* TRUQUE: Borda da mesma cor do fundo para sumir com a linha branca */
-            border: 2px solid #FFCB05 !important;   
-            border-radius: 12px !important;
-            
-            outline: none !important;
-            box-shadow: none !important;            /* Remove qualquer sombra/brilho */
-            
-            font-weight: bold;
-            width: 100%;
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 5px;
-            transition: transform 0.1s;
-        }
-        
-        /* Estado: Mouse em cima (Hover) */
-        div.stButton > button:hover {
-            transform: scale(1.02);
-            color: black !important;
-            background-color: #ffdb4d !important;   /* Um amarelo levemente mais claro */
-            border-color: #ffdb4d !important;       /* Mantém a borda igual ao fundo */
-        }
-        
-        /* Estado: Clicando (Active) e Focado (Focus) */
-        div.stButton > button:active, div.stButton > button:focus {
+        /* --- ESTILO DOS BOTÕES DA VERSÃO 5.3 (SEM BORDAS BRANCAS) --- */
+        .stButton > button, .stButton > button:focus, .stButton > button:active {
             background-color: #FFCB05 !important;
-            border-color: #FFCB05 !important;       /* Garante que não fique branco ao clicar */
             color: #2a3b96 !important;
-            box-shadow: none !important;
+            border-radius: 20px;
+            border: 0px solid transparent !important; /* O SEGREDO ESTÁ AQUI */
             outline: none !important;
+            box-shadow: none !important;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .stButton > button:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 0px 15px rgba(255, 203, 5, 0.8) !important;
+            color: black !important;
         }
 
         .log-entry {
@@ -548,7 +526,7 @@ if st.session_state.vencedor:
         st.session_state.clear()
         st.rerun()
 else:
-    st.title("🏆 Arena PokéBattle 5.6 (Botões Limpos)")
+    st.title("🏆 Arena PokéBattle 5.7 (Visual 5.3)")
     c1, c2 = st.columns(2)
     # Passamos as chaves fixas ("Treinador 1"), a função vai buscar o nome bonito lá dentro
     with c1: renderizar_mesa_jogador("Treinador 1")
