@@ -3,16 +3,15 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 6.0 (Habilidades)", page_icon="✨", layout="wide")
+st.set_page_config(page_title="PokéBattle 6.1 (Turnos)", page_icon="⏳", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (MANTIDA A PERFEITA DA v5.11) ---
+# --- 0. CONFIGURAÇÃO VISUAL (MANTIDA V5.11 LIMPA) ---
 def configurar_visual():
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
         html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
 
-        /* Fundo da Arena */
         [data-testid="stAppViewContainer"] {
             background-image: url("https://pokemonrevolution.net/forum/uploads/monthly_2021_03/DVMT-6OXcAE2rZY.jpg.afab972f972bd7fbd4253bc7aa1cf27f.jpg");
             background-size: cover;
@@ -47,7 +46,7 @@ def configurar_visual():
              box-shadow: none !important;
         }
 
-        /* BOTÕES PERFEITOS (AMARELOS) */
+        /* BOTÕES PADRÃO (AMARELOS) */
         .stButton > button {
             background-color: #FFCB05 !important;
             color: #2a3b96 !important;
@@ -75,13 +74,30 @@ def configurar_visual():
             background-color: #FFCB05 !important;
         }
 
-        /* BOTÃO DE HABILIDADE (AZUL DIFERENCIADO) */
+        /* BOTÃO DE HABILIDADE (AZUL) */
         .hab-btn > button {
-            background-color: #3b4cca !important; /* Azul Pokemon */
+            background-color: #3b4cca !important; 
             color: white !important;
         }
         .hab-btn > button:hover {
             background-color: #536dfe !important;
+        }
+        /* BOTÃO DE HABILIDADE USADA (CINZA) */
+        .hab-btn-used > button {
+            background-color: #555555 !important; 
+            color: #aaaaaa !important;
+            cursor: not-allowed;
+        }
+
+        /* BOTÃO PASSAR TURNO (VERDE) */
+        .turn-btn > button {
+            background-color: #4CAF50 !important;
+            color: white !important;
+            font-size: 20px !important;
+            padding: 15px 20px !important;
+        }
+        .turn-btn > button:hover {
+            background-color: #45a049 !important;
         }
 
         .log-entry {
@@ -94,8 +110,7 @@ def configurar_visual():
 
 configurar_visual()
 
-# --- 1. BANCO DE DADOS (AGORA COM HABILIDADES) ---
-# Adicionei o campo "hab" (Habilidade) nos Pokémons que tem.
+# --- 1. BANCO DE DADOS ---
 POKEDEX = {
     # --- DECK DRAGAPULT EX ---
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
@@ -141,10 +156,8 @@ class Pokemon:
         self.hp_base = int(hp_max)
         self.hp_max = int(hp_max)
         self.hp_atual = int(hp_max)
-        
         link_padrao = "https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg"
         self.imagem_url = imagem_url if imagem_url else link_padrao
-        
         self.id_unico = datetime.datetime.now().timestamp() + random.random()
         self.tipo = tipo
         self.fraqueza = fraqueza
@@ -152,20 +165,16 @@ class Pokemon:
         self.status = "Saudável"
         self.energias = {}
         self.ferramenta = "Nenhuma"
-        # Se veio no construtor, usa. Se não, tenta achar no DB.
         if habilidade:
             self.habilidade = habilidade
         else:
-            # Tenta pegar do POKEDEX automaticamente
             self.habilidade = POKEDEX[nome].get("hab") if nome in POKEDEX else None
 
     def equipar_ferramenta(self, nome_ferramenta):
         if self.ferramenta in TOOLS_DB:
             bonus_antigo = TOOLS_DB[self.ferramenta]["hp_bonus"]
             self.hp_max -= bonus_antigo
-            if self.hp_atual > self.hp_max:
-                self.hp_atual = self.hp_max
-
+            if self.hp_atual > self.hp_max: self.hp_atual = self.hp_max
         self.ferramenta = nome_ferramenta
         if nome_ferramenta in TOOLS_DB:
             novo_bonus = TOOLS_DB[nome_ferramenta]["hp_bonus"]
@@ -211,10 +220,7 @@ class Pokemon:
         self.fraqueza = nova_fraqueza
         self.resistencia = nova_resistencia
         if nova_img: self.imagem_url = nova_img
-        
-        # Atualiza habilidade na evolução
         self.habilidade = nova_hab if nova_hab else (POKEDEX[novo_nome].get("hab") if novo_nome in POKEDEX else None)
-        
         self.hp_atual = self.hp_max - dano_sofrido
         if self.hp_atual < 0: self.hp_atual = 0
         self.status = "Saudável"
@@ -230,17 +236,19 @@ class Pokemon:
             return True
         return False
 
-# --- 3. GERENCIAMENTO DE ESTADO ---
+# --- 3. GERENCIAMENTO DE ESTADO (COM SISTEMA DE TURNO) ---
 def inicializar_jogo():
     if 'Treinadores' not in st.session_state:
         st.session_state.Treinadores = {
             "Treinador 1": {"nome": "Treinador 1", "ativo": None, "banco": [], "descarte": [], "premios": 6},
             "Treinador 2": {"nome": "Treinador 2", "ativo": None, "banco": [], "descarte": [], "premios": 6}
         }
-    if 'log' not in st.session_state:
-        st.session_state.log = []
-    if 'vencedor' not in st.session_state:
-        st.session_state.vencedor = None
+    if 'log' not in st.session_state: st.session_state.log = []
+    if 'vencedor' not in st.session_state: st.session_state.vencedor = None
+    
+    # NOVAS VARIÁVEIS DE CONTROLE DE TURNO
+    if 'turno_atual' not in st.session_state: st.session_state.turno_atual = "Treinador 1"
+    if 'habilidades_usadas' not in st.session_state: st.session_state.habilidades_usadas = []
 
 def adicionar_log(mensagem, tipo="neutro"):
     hora = datetime.datetime.now().strftime("%H:%M")
@@ -254,9 +262,29 @@ def adicionar_log(mensagem, tipo="neutro"):
 
 inicializar_jogo()
 
-# --- 4. BARRA LATERAL ---
+# --- 4. BARRA LATERAL (CONTROLE E TURNOS) ---
 with st.sidebar:
     st.header("⚙️ Controle")
+    
+    # BOTÃO PASSAR TURNO (DESTAQUE)
+    st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
+    if st.button("⏳ PASSAR TURNO", help="Limpa habilidades e passa a vez"):
+        # Limpa habilidades usadas
+        st.session_state.habilidades_usadas = []
+        
+        # Troca o jogador
+        antigo = st.session_state.turno_atual
+        novo = "Treinador 2" if antigo == "Treinador 1" else "Treinador 1"
+        st.session_state.turno_atual = novo
+        
+        # Log
+        nome_novo = st.session_state.Treinadores[novo]['nome']
+        adicionar_log(f"🕒 <b>Fim do turno de {st.session_state.Treinadores[antigo]['nome']}.</b> Início do turno de <b>{nome_novo}</b>!", "neutro")
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.divider()
+
     with st.expander("👤 Personalizar Nomes", expanded=True):
         nome_t1_input = st.text_input("Nome Jogador 1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
         nome_t2_input = st.text_input("Nome Jogador 2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
@@ -269,6 +297,7 @@ with st.sidebar:
     p1 = st.session_state.Treinadores["Treinador 1"]["premios"]
     n2 = st.session_state.Treinadores["Treinador 2"]["nome"]
     p2 = st.session_state.Treinadores["Treinador 2"]["premios"]
+    
     c1.metric(n1, f"{p1} 🎴")
     c2.metric(n2, f"{p2} 🎴")
     
@@ -293,8 +322,7 @@ with st.sidebar:
             for log in logs_totais: adicionar_log(log, "ko")
             st.success("Checkup realizado!")
             st.rerun()
-        else:
-            st.toast("Nenhum status para resolver.")
+        else: st.toast("Nenhum status para resolver.")
 
     st.divider()
     st.subheader("💾 Salvar Registro")
@@ -307,8 +335,7 @@ with st.sidebar:
             texto_limpo = re.sub('<[^<]+?>', '', linha)
             texto_log += texto_limpo + "\n"
         st.download_button(label="📄 Baixar Arquivo .txt", data=texto_log, file_name="registro_batalha.txt", mime="text/plain")
-    else:
-        st.caption("O registro está vazio.")
+    else: st.caption("O registro está vazio.")
 
     st.divider()
     st.subheader("➕ Gerenciar Cartas")
@@ -322,7 +349,7 @@ with st.sidebar:
         dados = POKEDEX[escolha_pokedex]
         st.image(dados["img"], width=100)
         nome_final, hp_final, tipo_final, fraq_final, res_final, img_final = escolha_pokedex, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados["img"]
-        hab_final = dados.get("hab") # Pega habilidade se tiver
+        hab_final = dados.get("hab")
     else:
         nome_final = st.text_input("Nome do Pokémon")
         hp_final = st.number_input("HP Máximo", value=60, step=10)
@@ -383,8 +410,12 @@ def checar_vitoria(id_oponente_chave):
 def renderizar_mesa_jogador(id_jogador_chave):
     player = st.session_state.Treinadores[id_jogador_chave]
     nome_display = player['nome']
-    cor_texto = "#89CFF0" if id_jogador_chave == "Treinador 1" else "#FF6961"
-    border_color = "#89CFF0" if id_jogador_chave == "Treinador 1" else "#FF6961"
+    
+    # CORES BASEADOS NO TURNO
+    eh_a_vez = (st.session_state.turno_atual == id_jogador_chave)
+    cor_texto = "#4CAF50" if eh_a_vez else ("#89CFF0" if id_jogador_chave == "Treinador 1" else "#FF6961")
+    border_color = "#4CAF50" if eh_a_vez else ("#89CFF0" if id_jogador_chave == "Treinador 1" else "#FF6961")
+    indicador_vez = "⚡ SUA VEZ ⚡" if eh_a_vez else "Aguardando..."
     
     id_oponente_chave = "Treinador 2" if id_jogador_chave == "Treinador 1" else "Treinador 1"
     player_oponente = st.session_state.Treinadores[id_oponente_chave]
@@ -394,6 +425,7 @@ def renderizar_mesa_jogador(id_jogador_chave):
     st.markdown(f"""
         <div style='background-color: rgba(0,0,0,0.5); padding: 5px; border-radius: 10px; text-align: center; margin-bottom: 10px; border: 2px solid {border_color};'>
             <h2 style='margin:0; color: {cor_texto};'>{nome_display.upper()}</h2>
+            <p style='margin:0; color: {cor_texto}; font-weight: bold;'>{indicador_vez}</p>
             <p style='margin:0; color: white;'>Prêmios Restantes: <strong>{player['premios']}</strong> 🎴</p>
         </div>
     """, unsafe_allow_html=True)
@@ -412,10 +444,15 @@ def renderizar_mesa_jogador(id_jogador_chave):
                 
                 # --- BOTÃO DE HABILIDADE (ATIVO) ---
                 if ativo.habilidade:
-                    # Div especial para botão azul
-                    st.markdown('<div class="hab-btn">', unsafe_allow_html=True)
-                    if st.button(f"✨ {ativo.habilidade}", key=f"hab_{ativo.id_unico}"):
+                    ja_usou = ativo.id_unico in st.session_state.habilidades_usadas
+                    classe_btn = "hab-btn-used" if ja_usou else "hab-btn"
+                    label_btn = "✅ Usado" if ja_usou else f"✨ {ativo.habilidade}"
+                    
+                    st.markdown(f'<div class="{classe_btn}">', unsafe_allow_html=True)
+                    if st.button(label_btn, key=f"hab_{ativo.id_unico}", disabled=ja_usou):
+                        st.session_state.habilidades_usadas.append(ativo.id_unico)
                         adicionar_log(f"✨ **{ativo.nome}** ativou a habilidade: **{ativo.habilidade}**!", "tool")
+                        st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
 
             with col_infos:
@@ -520,10 +557,15 @@ def renderizar_mesa_jogador(id_jogador_chave):
                         
                         # --- BOTÃO DE HABILIDADE (BANCO) ---
                         if p.habilidade:
-                            # Botão pequeno para caber no banco
-                            st.markdown('<div class="hab-btn">', unsafe_allow_html=True)
-                            if st.button("✨", key=f"hab_banco_{p.id_unico}", help=p.habilidade):
+                            ja_usou = p.id_unico in st.session_state.habilidades_usadas
+                            classe_btn = "hab-btn-used" if ja_usou else "hab-btn"
+                            label_btn = "✅" if ja_usou else "✨"
+                            
+                            st.markdown(f'<div class="{classe_btn}">', unsafe_allow_html=True)
+                            if st.button(label_btn, key=f"hab_banco_{p.id_unico}", help=p.habilidade, disabled=ja_usou):
+                                st.session_state.habilidades_usadas.append(p.id_unico)
                                 adicionar_log(f"✨ **{p.nome}** (Banco) ativou: **{p.habilidade}**!", "tool")
+                                st.rerun()
                             st.markdown('</div>', unsafe_allow_html=True)
     
     if player['descarte']:
@@ -538,7 +580,7 @@ if st.session_state.vencedor:
         st.session_state.clear()
         st.rerun()
 else:
-    st.title("🏆 Arena PokéBattle 6.0 (Habilidades)")
+    st.title("🏆 Arena PokéBattle 6.1 (Turnos & Travas)")
     c1, c2 = st.columns(2)
     with c1: renderizar_mesa_jogador("Treinador 1")
     with c2: renderizar_mesa_jogador("Treinador 2")
