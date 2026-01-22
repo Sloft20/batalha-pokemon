@@ -3,9 +3,9 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 5.9 (Final)", page_icon="✨", layout="wide")
+st.set_page_config(page_title="PokéBattle 5.10 (Visual Limpo)", page_icon="💎", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (CORREÇÃO DA SOMBRA TEIMOSA) ---
+# --- 0. CONFIGURAÇÃO VISUAL (REMOÇÃO TOTAL DE BORDAS/LINHAS) ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -23,7 +23,7 @@ def configurar_visual():
         
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
 
-        /* Caixas de Vidro */
+        /* Caixas de Vidro (Fundo dos jogadores) */
         div[data-testid="stVerticalBlockBorderWrapper"] {
             background-color: rgba(0, 0, 0, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -36,47 +36,55 @@ def configurar_visual():
             color: #FFFFFF !important;
             text-shadow: 2px 2px 4px #000000;
         }
+
+        /* --- 1. REMOVENDO LINHAS BRANCAS DOS INPUTS E SELECTS (Sua Imagem) --- */
+        /* Isso arruma a caixa "Saudável", inputs de Dano e HP */
+        .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
+            background-color: rgba(255, 255, 255, 0.15) !important;
+            color: white !important;
+            border: 0px solid transparent !important; /* Tira a borda */
+            box-shadow: none !important;              /* Tira o brilho branco */
+        }
         
-        .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
-            background-color: rgba(255, 255, 255, 0.15);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.5);
+        /* Garante que não apareça linha branca quando clica no menu */
+        .stSelectbox div[data-baseweb="select"]:focus-within > div {
+             border-color: transparent !important;
+             box-shadow: none !important;
         }
 
-        /* --- O SEGREDO PARA MATAR A LINHA BRANCA --- */
-        /* O Streamlit usa box-shadow para o foco, não border. Vamos zerar tudo. */
-        
+        /* --- 2. REMOVENDO LINHAS BRANCAS DOS BOTÕES (Seu pedido) --- */
         .stButton > button {
             background-color: #FFCB05 !important;
             color: #2a3b96 !important;
             border-radius: 12px;
+            
+            /* O SEGRED0: Remove borda e sombra */
             border: none !important;
             outline: none !important;
+            box-shadow: none !important;
+            
             font-weight: bold;
             width: 100%;
             padding: 10px 20px;
             font-size: 16px;
             margin-top: 5px;
             transition: transform 0.1s;
-            
-            /* REMOVE QUALQUER SOMBRA PADRÃO */
-            box-shadow: none !important;
         }
 
-        /* Tira a borda vermelha/branca chata quando clica */
-        .stButton > button:focus, .stButton > button:active, .stButton > button:focus-visible {
-            box-shadow: none !important;
-            border: none !important;
-            outline: none !important;
-            background-color: #FFCB05 !important; /* Mantém amarelo */
-            color: #2a3b96 !important;
-        }
-
+        /* Mouse em cima (Aumenta um pouco) */
         .stButton > button:hover {
             transform: scale(1.02);
             color: black !important;
-            /* Sombra suave preta apenas no hover */
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.5) !important;
+            background-color: #ffdb4d !important;
+        }
+
+        /* Clicando ou Focado (Onde a linha branca costuma aparecer) */
+        .stButton > button:focus, .stButton > button:active {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important; /* Mata o brilho */
+            color: #2a3b96 !important;
+            background-color: #FFCB05 !important;
         }
 
         .log-entry {
@@ -222,14 +230,14 @@ def inicializar_jogo():
                 "ativo": None, 
                 "banco": [], 
                 "descarte": [], 
-                "premios": 6 # AJUSTADO PARA 6
+                "premios": 6
             },
             "Treinador 2": {
                 "nome": "Treinador 2",
                 "ativo": None, 
                 "banco": [], 
                 "descarte": [], 
-                "premios": 6 # AJUSTADO PARA 6
+                "premios": 6
             }
         }
     if 'log' not in st.session_state:
@@ -547,7 +555,7 @@ if st.session_state.vencedor:
         st.session_state.clear()
         st.rerun()
 else:
-    st.title("🏆 Arena PokéBattle 5.8 (Oficial)")
+    st.title("🏆 Arena PokéBattle 5.10 (Visual Limpo)")
     c1, c2 = st.columns(2)
     # Passamos as chaves fixas ("Treinador 1"), a função vai buscar o nome bonito lá dentro
     with c1: renderizar_mesa_jogador("Treinador 1")
