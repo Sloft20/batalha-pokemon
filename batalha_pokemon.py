@@ -3,16 +3,16 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 5.5 (Visual Fixo)", page_icon="✨", layout="wide")
+st.set_page_config(page_title="PokéBattle 5.6 (Botões Limpos)", page_icon="✨", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (VOLTAMOS PARA O ESTILO LIMPO) ---
+# --- 0. CONFIGURAÇÃO VISUAL (BOTÕES SEM LINHA BRANCA) ---
 def configurar_visual():
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
         html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
 
-        /* Fundo da Arena (NITIDO E BONITO) */
+        /* Fundo da Arena */
         [data-testid="stAppViewContainer"] {
             background-image: url("https://pokemonrevolution.net/forum/uploads/monthly_2021_03/DVMT-6OXcAE2rZY.jpg.afab972f972bd7fbd4253bc7aa1cf27f.jpg");
             background-size: cover;
@@ -23,7 +23,7 @@ def configurar_visual():
         
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
 
-        /* Caixas de Vidro Escuro */
+        /* Caixas de Vidro */
         div[data-testid="stVerticalBlockBorderWrapper"] {
             background-color: rgba(0, 0, 0, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -32,51 +32,54 @@ def configurar_visual():
             backdrop-filter: blur(5px);
         }
 
-        /* Textos */
         h1, h2, h3, p, span, div, label {
             color: #FFFFFF !important;
             text-shadow: 2px 2px 4px #000000;
         }
         
-        /* Inputs */
         .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
             background-color: rgba(255, 255, 255, 0.15);
             color: white;
             border: 1px solid rgba(255,255,255,0.5);
         }
 
-        /* --- BOTÕES PERFEITOS (SEM BORDA BRANCA) --- */
-        .stButton > button {
-            background-color: #FFCB05 !important;
-            color: #2a3b96 !important;
-            border-radius: 12px;
-            border: none !important;        /* Remove borda */
-            outline: none !important;       /* Remove contorno de foco */
-            box-shadow: none !important;    /* Remove sombra branca */
+        /* --- CORREÇÃO AGRESSIVA DOS BOTÕES --- */
+        div.stButton > button {
+            background-color: #FFCB05 !important;   /* Amarelo Pokémon */
+            color: #2a3b96 !important;              /* Azul Ash */
+            
+            /* TRUQUE: Borda da mesma cor do fundo para sumir com a linha branca */
+            border: 2px solid #FFCB05 !important;   
+            border-radius: 12px !important;
+            
+            outline: none !important;
+            box-shadow: none !important;            /* Remove qualquer sombra/brilho */
+            
             font-weight: bold;
-            transition: transform 0.1s;
-            width: 100%;                    /* Largura total */
-            padding: 10px 20px;             /* Gordinho */
+            width: 100%;
+            padding: 10px 20px;
             font-size: 16px;
             margin-top: 5px;
+            transition: transform 0.1s;
         }
         
-        /* Efeito ao passar o mouse */
-        .stButton > button:hover {
+        /* Estado: Mouse em cima (Hover) */
+        div.stButton > button:hover {
             transform: scale(1.02);
             color: black !important;
-            box-shadow: 0px 0px 10px rgba(255, 203, 5, 0.6) !important;
+            background-color: #ffdb4d !important;   /* Um amarelo levemente mais claro */
+            border-color: #ffdb4d !important;       /* Mantém a borda igual ao fundo */
         }
         
-        /* Efeito ao clicar e focar (Garante que a linha branca não volte) */
-        .stButton > button:focus, .stButton > button:active {
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
+        /* Estado: Clicando (Active) e Focado (Focus) */
+        div.stButton > button:active, div.stButton > button:focus {
+            background-color: #FFCB05 !important;
+            border-color: #FFCB05 !important;       /* Garante que não fique branco ao clicar */
             color: #2a3b96 !important;
+            box-shadow: none !important;
+            outline: none !important;
         }
 
-        /* Log */
         .log-entry {
             padding: 5px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -156,7 +159,6 @@ class Pokemon:
             novo_bonus = TOOLS_DB[nome_ferramenta]["hp_bonus"]
             self.hp_max += novo_bonus
             self.hp_atual += novo_bonus
-        
         return True
 
     def receber_dano(self, dano):
@@ -164,7 +166,6 @@ class Pokemon:
         if self.hp_atual < 0: self.hp_atual = 0
         if self.hp_atual > self.hp_max: self.hp_atual = self.hp_max
 
-    # LÓGICA DE CHECKUP INTELIGENTE
     def resolver_checkup(self):
         logs = []
         if self.status == "Envenenado 🧪":
@@ -192,15 +193,12 @@ class Pokemon:
         dano_sofrido = self.hp_max - self.hp_atual
         self.nome = novo_nome
         self.hp_base = int(novo_hp)
-        
         bonus_ferramenta = TOOLS_DB[self.ferramenta]["hp_bonus"]
         self.hp_max = self.hp_base + bonus_ferramenta
-        
         self.tipo = novo_tipo
         self.fraqueza = nova_fraqueza
         self.resistencia = nova_resistencia
         if nova_img: self.imagem_url = nova_img
-        
         self.hp_atual = self.hp_max - dano_sofrido
         if self.hp_atual < 0: self.hp_atual = 0
         self.status = "Saudável"
@@ -248,7 +246,6 @@ def adicionar_log(mensagem, tipo="neutro"):
     elif tipo == "cura": cor = "#90ee90" 
     elif tipo == "ko": cor = "#ff4500" 
     elif tipo == "tool": cor = "#add8e6"
-    
     st.session_state.log.insert(0, f"<div class='log-entry' style='color:{cor}'>[{hora}] {mensagem}</div>")
 
 inicializar_jogo()
@@ -260,7 +257,6 @@ with st.sidebar:
     with st.expander("👤 Personalizar Nomes", expanded=True):
         nome_t1_input = st.text_input("Nome Jogador 1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
         nome_t2_input = st.text_input("Nome Jogador 2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
-        
         st.session_state.Treinadores["Treinador 1"]["nome"] = nome_t1_input
         st.session_state.Treinadores["Treinador 2"]["nome"] = nome_t2_input
     
@@ -286,7 +282,6 @@ with st.sidebar:
     st.divider()
     
     st.info("Fim de Turno")
-    # BOTÃO CHECKUP AUTOMÁTICO
     if st.button("🔄 Fase de Checkup (Auto)"):
         logs_totais = []
         for nome_jog in ["Treinador 1", "Treinador 2"]:
@@ -294,7 +289,6 @@ with st.sidebar:
             if ativo:
                 resultados = ativo.resolver_checkup()
                 if resultados: logs_totais.extend(resultados)
-        
         if logs_totais:
             for log in logs_totais: adicionar_log(log, "ko")
             st.success("Checkup realizado!")
@@ -310,12 +304,10 @@ with st.sidebar:
         texto_log += f"Data: {datetime.datetime.now().strftime('%d/%m/%Y')}\n"
         texto_log += f"Jogadores: {n1} vs {n2}\n"
         texto_log += "-----------------------------------\n"
-        
         log_reverso = st.session_state.log[::-1]
         for linha in log_reverso:
             texto_limpo = re.sub('<[^<]+?>', '', linha)
             texto_log += texto_limpo + "\n"
-            
         st.download_button(
             label="📄 Baixar Arquivo .txt",
             data=texto_log,
@@ -348,14 +340,12 @@ with st.sidebar:
         escolha_pokedex = st.selectbox("Escolha o Pokémon:", list(POKEDEX.keys()))
         dados = POKEDEX[escolha_pokedex]
         st.image(dados["img"], width=100)
-        
         nome_final = escolha_pokedex
         hp_final = dados["hp"]
         tipo_final = dados["tipo"]
         fraq_final = dados["fraq"]
         res_final = dados["res"]
         img_final = dados["img"]
-        
     else:
         nome_final = st.text_input("Nome do Pokémon")
         hp_final = st.number_input("HP Máximo", value=60, step=10)
@@ -558,7 +548,7 @@ if st.session_state.vencedor:
         st.session_state.clear()
         st.rerun()
 else:
-    st.title("🏆 Arena PokéBattle 5.5 (Visual Fixo)")
+    st.title("🏆 Arena PokéBattle 5.6 (Botões Limpos)")
     c1, c2 = st.columns(2)
     # Passamos as chaves fixas ("Treinador 1"), a função vai buscar o nome bonito lá dentro
     with c1: renderizar_mesa_jogador("Treinador 1")
