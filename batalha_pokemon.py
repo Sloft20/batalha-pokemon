@@ -3,79 +3,68 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 5.4 (Checkup Auto)", page_icon="🔄", layout="wide")
+st.set_page_config(page_title="PokéBattle 5.3 (Regra EX)", page_icon="💀", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (COM BLUR) ---
+# --- 0. CONFIGURAÇÃO VISUAL ---
+# --- 0. CONFIGURAÇÃO VISUAL (BOTÕES AJUSTADOS) ---
 def configurar_visual():
     st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-        html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+    html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
 
-        [data-testid="stAppViewContainer"]::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-image: url("https://pokemonrevolution.net/forum/uploads/monthly_2021_03/DVMT-6OXcAE2rZY.jpg.afab972f972bd7fbd4253bc7aa1cf27f.jpg");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            filter: blur(8px); 
-            z-index: -1;
-        }
-        
-        [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
+    [data-testid="stAppViewContainer"] {
+        background-image: url("https://pokemonrevolution.net/forum/uploads/monthly_2021_03/DVMT-6OXcAE2rZY.jpg.afab972f972bd7fbd4253bc7aa1cf27f.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        filter: brightness(0.8);
+    }
 
-        div[data-testid="stVerticalBlockBorderWrapper"] {
-            background-color: rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 15px;
-            backdrop-filter: blur(5px);
-        }
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: rgba(0,0,0,0.85);
+        border-radius: 16px;
+        padding: 15px;
+        backdrop-filter: blur(6px);
+    }
 
-        h1, h2, h3, p, span, div, label {
-            color: #FFFFFF !important;
-            text-shadow: 2px 2px 4px #000000;
-        }
-        
-        .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
-            background-color: rgba(255, 255, 255, 0.15);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.5);
-        }
+    h1, h2, h3, p, span, label {
+        color: white !important;
+        text-shadow: 2px 2px 4px black;
+    }
 
-        .stButton > button, .stButton > button:focus, .stButton > button:active {
-            background-color: #FFCB05 !important;
-            color: #2a3b96 !important;
-            border-radius: 12px;
-            border: 0px solid transparent !important;
-            outline: none !important;
-            box-shadow: none !important;
-            font-weight: bold;
-            transition: all 0.2s;
-            width: 100%;
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 5px;
-        }
-        
-        .stButton > button:hover {
-            transform: scale(1.02);
-            box-shadow: 0px 0px 15px rgba(255, 203, 5, 0.8) !important;
-            color: black !important;
-        }
+    .stButton > button {
+        background-color: #FFCB05 !important;
+        color: #2a3b96 !important;
+        font-weight: bold;
+        border-radius: 12px;
+        width: 100%;
+        padding: 6px;
+        font-size: 16px;
+    }
 
-        .log-entry {
-            padding: 5px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 14px;
-        }
+    .stButton > button:hover {
+        transform: scale(1.03);
+        box-shadow: 0px 0px 15px #ffcb05;
+    }
+
+    .damage {
+        animation: shake 0.3s;
+        color: #ff4c4c;
+        font-weight: bold;
+    }
+
+    @keyframes shake {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-4px); }
+        50% { transform: translateX(4px); }
+        75% { transform: translateX(-4px); }
+        100% { transform: translateX(0); }
+    }
     </style>
     """, unsafe_allow_html=True)
+
 
 configurar_visual()
 
@@ -117,7 +106,7 @@ TOOLS_DB = {
     "TM: Devolution": {"efeito": "atk", "hp_bonus": 0},
 }
 
-# --- 2. CLASSE POKEMON (COM CHECKUP INTELIGENTE) ---
+# --- 2. CLASSE POKEMON ---
 class Pokemon:
     def __init__(self, nome, hp_max, tipo, fraqueza, resistencia, imagem_url=""):
         self.nome = nome
@@ -156,38 +145,20 @@ class Pokemon:
         if self.hp_atual < 0: self.hp_atual = 0
         if self.hp_atual > self.hp_max: self.hp_atual = self.hp_max
 
-    # --- LÓGICA DE CHECKUP INTELIGENTE ---
-    def resolver_checkup(self):
-        logs = []
-        
-        # 1. VENENO (Sempre toma 10)
+    def aplicar_dano_status(self):
+        dano = 0
+        msg = ""
         if self.status == "Envenenado 🧪":
-            self.receber_dano(10)
-            logs.append(f"🧪 {self.nome} sofreu 10 de veneno.")
-
-        # 2. QUEIMADO (Toma 20, depois joga moeda)
+            dano = 10
+            msg = f"🧪 {self.nome} sofreu 10 de veneno."
         elif self.status == "Queimado 🔥":
-            self.receber_dano(20)
-            logs.append(f"🔥 {self.nome} sofreu 20 de queimadura.")
+            dano = 20
+            msg = f"🔥 {self.nome} sofreu 20 de queimadura."
             
-            # Regra da moeda para curar
-            moeda = random.choice(["CARA", "COROA"])
-            if moeda == "CARA":
-                self.status = "Saudável"
-                logs.append(f"🪙 Deu CARA! {self.nome} se curou da Queimadura!")
-            else:
-                logs.append(f"🪙 Deu COROA! {self.nome} continua Queimado.")
-
-        # 3. ADORMECIDO (Joga moeda para acordar)
-        elif self.status == "Adormecido 💤":
-            moeda = random.choice(["CARA", "COROA"])
-            if moeda == "CARA":
-                self.status = "Saudável"
-                logs.append(f"🪙 Deu CARA! {self.nome} acordou!")
-            else:
-                logs.append(f"🪙 Deu COROA! {self.nome} continua dormindo.")
-
-        return logs
+        if dano > 0:
+            self.receber_dano(dano)
+            return msg
+        return None
 
     def evoluir_para(self, novo_nome, novo_hp, novo_tipo, nova_fraqueza, nova_resistencia, nova_img):
         dano_sofrido = self.hp_max - self.hp_atual
@@ -226,14 +197,14 @@ def inicializar_jogo():
                 "ativo": None, 
                 "banco": [], 
                 "descarte": [], 
-                "premios": 3
+                "premios": 6 # Pode ajustar para 6 se for jogo oficial
             },
             "Treinador 2": {
                 "nome": "Treinador 2",
                 "ativo": None, 
                 "banco": [], 
                 "descarte": [], 
-                "premios": 3
+                "premios": 6
             }
         }
     if 'log' not in st.session_state:
@@ -287,24 +258,19 @@ with st.sidebar:
     st.divider()
     
     st.info("Fim de Turno")
-    # --- BOTÃO DE CHECKUP AUTOMÁTICO ---
-    if st.button("🔄 Fase de Checkup (Auto)"):
-        logs_totais = []
+    if st.button("☣️ Aplicar Danos de Status"):
+        logs_status = []
         for nome_jog in ["Treinador 1", "Treinador 2"]:
             ativo = st.session_state.Treinadores[nome_jog]['ativo']
             if ativo:
-                # Chama a nova função inteligente
-                resultados = ativo.resolver_checkup()
-                if resultados:
-                    logs_totais.extend(resultados)
-        
-        if logs_totais:
-            for log in logs_totais:
-                adicionar_log(log, "ko")
-            st.success("Checkup realizado!")
+                resultado = ativo.aplicar_dano_status()
+                if resultado: logs_status.append(resultado)
+        if logs_status:
+            for log in logs_status: adicionar_log(log, "ko")
+            st.success("Danos aplicados!")
             st.rerun()
         else:
-            st.toast("Nenhum status para resolver.")
+            st.toast("Sem danos de status.")
 
     st.divider()
     
@@ -458,6 +424,7 @@ def renderizar_mesa_jogador(id_jogador_chave):
             
             with col_infos:
                 st.subheader(ativo.nome)
+                
                 st.progress(ativo.hp_atual / ativo.hp_max)
                 st.write(f"HP: {ativo.hp_atual}/{ativo.hp_max}")
                 
@@ -468,6 +435,7 @@ def renderizar_mesa_jogador(id_jogador_chave):
                         player['ativo'] = None
                         adicionar_log(f"☠️ {ativo.nome} ({nome_display}) foi nocauteado!", "ko")
                         
+                        # --- NOVA LÓGICA: 2 PRÊMIOS SE FOR EX ---
                         qtd_premios = 2 if "ex" in ativo.nome.lower() else 1
                         
                         player_oponente['premios'] -= qtd_premios
@@ -563,8 +531,9 @@ if st.session_state.vencedor:
         st.session_state.clear()
         st.rerun()
 else:
-    st.title("🏆 Arena PokéBattle 5.4 (Checkup Auto)")
+    st.title("🏆 Arena PokéBattle 5.3 (Final)")
     c1, c2 = st.columns(2)
+    # Passamos as chaves fixas ("Treinador 1"), a função vai buscar o nome bonito lá dentro
     with c1: renderizar_mesa_jogador("Treinador 1")
     with c2: renderizar_mesa_jogador("Treinador 2")
 
