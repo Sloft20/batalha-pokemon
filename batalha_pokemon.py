@@ -88,7 +88,7 @@ POKEDEX = {
     "Dusclops": {"hp": 90, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab":"Explosão Maldita", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_36.png"},
     "Munkidori": {"hp": 110, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab":"Adrena-cérebro", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_44.png"},
     "Budew": {"hp": 30, "tipo": "Planta 🌱", "fraq": "Fogo 🔥", "res": "", "recuo": 0, "hab":"Comichão De Pólen", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_4.png"},
-    "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Virar o Jogo", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_73.png"},
+    "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Virar o Jogo", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/shrouded-fable/pt-br/SV6pt5_PTBR_38.png"},
     ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
     ##                                                                                 DECK DE CHARIZARD EX
     ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
@@ -577,6 +577,7 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
+
 
 
 
