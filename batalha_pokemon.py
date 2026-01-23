@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 25.0 (Atk Rule)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 26.0 (Icons)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -29,24 +29,40 @@ def configurar_visual():
 
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
         
-        /* Botões Topo */
+        /* --- BOTÕES DO TOPO --- */
         div[data-testid="stPopover"] > div > button, .turn-btn button {
-            min-height: 45px !important; height: 45px !important; width: 100% !important;
-            border-radius: 8px !important; font-size: 15px !important; margin-bottom: 5px !important;
+            min-height: 45px !important;
+            height: 45px !important;
+            margin-top: 0px !important;
+            width: 100% !important;
+            border-radius: 8px !important;
+            font-size: 15px !important;
+            margin-bottom: 5px !important;
         }
+        
         div[data-testid="stPopover"] > div > button {
-            background-color: #1e293b !important; border: 1px solid #475569 !important; color: #e2e8f0 !important;
+            background-color: #1e293b !important;
+            border: 1px solid #475569 !important;
+            color: #e2e8f0 !important;
         }
         div[data-testid="stPopover"] > div > button:hover { background-color: #334155 !important; }
+
         .turn-btn button { 
-            background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold !important; border: 1px solid #FFC107 !important;
+            background-color: #FFC107 !important; 
+            color: #0f172a !important; 
+            font-weight: bold !important; 
+            border: 1px solid #FFC107 !important;
         }
         .turn-btn button:hover { background-color: #FFD54F !important; }
 
-        /* Botão Atacar */
+        /* --- BOTÃO DE ATACAR --- */
         .atk-btn > button { 
-            background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; 
-            min-height: 45px !important; margin-top: 5px !important; width: 100% !important;
+            background-color: #FFC107 !important; 
+            color: #0f172a !important; 
+            font-weight: bold; 
+            min-height: 45px !important;
+            margin-top: 5px !important;
+            width: 100% !important;
         }
 
         .menu-item button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
@@ -77,44 +93,26 @@ def configurar_visual():
 configurar_visual()
 
 # --- 1. DADOS ---
-POKEDEX = POKEDEX = {
-    ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
-    ##                                                                                 DECK DE DRAGAPULT EX
-    ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
-    "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_73.png"},
-    "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Ordem De Reconhecimento", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_72.png"},
-    "Dreepy": {"hp": 70, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_71.png"},
-    "Duskull": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_35.png"},
-    "Dusclops": {"hp": 90, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab":"Explosão Maldita", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_36.png"},
-    "Munkidori": {"hp": 110, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab":"Adrena-cérebro", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_44.png"},
-    "Budew": {"hp": 30, "tipo": "Planta 🌱", "fraq": "Fogo 🔥", "res": "", "recuo": 0, "hab":"Comichão De Pólen", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_4.png"},
-    "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Virar o Jogo", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/shrouded-fable/pt-br/SV6pt5_PTBR_38.png"},
-    ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
-    ##                                                                                 DECK DE CHARIZARD EX
-    ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
-    "Charizard ex": {"hp": 330, "tipo": "Escuridão 🌙", "fraq": "Planta 🌱", "res": "Nenhuma", "recuo": 2, "hab": "Reino Infernal", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/obsidian-flames/pt-br/SV03_PTBR_125.png"},
-    "Charmeleon": {"hp": 90, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 2, "hab": "Véu De Chamas", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/paldean-fates/pt-br/SV4pt5_PTBR_8.png"},
-    "Charmander": {"hp": 70, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/paldean-fates/pt-br/SV4pt5_PTBR_7.png"},
-    "Pidgeot ex": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 0, "hab": "Busca Rápida", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/obsidian-flames/pt-br/SV03_PTBR_164.png"},
-    "Pidgeotto": {"hp": 80, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 0, "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/151/pt-br/SV3pt5_PTBR_17.png"},
-    "Pidgey": {"hp": 60, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 0, "hab": "Chamar a Família", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/151/pt-br/SV3pt5_PTBR_16.png"},
-    "Moltres": {"hp": 120, "tipo": "Fogo 🔥", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "hab": "Chamas á Deriva", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/151/pt-br/SV3pt5_PTBR_146.png"},
-    ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
-    ##                                                                                 DECK DE GARDEVOIR EX
-    ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
-    "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Abraço Psíquico", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/pt-br/SV01_PTBR_86.png"},
-    "Kirlia": {"hp": 80, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Luta 🥊", "recuo": 2, "hab": "Requinte", "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/SWSH12/SWSH12_PT-BR_68.png"},
-    "Ralts": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "", "recuo": 1, "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/SWSH12/SWSH12_PT-BR_67.png"},
-    "Drifloon": {"hp": 70, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/SV01/SV01_PT-BR_89.png"},
-    "Mew ex": {"hp": 180, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab": "Recomeçar", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/151/pt-br/SV3pt5_PTBR_151.png"},
-    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "recuo": 1, "hab": "Cartas Na Manga", "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/SWSH10/SWSH10_PT-BR_46.png"},
-    "Fezandipiti": {"hp": 120, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Adrena-Feromônio", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_45.png"},
-    "Yamask": {"hp": 70, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/RSV10PT5/RSV10PT5_PT-BR_39.png"},
-    "Cofagrius": {"hp": 120, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/RSV10PT5/RSV10PT5_PT-BR_40.png"},
-    "Frilish": {"hp": 80, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 3, "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/RSV10PT5/RSV10PT5_PT-BR_44.png"},
-    ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
-    ##                                                                                 DECK DE LUGIA VSTAR
-    ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
+POKEDEX = {
+    "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
+    "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconhecimento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
+    "Dreepy": {"hp": 70, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN_PNG.png"},
+    "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab": "Sentido Clarividente", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
+    "Natu": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_071_R_EN_PNG.png"},
+    "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Virar o Jogo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SFA/SFA_038_R_EN_PNG.png"},
+    "Charizard ex": {"hp": 330, "tipo": "Escuridão 🌙", "fraq": "Planta 🌱", "res": "Nenhuma", "recuo": 2, "hab": "Reino Infernal", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_125_R_EN_PNG.png"},
+    "Charmeleon": {"hp": 90, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 2, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_027_R_EN_PNG.png"},
+    "Charmander": {"hp": 70, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_026_R_EN_PNG.png"},
+    "Pidgeot ex": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 0, "hab": "Busca Rápida", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_164_R_EN_PNG.png"},
+    "Pidgey": {"hp": 60, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "hab": "Chamar a Família", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_162_R_EN_PNG.png"},
+    "Moltres": {"hp": 120, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "hab": "Símbolo de Fogo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_021_R_EN_PNG.png"},
+    "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Abraço Psíquico", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_086_R_EN_PNG.png"},
+    "Kirlia": {"hp": 80, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Refinamento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_085_R_EN_PNG.png"},
+    "Ralts": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_084_R_EN_PNG.png"},
+    "Drifloon": {"hp": 70, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_089_R_EN_PNG.png"},
+    "Scream Tail": {"hp": 90, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_086_R_EN_PNG.png"},
+    "Mew ex": {"hp": 180, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 0, "hab": "Reinício", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/MEW/MEW_151_R_EN_PNG.png"},
+    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "recuo": 1, "hab": "Cartas Ocultas", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/ASR/ASR_046_R_EN_PNG.png"},
     "Lugia VSTAR": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "hab": "Astro Invocador", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_139_R_EN_PNG.png"},
     "Lugia V": {"hp": 220, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_138_R_EN_PNG.png"},
     "Archeops": {"hp": 150, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "hab": "Turbo Primitivo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_147_R_EN_PNG.png"},
@@ -141,7 +139,6 @@ def carregar_historico():
             return json.load(f)
     except: return []
 
-# --- SALVAR PARTIDA (COM LOG) ---
 def salvar_partida(vencedor, perdedor, deck_venc, deck_perd, log_partida):
     hist = carregar_historico()
     partida = {
@@ -251,7 +248,6 @@ def inicializar_jogo():
     if 'dmg_buffer' not in st.session_state: st.session_state.dmg_buffer = {}
     if 'tela_ranking' not in st.session_state: st.session_state.tela_ranking = False
 
-# --- LOG ATUALIZADO ---
 def adicionar_log(cat, msg, player=None):
     hora = datetime.datetime.now().strftime("%H:%M")
     css_class = {"Inicio": "tag-inicio", "Turno": "tag-turno", "Ataque": "tag-ataque", "Energia": "tag-energia", "Tool": "tag-tool", "KO": "tag-ko", "Status": "tag-status", "Moeda": "tag-tool"}.get(cat, "tag-log")
@@ -260,19 +256,16 @@ def adicionar_log(cat, msg, player=None):
 
 inicializar_jogo()
 
-# =================================================================================
-# === TELA DE RANKING ===
-# =================================================================================
 if st.session_state.tela_ranking:
     st.markdown('<div class="main-title">🏆 Ranking</div>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1, 5])
     with c1:
         st.markdown('<div class="menu-item">', unsafe_allow_html=True)
-        if st.button("⬅ Voltar", use_container_width=True): st.session_state.tela_ranking = False; st.rerun()
+        if st.button("Voltar", icon=":material/arrow_back:", use_container_width=True): st.session_state.tela_ranking = False; st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     with c2:
         st.markdown('<div class="btn-red">', unsafe_allow_html=True)
-        if st.button("🗑️ Resetar", use_container_width=True):
+        if st.button("Resetar", icon=":material/delete_forever:", use_container_width=True):
             if os.path.exists(HISTORY_FILE): os.remove(HISTORY_FILE); st.toast("Resetado!"); st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -300,32 +293,28 @@ if st.session_state.tela_ranking:
                     if 'log' in p and p['log']:
                         st.markdown("---")
                         st.markdown("".join(p['log']), unsafe_allow_html=True)
-                    else:
-                        st.caption("Log detalhado não disponível.")
+                    else: st.caption("Log detalhado não disponível.")
     else: st.info("Sem dados ainda.")
 
 else:
-    # =================================================================================
-    # === TELA DE JOGO ===
-    # =================================================================================
     c_title, c_spacer, c_buttons = st.columns([2, 1, 1.2])
     with c_title:
         st.markdown('<div class="main-title">⚔️ PokéBattle</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="turn-display">Turno De 👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="turn-display">👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
     with c_buttons:
-        with st.popover("⚙️ Menu", use_container_width=True):
+        with st.popover("Menu", icon=":material/menu:", use_container_width=True):
             st.markdown('<div class="menu-item">', unsafe_allow_html=True)
-            if st.button("🏆 Placar", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
-            if st.button("🪙 Moeda", use_container_width=True): r = random.choice(["CARA", "COROA"]); st.toast(f"{r}"); adicionar_log("Moeda", f"Resultado: {r}")
+            if st.button("Placar", icon=":material/leaderboard:", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
+            if st.button("Moeda", icon=":material/casino:", use_container_width=True): r = random.choice(["CARA", "COROA"]); st.toast(f"{r}"); adicionar_log("Moeda", f"Resultado: {r}")
             if st.session_state.log:
                 txt = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
-                st.download_button("📜 Baixar Log", txt, "log.txt", use_container_width=True)
-            if st.button("🗑️ Reset Jogo", use_container_width=True): st.session_state.clear(); st.rerun()
+                st.download_button("Baixar Log", txt, "log.txt", icon=":material/download:", use_container_width=True)
+            if st.button("Reset Jogo", icon=":material/restart_alt:", use_container_width=True): st.session_state.clear(); st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
             
         st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
-        if st.button("➡ Fim Turno", use_container_width=True):
+        if st.button("Fim Turno", icon=":material/skip_next:", use_container_width=True):
             logs_check = []
             for p in ["Treinador 1", "Treinador 2"]:
                 if st.session_state.Treinadores[p]['ativo']:
@@ -349,7 +338,7 @@ else:
             st.divider()
             n2 = st.text_input("J2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
             d2 = st.selectbox("Deck J2", LISTA_DECKS, index=1)
-            if st.button("Salvar", type="primary"):
+            if st.button("Salvar", icon=":material/save:", type="primary"):
                 st.session_state.Treinadores["Treinador 1"]["nome"] = n1; st.session_state.Treinadores["Treinador 1"]["deck"] = d1
                 st.session_state.Treinadores["Treinador 2"]["nome"] = n2; st.session_state.Treinadores["Treinador 2"]["deck"] = d2; st.rerun()
         
@@ -361,9 +350,8 @@ else:
         if acao == "Novo Básico":
             escolha = st.selectbox("Pokémon", list(POKEDEX.keys())); dados = POKEDEX[escolha]; st.image(dados["img"], width=80)
             local = st.radio("Local", ["Banco", "Ativo"], horizontal=True)
-            if st.button("Adicionar"):
+            if st.button("Adicionar", icon=":material/add_circle:"):
                 novo = Pokemon(escolha, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados.get("recuo", 1), dados["img"], dados.get("hab"))
-                # LOG NOVO
                 if local == "Ativo":
                     if not player['ativo']: 
                         adicionar_log("Inicio", f"Colocou {escolha} como Ativo.", player['nome'])
@@ -383,7 +371,7 @@ else:
             for i, p in enumerate(player['banco']): opcoes.append(f"[Banco {i+1}] {p.nome}")
             if opcoes:
                 alvo_str = st.selectbox("Quem?", opcoes); escolha_evo = st.selectbox("Evoluir Para", list(POKEDEX.keys()))
-                if st.button("Evoluir"):
+                if st.button("Evoluir", icon=":material/upgrade:"):
                     d = POKEDEX[escolha_evo]
                     obj = player['ativo'] if "[Ativo]" in alvo_str else player['banco'][int(alvo_str.split("]")[0].split(" ")[1])-1]
                     obj.evoluir_para(escolha_evo, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo",1), d["img"], d.get("hab"))
@@ -428,7 +416,7 @@ else:
                 if ativo.hp_atual == 0:
                     st.error("💀 NOCAUTEADO")
                     st.markdown('<div class="btn-red">', unsafe_allow_html=True)
-                    if st.button("Enviar p/ Descarte", key=f"ko_{ativo.id_unico}"):
+                    if st.button("Enviar p/ Descarte", icon=":material/delete:", key=f"ko_{ativo.id_unico}"):
                         p['descarte'].append(ativo); p['ativo'] = None; 
                         adicionar_log("KO", f"💀 {ativo.nome} caiu!", p['nome'])
                         op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
@@ -440,12 +428,11 @@ else:
                     st.markdown('</div>', unsafe_allow_html=True)
                 else:
                     if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
-                    
                     dmg = st.number_input("Dano do ataque", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
                     st.session_state.dmg_buffer[ativo.id_unico] = dmg
 
                     st.markdown('<div class="atk-btn">', unsafe_allow_html=True)
-                    if st.button("⚔️ ATACAR", key=f"atk_{ativo.id_unico}"):
+                    if st.button("ATACAR", icon=":material/swords:", key=f"atk_{ativo.id_unico}"):
                         op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                         op = st.session_state.Treinadores[op_key]
                         if op['ativo']:
@@ -468,22 +455,21 @@ else:
                             novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
                             st.session_state.turno_atual = novo
                             adicionar_log("Turno", f"Fim de turno (Ataque). Início de {st.session_state.Treinadores[novo]['nome']}.")
-                            
                             st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                     
-                    with st.popover("⚡ Energia / Status / Tool"):
+                    with st.popover("Energia / Status / Tool", icon=":material/flash_on:"):
                         t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"])
                         with t1:
                             escolha_e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"ae_{ativo.id_unico}")
                             c1, c2 = st.columns(2)
                             with c1: 
-                                if st.button("➕", key=f"ba_{ativo.id_unico}"): 
+                                if st.button("Add", icon=":material/add:", key=f"ba_{ativo.id_unico}"): 
                                     ativo.anexar_energia(escolha_e)
                                     adicionar_log("Energia", f"Ligou {escolha_e}", p['nome'])
                                     st.rerun()
                             with c2:
-                                if st.button("➖", key=f"br_{ativo.id_unico}"): 
+                                if st.button("Rem", icon=":material/remove:", key=f"br_{ativo.id_unico}"): 
                                     ativo.remover_energia(escolha_e)
                                     adicionar_log("Energia", f"Removeu {escolha_e}", p['nome'])
                                     st.rerun()
@@ -491,7 +477,7 @@ else:
                             st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}", on_change=lambda: setattr(ativo, 'status', st.session_state[f"st_{ativo.id_unico}"]))
                         with t3:
                             tl = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tl_{ativo.id_unico}")
-                            if st.button("Equipar", key=f"btl_{ativo.id_unico}"): 
+                            if st.button("Equipar", icon=":material/build:", key=f"btl_{ativo.id_unico}"): 
                                 ativo.equipar_ferramenta(tl)
                                 adicionar_log("Tool", f"Equipou {tl}", p['nome'])
                                 st.rerun()
@@ -509,7 +495,7 @@ else:
                     
                     custo = ativo.recuo
                     if ativo.ferramenta == "Skate de Resgate (-1 Recuo)": custo = max(0, custo - 1)
-                    if st.button(f"🏃 Recuar ({custo})", key=f"run_{ativo.id_unico}"):
+                    if st.button(f"Recuar ({custo})", icon=":material/logout:", key=f"run_{ativo.id_unico}"):
                         pode, msg = ativo.tentar_recuar()
                         if pode:
                             if p['banco']: 
@@ -521,7 +507,6 @@ else:
 
         if p['banco']:
             st.markdown("---")
-            # --- FIX: SEMPRE 5 COLUNAS (TAMANHO CORRIGIDO) ---
             cols = st.columns(max(5, len(p['banco'])))
             for i, bp in enumerate(p['banco']):
                 with cols[i]:
@@ -553,21 +538,21 @@ else:
                         with c_dmg: 
                             if st.button("💔", key=f"dmb_{bp.id_unico}"): bp.receber_dano(10); st.rerun()
                         
-                        with st.popover("⚡", use_container_width=True):
+                        with st.popover("⚡", icon=":material/flash_on:", use_container_width=True):
                             t1, t2, t3 = st.tabs(["Add", "Del", "Tool"])
                             with t1:
-                                eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀"], key=f"aeb_{bp.id_unico}")
-                                if st.button("Add", key=f"baeb_{bp.id_unico}"): 
+                                eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"aeb_{bp.id_unico}")
+                                if st.button("Add", icon=":material/add:", key=f"baeb_{bp.id_unico}"): 
                                     bp.anexar_energia(eb)
                                     adicionar_log("Energia", f"Ligou {eb} no banco", p['nome'])
                                     st.rerun()
                             with t2:
                                 if bp.energias:
                                     rb = st.selectbox("Rem", list(bp.energias.keys()), key=f"reb_{bp.id_unico}")
-                                    if st.button("Del", key=f"breb_{bp.id_unico}"): bp.remover_energia(rb); st.rerun()
+                                    if st.button("Del", icon=":material/remove:", key=f"breb_{bp.id_unico}"): bp.remover_energia(rb); st.rerun()
                             with t3:
                                 tlb = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tlb_{bp.id_unico}")
-                                if st.button("Eqp", key=f"btlb_{bp.id_unico}"): bp.equipar_ferramenta(tlb); st.rerun()
+                                if st.button("Eqp", icon=":material/build:", key=f"btlb_{bp.id_unico}"): bp.equipar_ferramenta(tlb); st.rerun()
 
                         if bp.habilidade:
                             ja = bp.id_unico in st.session_state.habilidades_usadas
@@ -583,29 +568,13 @@ else:
         st.markdown(f"<h1 style='text-align:center'>🏆 {st.session_state.vencedor} VENCEU!</h1>", unsafe_allow_html=True)
         if st.button("Novo Jogo"): st.session_state.clear(); st.rerun()
     else:
-        # --- DIVISÓRIA VISUAL ---
         c1, c_div, c2 = st.columns([1, 0.1, 1])
         with c1: render_player("Treinador 1")
         with c_div:
-            # Linha vertical
-            st.markdown(
-                """
-                <div style='
-                    height: 100%; 
-                    min-height: 800px;
-                    width: 1px; 
-                    background-color: #334155; 
-                    margin: 0 auto;
-                '></div>
-                """, 
-                unsafe_allow_html=True
-            )
+            st.markdown("""<div style='height: 100%; min-height: 800px; width: 1px; background-color: #334155; margin: 0 auto;'></div>""", unsafe_allow_html=True)
         with c2: render_player("Treinador 2")
         
         st.divider()
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
-
-
-
