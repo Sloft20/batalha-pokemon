@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 17.2 (HP Fix)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 17.3 (Style)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -33,6 +33,7 @@ def configurar_visual():
         .game-btn > button { background-color: #334155 !important; color: white; }
         .atk-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; }
         .btn-red > button { background-color: #EF4444 !important; color: white; }
+        .small-btn > button { padding: 2px 0px !important; font-size: 11px !important; min-height: 25px !important; background-color: #0f172a !important; border: 1px solid #334155 !important; }
 
         .log-container { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #cbd5e1; padding: 4px 0; border-bottom: 1px solid #334155; }
         .tag-log { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-right: 8px; width: 70px; text-align: center; }
@@ -50,21 +51,8 @@ def configurar_visual():
         .main-title { font-size: 28px; font-weight: 800; color: #f1f5f9; }
         .turn-display { font-size: 18px; font-weight: bold; color: #FFC107; margin-bottom: 10px; }
         
-        /* --- CORREÇÃO DA BARRA DE VIDA --- */
-        .hp-container {
-            width: 100%;
-            background-color: #334155;
-            border-radius: 6px;
-            height: 12px; /* Altura fixa */
-            margin-bottom: 15px;
-            overflow: hidden; /* Garante que a barra não vaze */
-            border: 1px solid #475569;
-        }
-        .hp-fill {
-            height: 100%;
-            border-radius: 6px;
-            transition: width 0.6s ease-in-out; /* Animação suave */
-        }
+        .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 10px; display: block; }
+        .hp-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-in-out; }
         
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
     </style>
@@ -323,7 +311,7 @@ if st.session_state.tela_ranking:
                 </div>
                 """, unsafe_allow_html=True)
     else:
-        st.info("Nenhuma partida registrada ainda.")
+        st.info("Nenhuma partida registrada ainda. Jogue para aparecer aqui!")
 
 else:
     # =================================================================================
@@ -479,13 +467,20 @@ else:
                 if ativo.ferramenta != "Nenhuma": st.caption(f"🛠️ {ativo.ferramenta}")
 
             with c_info:
-                st.markdown(f"**{ativo.nome}** <span style='float:right; font-size:12px;'>{ativo.hp_atual}/{ativo.hp_max}</span>", unsafe_allow_html=True)
+                # --- NOME ESTILIZADO (Estrela/Gold) ---
+                nome_display = ativo.nome
+                if "ex" in ativo.nome.lower() or "v" in ativo.nome.lower() or "vstar" in ativo.nome.lower():
+                    nome_display = f'<span style="color:#FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">★ {ativo.nome}</span>'
+                else:
+                    nome_display = f"**{ativo.nome}**"
                 
-                # --- BARRA DE VIDA (CSS PURO AGORA) ---
+                st.markdown(f"{nome_display} <span style='float:right; font-size:12px;'>{ativo.hp_atual}/{ativo.hp_max}</span>", unsafe_allow_html=True)
+                
+                # --- BARRA DE VIDA (GARANTIDA) ---
                 pct = max(0, min(100, (ativo.hp_atual / ativo.hp_max) * 100))
                 color_hp = "#22c55e" if pct > 50 else ("#eab308" if pct > 20 else "#ef4444")
                 st.markdown(f"""
-                <div class="hp-container">
+                <div class="hp-bar-bg">
                     <div class="hp-fill" style="width:{pct}%; background-color:{color_hp};"></div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -576,6 +571,9 @@ else:
             for i, bp in enumerate(p['banco']):
                 with cols[i]:
                     st.image(bp.imagem_url, use_container_width=True)
+                    # --- VIDA NO BANCO (PEDIDO ATENDIDO) ---
+                    st.markdown(f"<div style='text-align:center; font-size:12px; font-weight:bold; color:#cbd5e1; margin-top:-5px;'>HP: {bp.hp_atual}/{bp.hp_max}</div>", unsafe_allow_html=True)
+                    
                     txt_en_b = " ".join([f"{k.split()[-1]}x{v}" for k,v in bp.energias.items()])
                     if txt_en_b: st.markdown(f"<div style='background:#0f172a; padding:2px; border-radius:3px; margin-bottom:2px; font-size:10px; border:1px solid #334155; text-align:center;'>⚡ {txt_en_b}</div>", unsafe_allow_html=True)
                     
