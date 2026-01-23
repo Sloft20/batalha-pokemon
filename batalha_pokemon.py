@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 18.2 (Fixed UI)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 18.3 (Fixed)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -29,36 +29,34 @@ def configurar_visual():
 
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
         
-        /* --- CORREÇÃO DE ALINHAMENTO DO TOPO --- */
-        
-        /* Botão do Menu (Popover) */
+        /* Menu Button (Popover) */
         div[data-testid="stPopover"] button {
             background-color: #1e293b !important;
             border: 1px solid #475569 !important;
             color: #e2e8f0 !important;
-            min-height: 45px !important; /* Altura fixa igual ao Turno */
+            min-height: 45px !important;
             height: 45px !important;
             margin-top: 0px !important;
             width: 100%;
         }
         div[data-testid="stPopover"] button:hover { background-color: #334155 !important; }
 
-        /* Botão FIM TURNO */
+        /* Turn Button */
         .turn-btn button { 
             background-color: #FFC107 !important; 
             color: #0f172a !important; 
             font-weight: bold !important; 
-            min-height: 45px !important; /* Altura fixa igual ao Menu */
+            min-height: 45px !important;
             height: 45px !important;
             margin-top: 0px !important;
             font-size: 15px !important;
         }
         .turn-btn button:hover { background-color: #FFD54F !important; }
 
-        /* Botões dentro do Menu */
-        .menu-item button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
+        /* Menu Items */
+        .menu-btn button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
 
-        /* --- BOTÃO DE ATAQUE (MESA) --- */
+        /* Attack Button */
         .atk-btn > button { 
             background-color: #FFC107 !important; 
             color: #0f172a !important; 
@@ -68,7 +66,6 @@ def configurar_visual():
         .btn-red > button { background-color: #EF4444 !important; color: white; }
         .game-btn > button { background-color: #334155 !important; color: white; }
 
-        /* Log */
         .log-container { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #cbd5e1; padding: 4px 0; border-bottom: 1px solid #334155; }
         .tag-log { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-right: 8px; width: 70px; text-align: center; }
         .tag-inicio { background-color: #22c55e; color: #0f172a; } .tag-turno { background-color: #3b82f6; color: #fff; } 
@@ -88,7 +85,6 @@ def configurar_visual():
         .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 15px; display: block; }
         .hp-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-in-out; }
         
-        /* Flex force para colunas */
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
     </style>
     """, unsafe_allow_html=True)
@@ -135,10 +131,14 @@ TOOLS_DB = {
 HISTORY_FILE = "historico.json"
 LISTA_DECKS = ["Charizard ex", "Dragapult ex", "Lugia VSTAR", "Gardevoir ex", "Raging Bolt ex", "Iron Thorns ex", "Outro"]
 
+# --- CORREÇÃO DO ERRO DE SINTAXE AQUI ---
 def carregar_historico():
     if not os.path.exists(HISTORY_FILE): return []
-    try: with open(HISTORY_FILE, "r") as f: return json.load(f)
-    except: return []
+    try:
+        with open(HISTORY_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
 def salvar_partida(vencedor, perdedor, deck_venc, deck_perd):
     hist = carregar_historico()
@@ -256,7 +256,7 @@ if st.session_state.tela_ranking:
     st.markdown('<div class="main-title">🏆 Ranking</div>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1, 5])
     with c1:
-        st.markdown('<div class="menu-item">', unsafe_allow_html=True)
+        st.markdown('<div class="menu-btn">', unsafe_allow_html=True)
         if st.button("⬅ Voltar", use_container_width=True): st.session_state.tela_ranking = False; st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     with c2:
@@ -290,12 +290,12 @@ else:
         st.markdown(f'<div class="turn-display">👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
     with c_buttons:
-        # ALINHAMENTO CORRIGIDO: MENU E TURNO LADO A LADO
+        # MENU E TURNO LADO A LADO
         cm_menu, cm_turn = st.columns([1, 1.2])
         
         with cm_menu:
             with st.popover("⚙️ Menu", use_container_width=True):
-                st.markdown('<div class="menu-item">', unsafe_allow_html=True)
+                st.markdown('<div class="menu-btn">', unsafe_allow_html=True)
                 if st.button("🏆 Placar", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
                 if st.button("🪙 Moeda", use_container_width=True): r = random.choice(["CARA", "COROA"]); st.toast(f"{r}"); adicionar_log("Moeda", f"Resultado: {r}")
                 if st.session_state.log:
@@ -362,7 +362,8 @@ else:
 
     def checar_vitoria(id_oponente_chave):
         if st.session_state.Treinadores[id_oponente_chave]['premios'] <= 0: return True
-        if st.session_state.Treinadores[id_oponente_chave]['ativo'] is None and len(st.session_state.Treinadores[id_oponente_chave]['banco']) == 0: return True
+        oponente = st.session_state.Treinadores[id_oponente_chave]
+        if oponente['ativo'] is None and len(oponente['banco']) == 0: return True
         return False
 
     def render_player(key):
@@ -409,8 +410,8 @@ else:
                 else:
                     if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
                     
-                    # --- INPUT DE DANO REVERTIDO (SEM COLUNAS) ---
-                    dmg = st.number_input("Dano do ataque", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}")
+                    # --- DANO E BOTÃO DE ATAQUE RESTAURADOS AO NORMAL ---
+                    dmg = st.number_input("Dano do ataque", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
                     st.session_state.dmg_buffer[ativo.id_unico] = dmg
 
                     st.markdown('<div class="atk-btn">', unsafe_allow_html=True)
