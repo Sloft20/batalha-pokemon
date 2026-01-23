@@ -6,9 +6,9 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 21.0 (Log Update)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 22.0 (History Log)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (Mantido v20.2) ---
+# --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -123,7 +123,7 @@ def carregar_historico():
             return json.load(f)
     except: return []
 
-# --- SALVAR PARTIDA (AGORA SALVA O LOG) ---
+# --- SALVAR PARTIDA (COM LOG) ---
 def salvar_partida(vencedor, perdedor, deck_venc, deck_perd, log_partida):
     hist = carregar_historico()
     partida = {
@@ -132,14 +132,14 @@ def salvar_partida(vencedor, perdedor, deck_venc, deck_perd, log_partida):
         "perdedor": perdedor,
         "deck_vencedor": deck_venc,
         "deck_perdedor": deck_perd,
-        "log": log_partida # Salva todo o histórico do chat
+        "log": log_partida # Salva o histórico do chat
     }
     hist.append(partida)
     with open(HISTORY_FILE, "w") as f: json.dump(hist, f)
 
 def calcular_stats():
     dados = carregar_historico()
-    if not dados: return None, None
+    if not dados: return None, None, dados # Retorna dados brutos também
     stats_jog = {}; stats_deck = {}
     for d in dados:
         v, p = d['vencedor'], d['perdedor']
@@ -158,7 +158,7 @@ def calcular_stats():
     df_deck.columns = ['Deck', 'Partidas', 'Vitorias']
     df_deck['Winrate'] = (df_deck['Vitorias'] / df_deck['Partidas']) * 100
     df_deck = df_deck.sort_values(by=['Vitorias', 'Winrate'], ascending=False)
-    return df_jog, df_deck
+    return df_jog, df_deck, dados
 
 class Pokemon:
     def __init__(self, nome, hp_max, tipo, fraqueza, resistencia, recuo, imagem_url="", habilidade=None):
@@ -233,20 +233,17 @@ def inicializar_jogo():
     if 'dmg_buffer' not in st.session_state: st.session_state.dmg_buffer = {}
     if 'tela_ranking' not in st.session_state: st.session_state.tela_ranking = False
 
-# --- LOG ATUALIZADO (ACEITA NOME DO JOGADOR) ---
+# --- LOG ATUALIZADO (ACEITA NOME) ---
 def adicionar_log(cat, msg, player=None):
     hora = datetime.datetime.now().strftime("%H:%M")
     css_class = {"Inicio": "tag-inicio", "Turno": "tag-turno", "Ataque": "tag-ataque", "Energia": "tag-energia", "Tool": "tag-tool", "KO": "tag-ko", "Status": "tag-status", "Moeda": "tag-tool"}.get(cat, "tag-log")
-    
-    # Adiciona o nome do jogador se fornecido
     prefixo = f"<b>{player}</b>: " if player else ""
-    
     st.session_state.log.insert(0, f"<div class='log-container'><span style='color:#64748b;margin-right:8px'>[{hora}]</span><span class='tag-log {css_class}'>{cat}</span><span>{prefixo}{msg}</span></div>")
 
 inicializar_jogo()
 
 # =================================================================================
-# === TELA DE RANKING ===
+# === TELA DE RANKING (COM HISTÓRICO VISUAL) ===
 # =================================================================================
 if st.session_state.tela_ranking:
     st.markdown('<div class="main-title">🏆 Ranking</div>', unsafe_allow_html=True)
@@ -261,7 +258,8 @@ if st.session_state.tela_ranking:
             if os.path.exists(HISTORY_FILE): os.remove(HISTORY_FILE); st.toast("Resetado!"); st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         
-    df_jog, df_deck = calcular_stats()
+    df_jog, df_deck, dados_brutos = calcular_stats()
+    
     if df_jog is not None and not df_jog.empty:
         c_jog, c_dck = st.columns(2)
         with c_jog:
@@ -274,6 +272,22 @@ if st.session_state.tela_ranking:
             for index, row in df_deck.iterrows():
                 cor = "#3b82f6" if row['Winrate'] >= 50 else "#64748b"
                 st.markdown(f"""<div class="rank-card"><div class="rank-name">{row['Deck']}</div><div class="rank-stats">V: {row['Vitorias']} / P: {row['Partidas']}</div><div class="rank-bar-bg"><div class="rank-bar-fill" style="width:{row['Winrate']}%; background-color:{cor};"></div></div></div>""", unsafe_allow_html=True)
+        
+        # --- NOVO VISUALIZADOR DE HISTÓRICO ---
+        st.divider()
+        st.markdown("### 📜 Histórico de Partidas")
+        if dados_brutos:
+            for p in reversed(dados_brutos): # Mostra mais recente primeiro
+                with st.expander(f"{p['data']} - 🏆 {p['vencedor']} (vs {p['perdedor']})"):
+                    st.markdown(f"**Decks:** {p['deck_vencedor']} vs {p['deck_perdedor']}")
+                    if 'log' in p and p['log']:
+                        st.markdown("---")
+                        # O log é salvo do mais recente para o mais antigo, então para ler "como foi o jogo", 
+                        # a gente inverte de volta ou mostra assim mesmo. 
+                        # Aqui mostramos como está no painel (recente no topo).
+                        st.markdown("".join(p['log']), unsafe_allow_html=True)
+                    else:
+                        st.caption("Log detalhado não disponível para esta partida.")
     else: st.info("Sem dados ainda.")
 
 else:
@@ -286,7 +300,6 @@ else:
         st.markdown(f'<div class="turn-display">👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
     with c_buttons:
-        # MENU E TURNO EM PILHA
         with st.popover("⚙️ Menu", use_container_width=True):
             st.markdown('<div class="menu-item">', unsafe_allow_html=True)
             if st.button("🏆 Placar", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
@@ -336,7 +349,7 @@ else:
             local = st.radio("Local", ["Banco", "Ativo"], horizontal=True)
             if st.button("Adicionar"):
                 novo = Pokemon(escolha, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados.get("recuo", 1), dados["img"], dados.get("hab"))
-                # CORREÇÃO DE LOG AQUI: Adicionar antes do rerun e com nome do jogador
+                # LOG NOVO
                 if local == "Ativo":
                     if not player['ativo']: 
                         adicionar_log("Inicio", f"Colocou {escolha} como Ativo.", player['nome'])
@@ -360,7 +373,7 @@ else:
                     d = POKEDEX[escolha_evo]
                     obj = player['ativo'] if "[Ativo]" in alvo_str else player['banco'][int(alvo_str.split("]")[0].split(" ")[1])-1]
                     obj.evoluir_para(escolha_evo, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo",1), d["img"], d.get("hab"))
-                    adicionar_log("Energia", f"{obj.nome} evoluiu!", player['nome']) # Log com nome
+                    adicionar_log("Energia", f"{obj.nome} evoluiu!", player['nome'])
                     st.rerun()
 
     def checar_vitoria(id_oponente_chave):
@@ -403,18 +416,16 @@ else:
                     st.markdown('<div class="btn-red">', unsafe_allow_html=True)
                     if st.button("Enviar p/ Descarte", key=f"ko_{ativo.id_unico}"):
                         p['descarte'].append(ativo); p['ativo'] = None; 
-                        adicionar_log("KO", f"💀 {ativo.nome} caiu!", p['nome']) # Log KO
+                        adicionar_log("KO", f"💀 {ativo.nome} caiu!", p['nome'])
                         op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                         st.session_state.Treinadores[op_key]['premios'] -= 2 if "ex" in ativo.nome.lower() else 1
                         if checar_vitoria(key):
                             st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
-                            # SALVAR COM LOG AQUI
                             salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], st.session_state.Treinadores[op_key]['deck'], p['deck'], list(st.session_state.log))
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 else:
                     if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
-                    
                     dmg = st.number_input("Dano do ataque", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
                     st.session_state.dmg_buffer[ativo.id_unico] = dmg
 
@@ -427,7 +438,7 @@ else:
                             red = 30 if ativo.tipo == op['ativo'].resistencia else 0
                             final = max(0, (dmg * mult) - red)
                             op['ativo'].receber_dano(final)
-                            adicionar_log("Ataque", f"{ativo.nome} causou {final} em {op['ativo'].nome}.", p['nome']) # Log Atk
+                            adicionar_log("Ataque", f"{ativo.nome} causou {final} em {op['ativo'].nome}.", p['nome'])
                             st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                     
@@ -472,7 +483,7 @@ else:
                         pode, msg = ativo.tentar_recuar()
                         if pode:
                             if p['banco']: 
-                                p['banco'].append(ativo); p['ativo'] = None
+                                p['banco'].append(ativo); p['ativo'] = None; 
                                 adicionar_log("Inicio", f"{ativo.nome} recuou.", p['nome'])
                                 st.rerun()
                             else: st.warning("Banco vazio!")
