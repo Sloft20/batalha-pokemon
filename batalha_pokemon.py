@@ -2,10 +2,13 @@ import streamlit as st
 import datetime
 import random 
 import re 
+import json
+import os
+import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 13.2 (Aligned)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 14.0 (Ranking)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (CORRIGIDA) ---
+# --- 0. CONFIGURAÇÃO VISUAL (MANTIDA V13.2) ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -37,7 +40,6 @@ def configurar_visual():
         }
 
         /* --- CORREÇÃO DE ALINHAMENTO --- */
-        /* Força as colunas a alinharem os botões verticalmente */
         div[data-testid="column"] {
             display: flex;
             flex-direction: column;
@@ -47,7 +49,7 @@ def configurar_visual():
         /* Botões Genéricos */
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
 
-        /* Botões do Topo (Ajuste Profundo para pegar o Download também) */
+        /* Botões do Topo */
         .top-btn button, .top-btn div[data-testid="stDownloadButton"] button {
             border-radius: 6px;
             border: 1px solid #475569 !important;
@@ -56,7 +58,7 @@ def configurar_visual():
             font-size: 13px !important;
             padding: 0px 10px !important;
             min-height: 40px !important;
-            height: 40px !important; /* Força altura igual */
+            height: 40px !important;
             margin-top: 0px !important;
             width: 100%;
             line-height: 1.2 !important;
@@ -66,7 +68,7 @@ def configurar_visual():
             border-color: #94a3b8 !important; 
         }
 
-        /* Botão FIM TURNO (Ajustado para bater a altura) */
+        /* Botão FIM TURNO */
         .turn-btn button {
             background-color: #FFC107 !important;
             color: #0f172a !important;
@@ -99,12 +101,15 @@ def configurar_visual():
         .hp-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
         .main-title { font-size: 28px; font-weight: 800; color: #f1f5f9; }
         .turn-display { font-size: 18px; font-weight: bold; color: #FFC107; margin-bottom: 10px; }
+        
+        /* Tabela Ranking */
+        div[data-testid="stDataFrame"] { width: 100%; }
     </style>
     """, unsafe_allow_html=True)
 
 configurar_visual()
 
-# --- 1. BANCO DE DADOS (PT-BR) ---
+# --- 1. BANCO DE DADOS ---
 POKEDEX = {
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
     "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconhecimento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
@@ -197,10 +202,10 @@ class Pokemon:
         self.tipo = novo_tipo
         self.fraqueza = nova_fraqueza
         self.resistencia = nova_resistencia
-        dados = POKEDEX.get(novo_nome, {})
-        self.recuo = dados.get("recuo", 1)
+        dados_novos = POKEDEX.get(novo_nome, {})
+        self.recuo = dados_novos.get("recuo", 1)
         if nova_img: self.imagem_url = nova_img
-        self.habilidade = nova_hab if nova_hab else dados.get("hab")
+        self.habilidade = nova_hab if nova_hab else dados_novos.get("hab")
         self.hp_atual = self.hp_max - dano
         if self.hp_atual < 0: self.hp_atual = 0
         self.status = "Saudável"
@@ -253,9 +258,25 @@ def adicionar_log(cat, msg):
     html = f"<div class='log-container'><span style='color:#64748b;margin-right:8px'>[{hora}]</span><span class='tag-log {css_class}'>{cat}</span><span>{msg}</span></div>"
     st.session_state.log.insert(0, html)
 
+# --- RANKING SYSTEM (NOVO) ---
+RANKING_FILE = "ranking.json"
+def carregar_ranking():
+    if not os.path.exists(RANKING_FILE): return {}
+    try:
+        with open(RANKING_FILE, "r") as f: return json.load(f)
+    except: return {}
+
+def salvar_vitoria(vencedor, perdedor):
+    data = carregar_ranking()
+    if vencedor not in data: data[vencedor] = {"vitorias": 0, "derrotas": 0}
+    if perdedor not in data: data[perdedor] = {"vitorias": 0, "derrotas": 0}
+    data[vencedor]["vitorias"] += 1
+    data[perdedor]["derrotas"] += 1
+    with open(RANKING_FILE, "w") as f: json.dump(data, f)
+
 inicializar_jogo()
 
-# --- 4. TOP BAR (ALINHADA) ---
+# --- 4. TOP BAR ---
 col_top_title, col_top_actions = st.columns([1.5, 3])
 
 with col_top_title:
@@ -267,8 +288,13 @@ with col_top_actions:
     c_p1, c_coin, c_reset, c_log, c_turn = st.columns([1, 1, 1, 1, 1.5])
     with c_p1:
         st.markdown('<div class="top-btn">', unsafe_allow_html=True)
+        # BOTÃO PLACAR COM LÓGICA NOVA
         if st.button("🏆 Placar", use_container_width=True):
-            st.toast(f"P1: {st.session_state.Treinadores['Treinador 1']['premios']} | P2: {st.session_state.Treinadores['Treinador 2']['premios']}")
+            r = carregar_ranking()
+            if r:
+                df = pd.DataFrame.from_dict(r, orient='index').sort_values(by='vitorias', ascending=False)
+                st.dataframe(df)
+            else: st.toast("Ranking vazio.")
         st.markdown('</div>', unsafe_allow_html=True)
     with c_coin:
         st.markdown('<div class="top-btn">', unsafe_allow_html=True)
@@ -307,9 +333,9 @@ with col_top_actions:
 
 st.markdown("---")
 
-# --- 5. SIDEBAR (COMPLETA) ---
+# --- 5. SIDEBAR (CONFIG + GESTÃO COMPLETA) ---
 with st.sidebar:
-    st.header("⚙️ Configuração")
+    st.header("⚙️ Gerenciar")
     with st.expander("👤 Nomes", expanded=False):
         n1 = st.text_input("J1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
         n2 = st.text_input("J2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
@@ -318,7 +344,7 @@ with st.sidebar:
             st.session_state.Treinadores["Treinador 2"]["nome"] = n2
             st.rerun()
     
-    st.markdown("### ➕ Gerenciar Cartas")
+    st.markdown("### ➕ Cartas")
     dono_key = st.selectbox("Treinador", ["Treinador 1", "Treinador 2"], format_func=lambda x: st.session_state.Treinadores[x]['nome'])
     player = st.session_state.Treinadores[dono_key]
     acao = st.radio("Ação", ["Novo Básico", "Evoluir"], horizontal=True)
@@ -429,7 +455,12 @@ def render_player(key):
                     op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                     qtd = 2 if "ex" in ativo.nome.lower() else 1
                     st.session_state.Treinadores[op_key]['premios'] -= qtd
-                    if checar_vitoria(key): st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
+                    
+                    # LOGICA VITORIA NO RANKING
+                    if checar_vitoria(key):
+                        st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
+                        salvar_vitoria(st.session_state.Treinadores[op_key]['nome'], p['nome'])
+                    
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
             else:
@@ -469,7 +500,6 @@ def render_player(key):
                         st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
                 
-                # --- MENU UNIFICADO ---
                 with st.popover("⚡ Energia / Status / Tool"):
                     t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"])
                     with t1:
@@ -525,6 +555,11 @@ def render_player(key):
                         op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                         q = 2 if "ex" in bp.nome.lower() else 1
                         st.session_state.Treinadores[op_key]['premios'] -= q
+                        
+                        if checar_vitoria(key):
+                            st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
+                            salvar_vitoria(st.session_state.Treinadores[op_key]['nome'], p['nome'])
+                        
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 else:
