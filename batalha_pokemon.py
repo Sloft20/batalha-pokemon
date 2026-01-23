@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 29.0 (Stats Back)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 30.0 (Retreat Fix)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -80,12 +80,13 @@ def configurar_visual():
         .energy-icon { width: 22px; height: 22px; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.6)); transition: transform 0.2s; }
         .energy-icon:hover { transform: scale(1.2); }
         
-        /* Stats Box (Fraqueza/Resistencia) */
+        /* Stats Box */
         .stats-box {
-            display: flex; justify-content: space-between; font-size: 11px; 
-            color: #94a3b8; background: #0f172a; padding: 4px 8px; 
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 11px; color: #94a3b8; background: #0f172a; padding: 4px 8px; 
             border-radius: 4px; border: 1px solid #334155; margin-top: 8px;
         }
+        .recuo-img { width: 14px; vertical-align: middle; margin-left: 1px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -438,13 +439,20 @@ else:
                 color_hp = "#22c55e" if pct > 50 else ("#eab308" if pct > 20 else "#ef4444")
                 st.markdown(f"""<div class="hp-bar-bg"><div class="hp-fill" style="width:{pct}%; background-color:{color_hp};"></div></div>""", unsafe_allow_html=True)
                 
-                # --- STATS VOLTARAM AQUI ---
-                recuo_txt = "⭐" * ativo.recuo if ativo.recuo > 0 else "Livre"
+                # --- STATS BOX (COM RECUO VISUAL) ---
+                if ativo.recuo > 0:
+                    recuo_html = ""
+                    img_recuo = ENERGY_IMGS["Incolor ⭐"]
+                    for _ in range(ativo.recuo):
+                        recuo_html += f"<img src='{img_recuo}' class='recuo-img'>"
+                else:
+                    recuo_html = "Livre"
+
                 stats_html = f"""
                 <div class="stats-box">
                     <span>⚔️ {ativo.fraqueza}</span>
                     <span>🛡️ {ativo.resistencia}</span>
-                    <span>🦶 {recuo_txt}</span>
+                    <span>🦶 {recuo_html}</span>
                 </div>
                 """
                 st.markdown(stats_html, unsafe_allow_html=True)
@@ -496,10 +504,10 @@ else:
                     with st.popover("Energia / Status / Tool", icon=":material/flash_on:"):
                         t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"])
                         with t1:
-                            # SELECTBOX CONTINUA COM TEXTO, MAS MOSTRAMOS A IMAGEM EMBAIXO
+                            # SELECTBOX COM TEXTO, MAS COM PREVIEW VISUAL
                             escolha_e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"ae_{ativo.id_unico}")
                             
-                            # --- PREVIEW DA IMAGEM ---
+                            # --- PREVIEW VISUAL DA ENERGIA SELECIONADA ---
                             img_preview = ENERGY_IMGS.get(escolha_e)
                             if img_preview: st.image(img_preview, width=40)
                             
@@ -583,7 +591,7 @@ else:
                             with t1:
                                 eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"aeb_{bp.id_unico}")
                                 
-                                # PREVIEW
+                                # PREVIEW NO BANCO
                                 img_preview_b = ENERGY_IMGS.get(eb)
                                 if img_preview_b: st.image(img_preview_b, width=30)
 
