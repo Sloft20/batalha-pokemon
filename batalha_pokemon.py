@@ -3,13 +3,15 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 12.2 (PT-BR)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 13.0 (Log Tático)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap'); /* Fonte mono para log */
+
         html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
 
         /* Fundo Geral */
@@ -26,7 +28,7 @@ def configurar_visual():
         }
 
         /* Containers */
-        div[data-testid="stVerticalBlockBorderWrapper"], div[data-testid="stExpander"] {
+        div[data-testid="stVerticalBlockBorderWrapper"], div[data-testid="stExpander"], div[data-testid="stContainer"] {
             background-color: #1e293b;
             border: 1px solid #334155;
             border-radius: 8px;
@@ -40,43 +42,49 @@ def configurar_visual():
             border-radius: 6px;
         }
 
-        /* Botões Topo */
-        .top-btn > button {
-            border-radius: 6px;
-            border: 1px solid #475569 !important;
-            background-color: #1e293b !important;
-            color: #e2e8f0 !important;
-            font-size: 13px !important;
-            padding: 0px 10px !important;
-            min-height: 40px !important;
-        }
-        .top-btn > button:hover { background-color: #334155 !important; border-color: #94a3b8 !important; }
-
-        /* Botão FIM TURNO */
-        .turn-btn > button {
-            background-color: #FFC107 !important;
-            color: #0f172a !important;
-            font-weight: bold !important;
-            border: none !important;
-            min-height: 40px !important;
-        }
-        .turn-btn > button:hover { background-color: #FFD54F !important; }
-
-        /* Botões Jogo */
-        .game-btn > button { background-color: #334155 !important; color: white !important; border: none !important; border-radius: 6px; width: 100%; }
-        .atk-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; border: none !important; }
+        /* Botões */
+        .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; }
+        .top-btn > button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
+        .turn-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; }
+        .game-btn > button { background-color: #334155 !important; color: white !important; width: 100%; }
+        .atk-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; }
         .btn-red > button { background-color: #EF4444 !important; color: white !important; }
-        
-        /* Botões Pequenos (+10) */
         .small-btn > button { padding: 2px 0px !important; font-size: 11px !important; min-height: 25px !important; background-color: #0f172a !important; border: 1px solid #334155 !important; }
 
         /* Barra de Vida */
         .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 10px; }
         .hp-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
 
-        .log-entry { padding: 3px; border-bottom: 1px solid #334155; font-size: 12px; font-family: monospace; }
+        /* --- ESTILO DO LOG NOVO --- */
+        .log-container {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #cbd5e1;
+            padding: 4px 0;
+            border-bottom: 1px solid #334155;
+        }
+        .log-time { color: #64748b; margin-right: 8px; }
         
-        /* Texto Turno */
+        /* Badges de Categoria do Log */
+        .tag-log {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 10px;
+            margin-right: 8px;
+            text-transform: uppercase;
+            width: 70px; /* Largura fixa para alinhar */
+            text-align: center;
+        }
+        .tag-inicio { background-color: #22c55e; color: #0f172a; }
+        .tag-turno { background-color: #3b82f6; color: #fff; }
+        .tag-ataque { background-color: #ef4444; color: #fff; }
+        .tag-energia { background-color: #eab308; color: #0f172a; }
+        .tag-tool { background-color: #a855f7; color: #fff; }
+        .tag-ko { background-color: #000; color: #ef4444; border: 1px solid #ef4444; }
+        .tag-status { background-color: #f97316; color: #fff; }
+
         .turn-display { font-size: 18px; font-weight: bold; color: #FFC107; margin-top: -15px; margin-bottom: 10px; }
         .main-title { font-size: 28px; font-weight: 800; color: #f1f5f9; margin-bottom: 0px; }
     </style>
@@ -84,7 +92,7 @@ def configurar_visual():
 
 configurar_visual()
 
-# --- 1. BANCO DE DADOS (TRADUZIDO) ---
+# --- 1. BANCO DE DADOS ---
 POKEDEX = {
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
     "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconhecimento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
@@ -182,7 +190,6 @@ class Pokemon:
         self.tipo = novo_tipo
         self.fraqueza = nova_fraqueza
         self.resistencia = nova_resistencia
-        # Custo de recuo deve ser atualizado tbm, mas por simplificação mantemos ou pegamos do DB
         dados_novos = POKEDEX.get(novo_nome, {})
         self.recuo = dados_novos.get("recuo", 1) 
         if nova_img: self.imagem_url = nova_img
@@ -231,11 +238,30 @@ def inicializar_jogo():
     if 'habilidades_usadas' not in st.session_state: st.session_state.habilidades_usadas = []
     if 'dmg_buffer' not in st.session_state: st.session_state.dmg_buffer = {}
 
-def adicionar_log(mensagem, tipo="neutro"):
+# --- FUNÇÃO DE LOG NOVA ---
+def adicionar_log(categoria, mensagem):
     hora = datetime.datetime.now().strftime("%H:%M")
-    colors = {"ataque": "#f87171", "energia": "#c084fc", "cura": "#4ade80", "ko": "#fb923c", "tool": "#60a5fa", "neutro": "#94a3b8"}
-    c = colors.get(tipo, "white")
-    st.session_state.log.insert(0, f"<div class='log-entry' style='color:{c}'>[{hora}] {mensagem}</div>")
+    
+    # Classes CSS por categoria
+    cat_class = {
+        "Inicio": "tag-inicio",
+        "Turno": "tag-turno",
+        "Ataque": "tag-ataque",
+        "Energia": "tag-energia",
+        "Tool": "tag-tool",
+        "KO": "tag-ko",
+        "Status": "tag-status",
+        "Moeda": "tag-tool"
+    }.get(categoria, "tag-log")
+    
+    html = f"""
+    <div class='log-container'>
+        <span class='log-time'>[{hora}]</span>
+        <span class='tag-log {cat_class}'>{categoria}</span>
+        <span>{mensagem}</span>
+    </div>
+    """
+    st.session_state.log.insert(0, html)
 
 inicializar_jogo()
 
@@ -258,7 +284,7 @@ with col_top_actions:
         st.markdown('<div class="top-btn">', unsafe_allow_html=True)
         if st.button("🪙 Moeda", use_container_width=True):
             r = random.choice(["CARA", "COROA"])
-            st.toast(f"Moeda: {r}"); adicionar_log(f"🪙 Moeda: {r}")
+            st.toast(f"Moeda: {r}"); adicionar_log("Moeda", f"Resultado: {r}")
         st.markdown('</div>', unsafe_allow_html=True)
     with c_reset:
         st.markdown('<div class="top-btn">', unsafe_allow_html=True)
@@ -269,8 +295,8 @@ with col_top_actions:
         st.markdown('<div class="top-btn">', unsafe_allow_html=True)
         if st.session_state.log:
             txt = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
-            st.download_button("📜 Log", txt, "log.txt", use_container_width=True)
-        else: st.button("📜 Log", disabled=True, use_container_width=True)
+            st.download_button("📜 Baixar", txt, "log.txt", use_container_width=True)
+        else: st.button("📜 Baixar", disabled=True, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     with c_turn:
         st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
@@ -279,14 +305,14 @@ with col_top_actions:
             for p in ["Treinador 1", "Treinador 2"]:
                 if st.session_state.Treinadores[p]['ativo']:
                     r = st.session_state.Treinadores[p]['ativo'].resolver_checkup()
-                    if r: logs_check.extend(r)
-            if logs_check:
-                for l in logs_check: adicionar_log(l, "ko")
+                    if r: 
+                        for msg in r: adicionar_log("Status", msg)
+            
             st.session_state.habilidades_usadas = []
             antigo = st.session_state.turno_atual
             novo = "Treinador 2" if antigo == "Treinador 1" else "Treinador 1"
             st.session_state.turno_atual = novo
-            adicionar_log(f"🕒 Fim de turno de {st.session_state.Treinadores[antigo]['nome']}.", "neutro")
+            adicionar_log("Turno", f"Fim de turno de {st.session_state.Treinadores[antigo]['nome']}. Início de {st.session_state.Treinadores[novo]['nome']}.")
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -314,8 +340,12 @@ with st.sidebar:
         if st.button("Adicionar"):
             novo = Pokemon(escolha, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados.get("recuo", 1), dados["img"], dados.get("hab"))
             player = st.session_state.Treinadores[dono_key]
-            if not player['ativo']: player['ativo'] = novo
-            elif len(player['banco']) < 5: player['banco'].append(novo)
+            if not player['ativo']: 
+                player['ativo'] = novo
+                adicionar_log("Inicio", f"{escolha} entrou como Ativo de {player['nome']}.")
+            elif len(player['banco']) < 5: 
+                player['banco'].append(novo)
+                adicionar_log("Inicio", f"{escolha} entrou no Banco de {player['nome']}.")
             else: st.error("Cheio!")
             st.rerun()
     else:
@@ -355,11 +385,8 @@ def render_player(key):
         with c_img:
             st.image(ativo.imagem_url, use_container_width=True)
             if ativo.status != "Saudável": st.warning(ativo.status)
-            
-            # Energias na carta (Resumo)
             txt_en = " ".join([f"{k.split()[-1]}x{v}" for k,v in ativo.energias.items()])
             if txt_en: st.markdown(f"<div style='background:#0f172a; padding:4px; border-radius:4px; margin-top:5px; font-size:12px; border:1px solid #334155; text-align:center;'>⚡ {txt_en}</div>", unsafe_allow_html=True)
-            
             if ativo.ferramenta != "Nenhuma": st.caption(f"🛠️ {ativo.ferramenta}")
 
         with c_info:
@@ -374,10 +401,11 @@ def render_player(key):
                 if st.button("Enviar p/ Descarte", key=f"ko_{ativo.id_unico}"):
                     p['descarte'].append(ativo)
                     p['ativo'] = None
-                    adicionar_log(f"💀 {ativo.nome} caiu!", "ko")
+                    adicionar_log("KO", f"💀 {ativo.nome} foi nocauteado!")
                     op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                     qtd = 2 if "ex" in ativo.nome.lower() else 1
                     st.session_state.Treinadores[op_key]['premios'] -= qtd
+                    adicionar_log("KO", f"🏆 Oponente pegou {qtd} prêmio(s).")
                     if checar_vitoria(key): st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -414,36 +442,37 @@ def render_player(key):
                         final = (dmg * mult) - red
                         if final < 0: final = 0
                         op['ativo'].receber_dano(final)
-                        adicionar_log(f"⚔️ {ativo.nome} causou {final}!", "ataque")
+                        
+                        # LOG DETALHADO DE ATAQUE
+                        msg_atk = f"{p['nome']}: {ativo.nome} causou {final} dano em {op['ativo'].nome} (Base: {dmg}). HP Restante: {op['ativo'].hp_atual}"
+                        adicionar_log("Ataque", msg_atk)
                         st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
                 
-                # --- MENU EFICIENTE (PEDIDO) ---
-                with st.popover("⚡ Energia / Status / Ferramenta"):
-                    t_en, t_st, t_tl = st.tabs(["Energia", "Status", "Ferramenta"])
-                    
-                    # 1. ABA DE ENERGIA UNIFICADA
-                    with t_en:
-                        escolha_e = st.selectbox("Tipo de Energia", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"ae_{ativo.id_unico}")
-                        ce_1, ce_2 = st.columns(2)
-                        with ce_1:
-                            if st.button("➕ Adicionar", key=f"bae_{ativo.id_unico}", use_container_width=True):
-                                ativo.anexar_energia(escolha_e); st.rerun()
-                        with ce_2:
-                            if st.button("➖ Remover", key=f"bre_{ativo.id_unico}", use_container_width=True):
-                                if escolha_e in ativo.energias: ativo.remover_energia(escolha_e); st.rerun()
-                                else: st.toast("Não possui essa energia!")
-                        
-                        st.caption("Atuais: " + " ".join([f"{k.split()[-1]}x{v}" for k,v in ativo.energias.items()]))
-
-                    # 2. ABA STATUS
-                    with t_st:
-                        st.selectbox("Condição", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}", on_change=lambda: setattr(ativo, 'status', st.session_state[f"st_{ativo.id_unico}"]))
-                    
-                    # 3. ABA FERRAMENTAS
-                    with t_tl:
-                        tl = st.selectbox("Escolher", list(TOOLS_DB.keys()), key=f"tl_{ativo.id_unico}")
-                        if st.button("Equipar", key=f"btl_{ativo.id_unico}", use_container_width=True): ativo.equipar_ferramenta(tl); st.rerun()
+                with st.popover("⚡ Energia / Status / Tool"):
+                    t1, t2, t3, t4 = st.tabs(["+ E", "- E", "Stat", "Tool"])
+                    with t1:
+                        e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"ae_{ativo.id_unico}")
+                        if st.button("Add", key=f"bae_{ativo.id_unico}"): 
+                            ativo.anexar_energia(e)
+                            adicionar_log("Energia", f"{p['nome']}: Anexou {e} em {ativo.nome}.")
+                            st.rerun()
+                    with t2:
+                        if ativo.energias:
+                            r = st.selectbox("Remover", list(ativo.energias.keys()), key=f"re_{ativo.id_unico}")
+                            if st.button("Del", key=f"bre_{ativo.id_unico}"): 
+                                ativo.remover_energia(r)
+                                adicionar_log("Energia", f"{p['nome']}: Removeu {r} de {ativo.nome}.")
+                                st.rerun()
+                        else: st.info("Vazio")
+                    with t3:
+                        st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}", on_change=lambda: setattr(ativo, 'status', st.session_state[f"st_{ativo.id_unico}"]))
+                    with t4:
+                        tl = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tl_{ativo.id_unico}")
+                        if st.button("Equipar", key=f"btl_{ativo.id_unico}"): 
+                            ativo.equipar_ferramenta(tl)
+                            adicionar_log("Tool", f"{p['nome']}: Equipou {tl} em {ativo.nome}.")
+                            st.rerun()
 
                 if ativo.habilidade:
                     ja = ativo.id_unico in st.session_state.habilidades_usadas
@@ -452,7 +481,7 @@ def render_player(key):
                     st.markdown(f'<div class="{cls}">', unsafe_allow_html=True)
                     if st.button(lbl, key=f"hab_{ativo.id_unico}", disabled=ja):
                         st.session_state.habilidades_usadas.append(ativo.id_unico)
-                        adicionar_log(f"✨ {ativo.nome} usou {ativo.habilidade}!", "tool")
+                        adicionar_log("Tool", f"✨ {ativo.nome} usou habilidade {ativo.habilidade}.")
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 
@@ -464,7 +493,7 @@ def render_player(key):
                         if p['banco']:
                             p['banco'].append(ativo)
                             p['ativo'] = None
-                            adicionar_log(f"🏃 {ativo.nome} recuou.", "neutro")
+                            adicionar_log("Inicio", f"🏃 {ativo.nome} recuou para o banco.")
                             st.rerun()
                         else: st.warning("Banco vazio!")
                     else: st.error(msg)
@@ -479,7 +508,7 @@ def render_player(key):
                     st.markdown('<div class="btn-red">', unsafe_allow_html=True)
                     if st.button("💀", key=f"ko_b_{bp.id_unico}"):
                         p['banco'].pop(i); p['descarte'].append(bp)
-                        adicionar_log(f"💀 {bp.nome} (Banco) caiu!", "ko")
+                        adicionar_log("KO", f"💀 {bp.nome} (Banco) nocauteado.")
                         op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                         q = 2 if "ex" in bp.nome.lower() else 1
                         st.session_state.Treinadores[op_key]['premios'] -= q
@@ -487,13 +516,16 @@ def render_player(key):
                     st.markdown('</div>', unsafe_allow_html=True)
                 else:
                     if st.button("⬆️", key=f"up_{bp.id_unico}"):
-                        if not p['ativo']: p['ativo'] = p['banco'].pop(i); st.rerun()
+                        if not p['ativo']: 
+                            p['ativo'] = p['banco'].pop(i)
+                            adicionar_log("Inicio", f"🆙 {bp.nome} subiu para o Ativo.")
+                            st.rerun()
                     if st.button("💔", key=f"dmb_{bp.id_unico}"): bp.receber_dano(10); st.rerun()
                     if bp.habilidade:
                         ja = bp.id_unico in st.session_state.habilidades_usadas
                         if st.button("✨", key=f"hbb_{bp.id_unico}", disabled=ja, help=bp.habilidade):
                             st.session_state.habilidades_usadas.append(bp.id_unico)
-                            adicionar_log(f"✨ {bp.nome} (Banco) hab.", "tool")
+                            adicionar_log("Tool", f"✨ {bp.nome} (Banco) usou habilidade.")
                             st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
@@ -507,3 +539,8 @@ else:
     c1, c2 = st.columns(2)
     with c1: render_player("Treinador 1")
     with c2: render_player("Treinador 2")
+    
+    st.divider()
+    st.subheader("📜 Registro de Batalha")
+    with st.container(height=300):
+        st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
