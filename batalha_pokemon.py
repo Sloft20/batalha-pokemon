@@ -6,9 +6,9 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 18.0 (Mobile)", page_icon="📱", layout="wide")
+st.set_page_config(page_title="PokéBattle 18.1 (Final Align)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (MOBILE OPTIMIZED) ---
+# --- 0. CONFIGURAÇÃO VISUAL (CSS AJUSTADO) ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -19,35 +19,50 @@ def configurar_visual():
         [data-testid="stAppViewContainer"] { background-color: #0f172a; color: #f1f5f9; }
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
         
-        /* Sidebar e Containers */
+        /* Containers */
         [data-testid="stSidebar"], div[data-testid="stVerticalBlockBorderWrapper"], div[data-testid="stExpander"] {
             background-color: #1e293b; border: 1px solid #334155; border-radius: 8px;
         }
         
+        /* Inputs */
         .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
             background-color: #0f172a !important; color: #e2e8f0 !important; border: 1px solid #475569 !important; border-radius: 6px;
         }
 
-        /* Botões Gerais */
+        /* Botões */
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
         
-        /* Botões do Menu (Dentro do Popover) */
-        .menu-btn button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 45px; }
+        /* Botão Menu (Topo) */
+        .menu-btn button { 
+            background-color: #1e293b !important; 
+            border: 1px solid #475569 !important; 
+            min-height: 42px !important;
+            margin-top: 0px !important;
+        }
         .menu-btn button:hover { background-color: #334155 !important; }
 
-        /* Botão FIM TURNO (Destaque Mobile) */
+        /* Botão FIM TURNO (Topo) - Alinhado */
         .turn-btn button { 
             background-color: #FFC107 !important; 
             color: #0f172a !important; 
             font-weight: bold !important; 
-            min-height: 50px !important; /* Mais alto pra dedo */
-            font-size: 16px !important;
+            min-height: 42px !important; /* Mesma altura do menu */
+            font-size: 15px !important;
+            margin-top: 0px !important;
         }
         .turn-btn button:hover { background-color: #FFD54F !important; }
 
-        /* Botões de Ação na Mesa */
+        /* Botão ATACAR (Destaque na mesa) */
+        .atk-btn > button { 
+            background-color: #FFC107 !important; 
+            color: #0f172a !important; 
+            font-weight: bold; 
+            min-height: 42px !important; /* Alinhado com o input */
+            margin-top: 0px !important;
+        }
+        
+        /* Outros Botões */
         .game-btn > button { background-color: #334155 !important; color: white; }
-        .atk-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; }
         .btn-red > button { background-color: #EF4444 !important; color: white; }
 
         /* Log */
@@ -58,29 +73,21 @@ def configurar_visual():
         .tag-tool { background-color: #a855f7; color: #fff; } .tag-ko { background-color: #000; color: #ef4444; border: 1px solid #ef4444; } 
         .tag-status { background-color: #f97316; color: #fff; }
 
-        /* Ranking Cards */
+        /* Dashboard */
         .rank-card { background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
         .rank-name { font-size: 16px; font-weight: bold; color: #f1f5f9; margin-bottom: 5px; }
         .rank-stats { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
         .rank-bar-bg { width: 100%; height: 6px; background-color: #334155; border-radius: 3px; }
         .rank-bar-fill { height: 100%; border-radius: 3px; }
         
-        .main-title { font-size: 28px; font-weight: 800; color: #f1f5f9; }
-        .turn-display { font-size: 18px; font-weight: bold; color: #FFC107; margin-bottom: 10px; }
+        .main-title { font-size: 26px; font-weight: 800; color: #f1f5f9; line-height: 1.2; }
+        .turn-display { font-size: 16px; font-weight: bold; color: #FFC107; }
         
-        .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 10px; display: block; }
+        /* Barra de Vida */
+        .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 15px; display: block; }
         .hp-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-in-out; }
         
-        /* --- AJUSTES MOBILE (MEDIA QUERY) --- */
-        @media only screen and (max-width: 600px) {
-            .main-title { font-size: 20px !important; } /* Título menor */
-            .turn-display { font-size: 14px !important; margin-bottom: 5px; }
-            div[data-testid="column"] { gap: 0.5rem !important; }
-            .stButton > button { font-size: 14px !important; }
-            /* Reduz padding lateral padrão do Streamlit */
-            .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
-        }
-        
+        /* ALINHAMENTO GERAL DAS COLUNAS */
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
     </style>
     """, unsafe_allow_html=True)
@@ -124,7 +131,7 @@ TOOLS_DB = {
     "MT: Devolução": {"efeito": "atk", "hp_bonus": 0},
 }
 
-# --- 2. SISTEMA DE RANKING ---
+# --- 2. RANKING ---
 HISTORY_FILE = "historico.json"
 LISTA_DECKS = ["Charizard ex", "Dragapult ex", "Lugia VSTAR", "Gardevoir ex", "Raging Bolt ex", "Iron Thorns ex", "Outro"]
 
@@ -286,7 +293,7 @@ inicializar_jogo()
 # === TELA DE RANKING (DASHBOARD) ===
 # =================================================================================
 if st.session_state.tela_ranking:
-    st.markdown('<div class="main-title">🏆 Ranking</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-title">🏆 Ranking — PokéBattle</div>', unsafe_allow_html=True)
     
     col_back, col_reset, col_space = st.columns([1, 1, 5])
     with col_back:
@@ -301,7 +308,7 @@ if st.session_state.tela_ranking:
         if st.button("🗑️ Resetar", use_container_width=True):
             if os.path.exists(HISTORY_FILE):
                 os.remove(HISTORY_FILE)
-                st.toast("Resetado!")
+                st.toast("Ranking Resetado!")
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -338,23 +345,26 @@ if st.session_state.tela_ranking:
                 </div>
                 """, unsafe_allow_html=True)
     else:
-        st.info("Sem dados ainda.")
+        st.info("Sem dados.")
 
 else:
     # =================================================================================
-    # === TELA DE JOGO (MOBILE OPTIMIZED) ===
+    # === TELA DE JOGO (ALINHAMENTO CORRIGIDO) ===
     # =================================================================================
-    c_title, c_acts = st.columns([1.5, 3])
+    
+    # 1. Título e Turno (Esquerda)
+    c_title, c_spacer, c_buttons = st.columns([2, 1, 2])
+    
     with c_title:
         st.markdown('<div class="main-title">⚔️ PokéBattle</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="turn-display">👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
-    with c_acts:
-        # MOBILE: 2 COLUNAS (MENU + TURNO)
-        cm_menu, cm_turn = st.columns([1, 1.5])
+    # 2. Botões (Direita) - Agrupados
+    with c_buttons:
+        cm_menu, cm_turn = st.columns([1, 1.2]) # Menu menor, Turno maior
         
         with cm_menu:
-            # MENU HAMBURGUER / POPOVER
+            # Menu (Popover)
             with st.popover("⚙️ Menu", use_container_width=True):
                 st.markdown('<div class="menu-btn">', unsafe_allow_html=True)
                 if st.button("🏆 Placar", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
@@ -367,6 +377,7 @@ else:
                 st.markdown('</div>', unsafe_allow_html=True)
                 
         with cm_turn:
+            # Botão Turno Isolado
             st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
             if st.button("➡ Fim Turno", use_container_width=True):
                 logs_check = []
@@ -459,7 +470,6 @@ else:
                 if ativo.ferramenta != "Nenhuma": st.caption(f"🛠️ {ativo.ferramenta}")
 
             with c_info:
-                # NOME ESTILIZADO (Estrela)
                 nome_disp = ativo.nome
                 if any(x in ativo.nome.lower() for x in ["ex", "v", "vstar"]):
                     nome_disp = f'<span style="color:#FFD700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.6);">★ {ativo.nome}</span>'
@@ -488,22 +498,28 @@ else:
                     st.markdown('</div>', unsafe_allow_html=True)
                 else:
                     if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
-                    dmg = st.number_input("Dano do ataque", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}")
-                    st.session_state.dmg_buffer[ativo.id_unico] = dmg
-
-                    st.markdown('<div class="atk-btn">', unsafe_allow_html=True)
-                    if st.button("⚔️ ATACAR", key=f"atk_{ativo.id_unico}"):
-                        op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
-                        op = st.session_state.Treinadores[op_key]
-                        if op['ativo']:
-                            mult = 2 if ativo.tipo == op['ativo'].fraqueza else 1
-                            red = 30 if ativo.tipo == op['ativo'].resistencia else 0
-                            final = (dmg * mult) - red
-                            if final < 0: final = 0
-                            op['ativo'].receber_dano(final)
-                            adicionar_log("Ataque", f"{p['nome']}: {ativo.nome} causou {final} em {op['ativo'].nome}.")
-                            st.rerun()
-                    st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    # --- ALINHAMENTO DO DANO E ATAQUE (LADO A LADO) ---
+                    c_dmg, c_atk_btn = st.columns([1.5, 1]) # Proporção: Input maior, Botão menor
+                    
+                    with c_dmg:
+                        dmg = st.number_input("Dano", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
+                        st.session_state.dmg_buffer[ativo.id_unico] = dmg
+                    
+                    with c_atk_btn:
+                        st.markdown('<div class="atk-btn">', unsafe_allow_html=True)
+                        if st.button("⚔️ ATACAR", key=f"atk_{ativo.id_unico}"):
+                            op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
+                            op = st.session_state.Treinadores[op_key]
+                            if op['ativo']:
+                                mult = 2 if ativo.tipo == op['ativo'].fraqueza else 1
+                                red = 30 if ativo.tipo == op['ativo'].resistencia else 0
+                                final = (dmg * mult) - red
+                                if final < 0: final = 0
+                                op['ativo'].receber_dano(final)
+                                adicionar_log("Ataque", f"{p['nome']}: {ativo.nome} causou {final} em {op['ativo'].nome}.")
+                                st.rerun()
+                        st.markdown('</div>', unsafe_allow_html=True)
                     
                     with st.popover("⚡ Energia / Status / Tool"):
                         t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"])
@@ -546,10 +562,7 @@ else:
             for i, bp in enumerate(p['banco']):
                 with cols[i]:
                     st.image(bp.imagem_url, use_container_width=True)
-                    
-                    # --- VIDA NO BANCO ---
                     st.markdown(f"<div style='text-align:center; font-size:11px; font-weight:bold; color:#cbd5e1; margin-top:-5px;'>HP: {bp.hp_atual}/{bp.hp_max}</div>", unsafe_allow_html=True)
-                    
                     txt_en_b = " ".join([f"{k.split()[-1]}x{v}" for k,v in bp.energias.items()])
                     if txt_en_b: st.markdown(f"<div style='background:#0f172a; padding:2px; border-radius:3px; margin-bottom:2px; font-size:10px; border:1px solid #334155; text-align:center;'>⚡ {txt_en_b}</div>", unsafe_allow_html=True)
                     
@@ -563,7 +576,9 @@ else:
                             st.session_state.Treinadores[op_key]['premios'] -= q
                             if checar_vitoria(key):
                                 st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
-                                salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], st.session_state.Treinadores[op_key]['deck'], p['deck'])
+                                deck_v = st.session_state.Treinadores[op_key]['deck']
+                                deck_p = p['deck']
+                                salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], deck_v, deck_p)
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
                     else:
