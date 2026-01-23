@@ -6,9 +6,9 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 15.0 (Dashboard)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 16.0 (Ranking Pro)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL ---
+# --- 0. CONFIGURAÇÃO VISUAL (ESTILO DASHBOARD) ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -18,35 +18,46 @@ def configurar_visual():
         html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
         [data-testid="stAppViewContainer"] { background-color: #0f172a; color: #f1f5f9; }
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
+        
+        /* Containers */
         [data-testid="stSidebar"], div[data-testid="stVerticalBlockBorderWrapper"], div[data-testid="stExpander"] {
             background-color: #1e293b; border: 1px solid #334155; border-radius: 8px;
         }
+        
+        /* Inputs */
         .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
             background-color: #0f172a !important; color: #e2e8f0 !important; border: 1px solid #475569 !important; border-radius: 6px;
         }
-        div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
+
+        /* Botões */
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
-        
-        /* Botões Topo */
-        .top-btn button, .top-btn div[data-testid="stDownloadButton"] button {
-            border-radius: 6px; border: 1px solid #475569 !important; background-color: #1e293b !important; color: #e2e8f0 !important;
-            font-size: 13px !important; padding: 0px 10px !important; min-height: 40px !important; height: 40px !important;
-            margin-top: 0px !important; width: 100%; line-height: 1.2 !important;
-        }
-        .top-btn button:hover { background-color: #334155 !important; border-color: #94a3b8 !important; }
-
-        .turn-btn button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold !important; min-height: 40px !important; height: 40px !important; }
-        .game-btn > button { background-color: #334155 !important; color: white !important; }
+        .top-btn button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
+        .turn-btn button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; min-height: 40px; }
+        .game-btn > button { background-color: #334155 !important; color: white; }
         .atk-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; }
-        .btn-red > button { background-color: #EF4444 !important; color: white !important; }
-        .small-btn > button { padding: 2px 0px !important; font-size: 11px !important; min-height: 25px !important; background-color: #0f172a !important; border: 1px solid #334155 !important; }
-
+        .btn-red > button { background-color: #EF4444 !important; color: white; }
+        
+        /* Log */
         .log-container { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #cbd5e1; padding: 4px 0; border-bottom: 1px solid #334155; }
         .tag-log { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-right: 8px; width: 70px; text-align: center; }
-        .tag-inicio { background-color: #22c55e; color: #0f172a; } .tag-turno { background-color: #3b82f6; color: #fff; } .tag-ataque { background-color: #ef4444; color: #fff; } .tag-energia { background-color: #eab308; color: #0f172a; } .tag-tool { background-color: #a855f7; color: #fff; } .tag-ko { background-color: #000; color: #ef4444; border: 1px solid #ef4444; } .tag-status { background-color: #f97316; color: #fff; }
+        .tag-inicio { background-color: #22c55e; color: #0f172a; } .tag-turno { background-color: #3b82f6; color: #fff; } 
+        .tag-ataque { background-color: #ef4444; color: #fff; } .tag-energia { background-color: #eab308; color: #0f172a; } 
+        .tag-tool { background-color: #a855f7; color: #fff; } .tag-ko { background-color: #000; color: #ef4444; border: 1px solid #ef4444; } 
+        .tag-status { background-color: #f97316; color: #fff; }
 
-        .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 10px; }
-        .hp-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+        /* --- ESTILO DOS CARDS DE RANKING (Igual Imagem) --- */
+        .rank-card {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .rank-name { font-size: 16px; font-weight: bold; color: #f1f5f9; margin-bottom: 5px; }
+        .rank-stats { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+        .rank-bar-bg { width: 100%; height: 6px; background-color: #334155; border-radius: 3px; }
+        .rank-bar-fill { height: 100%; border-radius: 3px; }
+        
         .main-title { font-size: 28px; font-weight: 800; color: #f1f5f9; }
         .turn-display { font-size: 18px; font-weight: bold; color: #FFC107; margin-bottom: 10px; }
     </style>
@@ -54,7 +65,7 @@ def configurar_visual():
 
 configurar_visual()
 
-# --- 1. DADOS E CONSTANTES ---
+# --- 1. BANCO DE DADOS ---
 POKEDEX = {
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
     "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconhecimento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
@@ -91,8 +102,9 @@ TOOLS_DB = {
     "MT: Devolução": {"efeito": "atk", "hp_bonus": 0},
 }
 
-# --- 2. SISTEMA DE RANKING AVANÇADO ---
+# --- 2. SISTEMA DE RANKING E DECKS ---
 HISTORY_FILE = "historico.json"
+LISTA_DECKS = ["Charizard ex", "Dragapult ex", "Lugia VSTAR", "Gardevoir ex", "Raging Bolt ex", "Iron Thorns ex", "Outro"]
 
 def carregar_historico():
     if not os.path.exists(HISTORY_FILE): return []
@@ -104,10 +116,8 @@ def salvar_partida(vencedor, perdedor, deck_venc, deck_perd):
     hist = carregar_historico()
     partida = {
         "data": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "vencedor": vencedor,
-        "perdedor": perdedor,
-        "deck_vencedor": deck_venc,
-        "deck_perdedor": deck_perd
+        "vencedor": vencedor, "perdedor": perdedor,
+        "deck_vencedor": deck_venc, "deck_perdedor": deck_perd
     }
     hist.append(partida)
     with open(HISTORY_FILE, "w") as f: json.dump(hist, f)
@@ -116,31 +126,29 @@ def calcular_stats():
     dados = carregar_historico()
     if not dados: return None, None
     
-    # Stats Jogadores
     stats_jog = {}
-    for d in dados:
-        v, p = d['vencedor'], d['perdedor']
-        if v not in stats_jog: stats_jog[v] = {'partidas':0, 'vitorias':0}
-        if p not in stats_jog: stats_jog[p] = {'partidas':0, 'vitorias':0}
-        stats_jog[v]['partidas'] += 1
-        stats_jog[v]['vitorias'] += 1
-        stats_jog[p]['partidas'] += 1
+    stats_deck = {}
     
+    for d in dados:
+        # Jogadores
+        v, p = d['vencedor'], d['perdedor']
+        if v not in stats_jog: stats_jog[v] = {'p':0, 'v':0}
+        if p not in stats_jog: stats_jog[p] = {'p':0, 'v':0}
+        stats_jog[v]['p'] += 1; stats_jog[v]['v'] += 1
+        stats_jog[p]['p'] += 1
+        
+        # Decks
+        dv, dp = d['deck_vencedor'], d['deck_perdedor']
+        if dv not in stats_deck: stats_deck[dv] = {'p':0, 'v':0}
+        if dp not in stats_deck: stats_deck[dp] = {'p':0, 'v':0}
+        stats_deck[dv]['p'] += 1; stats_deck[dv]['v'] += 1
+        stats_deck[dp]['p'] += 1
+
     df_jog = pd.DataFrame.from_dict(stats_jog, orient='index').reset_index()
     df_jog.columns = ['Nome', 'Partidas', 'Vitorias']
     df_jog['Winrate'] = (df_jog['Vitorias'] / df_jog['Partidas']) * 100
     df_jog = df_jog.sort_values(by=['Vitorias', 'Winrate'], ascending=False)
 
-    # Stats Decks
-    stats_deck = {}
-    for d in dados:
-        dv, dp = d['deck_vencedor'], d['deck_perdedor']
-        if dv not in stats_deck: stats_deck[dv] = {'partidas':0, 'vitorias':0}
-        if dp not in stats_deck: stats_deck[dp] = {'partidas':0, 'vitorias':0}
-        stats_deck[dv]['partidas'] += 1
-        stats_deck[dv]['vitorias'] += 1
-        stats_deck[dp]['partidas'] += 1
-        
     df_deck = pd.DataFrame.from_dict(stats_deck, orient='index').reset_index()
     df_deck.columns = ['Deck', 'Partidas', 'Vitorias']
     df_deck['Winrate'] = (df_deck['Vitorias'] / df_deck['Partidas']) * 100
@@ -241,15 +249,15 @@ class Pokemon:
 def inicializar_jogo():
     if 'Treinadores' not in st.session_state:
         st.session_state.Treinadores = {
-            "Treinador 1": {"nome": "Treinador 1", "ativo": None, "banco": [], "descarte": [], "premios": 6},
-            "Treinador 2": {"nome": "Treinador 2", "ativo": None, "banco": [], "descarte": [], "premios": 6}
+            "Treinador 1": {"nome": "Treinador 1", "ativo": None, "banco": [], "descarte": [], "premios": 6, "deck": "Charizard ex"},
+            "Treinador 2": {"nome": "Treinador 2", "ativo": None, "banco": [], "descarte": [], "premios": 6, "deck": "Dragapult ex"}
         }
     if 'log' not in st.session_state: st.session_state.log = []
     if 'vencedor' not in st.session_state: st.session_state.vencedor = None
     if 'turno_atual' not in st.session_state: st.session_state.turno_atual = "Treinador 1"
     if 'habilidades_usadas' not in st.session_state: st.session_state.habilidades_usadas = []
     if 'dmg_buffer' not in st.session_state: st.session_state.dmg_buffer = {}
-    if 'tela_ranking' not in st.session_state: st.session_state.tela_ranking = False # Controle de tela
+    if 'tela_ranking' not in st.session_state: st.session_state.tela_ranking = False
 
 def adicionar_log(cat, msg):
     hora = datetime.datetime.now().strftime("%H:%M")
@@ -263,7 +271,7 @@ def adicionar_log(cat, msg):
 inicializar_jogo()
 
 # =================================================================================
-# === TELA DE RANKING (DASHBOARD) ===
+# === TELA DE RANKING (DASHBOARD PRO) ===
 # =================================================================================
 if st.session_state.tela_ranking:
     st.markdown('<div class="main-title">🏆 Ranking — PokéBattle</div>', unsafe_allow_html=True)
@@ -282,76 +290,71 @@ if st.session_state.tela_ranking:
         c1, c2 = st.columns(2)
         
         with c1:
-            st.markdown("### 👤 Jogadores")
-            st.caption(f"{len(df_jog)} jogadores registrados")
+            st.markdown(f"### 👤 Jogadores ({len(df_jog)})")
             for index, row in df_jog.iterrows():
-                with st.container(border=True):
-                    cor_rank = "🥇" if index == 0 else ("🥈" if index == 1 else ("🥉" if index == 2 else f"#{index+1}"))
-                    st.markdown(f"#### {cor_rank} {row['Nome']}")
-                    st.caption(f"Partidas: {row['Partidas']} • Vitórias: {row['Vitorias']} • Winrate: {row['Winrate']:.1f}%")
-                    
-                    # Barra de progresso colorida
-                    wr = row['Winrate']
-                    color = "#22c55e" if wr >= 50 else ("#eab308" if wr >= 30 else "#ef4444")
-                    st.markdown(f"""<div style="background:#334155;border-radius:4px;height:8px;width:100%"><div style="background:{color};width:{wr}%;height:100%;border-radius:4px"></div></div>""", unsafe_allow_html=True)
+                cor_rank = "🥇" if index == 0 else ("🥈" if index == 1 else ("🥉" if index == 2 else f"#{index+1}"))
+                wr = row['Winrate']
+                color = "#22c55e" if wr >= 50 else ("#eab308" if wr >= 30 else "#ef4444")
+                st.markdown(f"""
+                <div class="rank-card">
+                    <div class="rank-name">{cor_rank} {row['Nome']}</div>
+                    <div class="rank-stats">Partidas: {row['Partidas']} • Vitórias: {row['Vitorias']} • Winrate: {wr:.1f}%</div>
+                    <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:{wr}%; background-color:{color};"></div></div>
+                </div>
+                """, unsafe_allow_html=True)
 
         with c2:
-            st.markdown("### 🃏 Decks (Melhores)")
-            st.caption(f"{len(df_deck)} decks registrados")
+            st.markdown(f"### 🃏 Decks ({len(df_deck)})")
             for index, row in df_deck.iterrows():
-                with st.container(border=True):
-                    st.markdown(f"**{row['Deck']}**")
-                    st.caption(f"V: {row['Vitorias']} / P: {row['Partidas']}")
-                    wr = row['Winrate']
-                    st.markdown(f"<span style='float:right;color:#cbd5e1;font-size:12px'>{wr:.1f}%</span>", unsafe_allow_html=True)
-                    color = "#3b82f6" if wr >= 50 else "#64748b"
-                    st.markdown(f"""<div style="background:#334155;border-radius:4px;height:6px;width:100%;margin-top:5px"><div style="background:{color};width:{wr}%;height:100%;border-radius:4px"></div></div>""", unsafe_allow_html=True)
+                wr = row['Winrate']
+                color = "#3b82f6" if wr >= 50 else "#64748b"
+                st.markdown(f"""
+                <div class="rank-card">
+                    <div class="rank-name" style="display:flex;justify-content:space-between;">
+                        <span>{row['Deck']}</span>
+                        <span style="font-size:12px;color:{color}">{wr:.1f}%</span>
+                    </div>
+                    <div class="rank-stats">V: {row['Vitorias']} / P: {row['Partidas']}</div>
+                    <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:{wr}%; background-color:{color};"></div></div>
+                </div>
+                """, unsafe_allow_html=True)
     else:
         st.info("Nenhuma partida registrada ainda. Jogue para aparecer aqui!")
 
 else:
     # =================================================================================
-    # === TELA DE JOGO (NORMAL) ===
+    # === TELA DE JOGO ===
     # =================================================================================
-    
-    # --- 4. TOP BAR ---
-    col_top_title, col_top_actions = st.columns([1.5, 3])
-
-    with col_top_title:
+    c_title, c_acts = st.columns([1.5, 3])
+    with c_title:
         st.markdown('<div class="main-title">⚔️ PokéBattle</div>', unsafe_allow_html=True)
-        nome_vez = st.session_state.Treinadores[st.session_state.turno_atual]['nome']
-        st.markdown(f'<div class="turn-display">👉 Vez de: {nome_vez}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="turn-display">👉 Vez de: {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
-    with col_top_actions:
-        c_p1, c_coin, c_reset, c_log, c_turn = st.columns([1, 1, 1, 1, 1.5])
-        with c_p1:
+    with c_acts:
+        c1, c2, c3, c4, c5 = st.columns([1, 1, 1, 1, 1.5])
+        with c1: 
             st.markdown('<div class="top-btn">', unsafe_allow_html=True)
-            # BOTÃO PLACAR VAI PARA A NOVA TELA
-            if st.button("🏆 Placar", use_container_width=True):
-                st.session_state.tela_ranking = True
-                st.rerun()
+            if st.button("🏆 Placar", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
-        with c_coin:
+        with c2:
             st.markdown('<div class="top-btn">', unsafe_allow_html=True)
-            if st.button("🪙 Moeda", use_container_width=True):
-                r = random.choice(["CARA", "COROA"])
-                st.toast(f"Moeda: {r}"); adicionar_log("Moeda", f"Resultado: {r}")
+            if st.button("🪙 Moeda", use_container_width=True): 
+                r = random.choice(["CARA", "COROA"]); st.toast(f"{r}"); adicionar_log("Moeda", f"Resultado: {r}")
             st.markdown('</div>', unsafe_allow_html=True)
-        with c_reset:
+        with c3:
             st.markdown('<div class="top-btn">', unsafe_allow_html=True)
-            if st.button("🗑️ Reset", use_container_width=True):
-                st.session_state.clear(); st.rerun()
+            if st.button("🗑️ Reset", use_container_width=True): st.session_state.clear(); st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
-        with c_log:
+        with c4:
             st.markdown('<div class="top-btn">', unsafe_allow_html=True)
             if st.session_state.log:
                 txt = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
                 st.download_button("📜 Baixar", txt, "log.txt", use_container_width=True)
             else: st.button("📜 Baixar", disabled=True, use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
-        with c_turn:
+        with c5:
             st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
-            if st.button("➡ Fim Turno", help="Faz Checkup e Passa Vez", use_container_width=True):
+            if st.button("➡ Fim Turno", use_container_width=True):
                 logs_check = []
                 for p in ["Treinador 1", "Treinador 2"]:
                     if st.session_state.Treinadores[p]['ativo']:
@@ -362,21 +365,39 @@ else:
                 ant = st.session_state.turno_atual
                 novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
                 st.session_state.turno_atual = novo
-                adicionar_log("Turno", f"Fim de turno {st.session_state.Treinadores[ant]['nome']}. Início {st.session_state.Treinadores[novo]['nome']}.")
+                adicionar_log("Turno", f"Início de {st.session_state.Treinadores[novo]['nome']}.")
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # --- 5. SIDEBAR (CONFIG + GESTÃO COMPLETA) ---
+    # --- SIDEBAR COM SELEÇÃO DE DECK ---
     with st.sidebar:
-        st.header("⚙️ Gerenciar")
-        with st.expander("👤 Nomes", expanded=False):
+        st.header("⚙️ Configuração")
+        
+        with st.expander("👤 Nomes e Decks", expanded=True):
             n1 = st.text_input("J1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
+            
+            # SELETOR DE DECK J1
+            d1_sel = st.selectbox("Deck J1", LISTA_DECKS, index=0)
+            if d1_sel == "Outro": d1_final = st.text_input("Nome Deck J1", value="Custom")
+            else: d1_final = d1_sel
+            
+            st.divider()
+            
             n2 = st.text_input("J2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
-            if st.button("Salvar"):
+            
+            # SELETOR DE DECK J2
+            d2_sel = st.selectbox("Deck J2", LISTA_DECKS, index=1)
+            if d2_sel == "Outro": d2_final = st.text_input("Nome Deck J2", value="Custom")
+            else: d2_final = d2_sel
+
+            if st.button("Salvar Tudo", type="primary"):
                 st.session_state.Treinadores["Treinador 1"]["nome"] = n1
+                st.session_state.Treinadores["Treinador 1"]["deck"] = d1_final
                 st.session_state.Treinadores["Treinador 2"]["nome"] = n2
+                st.session_state.Treinadores["Treinador 2"]["deck"] = d2_final
+                st.toast("Configurações salvas!")
                 st.rerun()
         
         st.markdown("### ➕ Cartas")
@@ -394,16 +415,10 @@ else:
                 if st.button("Adicionar"):
                     novo = Pokemon(escolha, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados.get("recuo", 1), dados["img"], dados.get("hab"))
                     if local == "Ativo":
-                        if not player['ativo']: 
-                            player['ativo'] = novo
-                            adicionar_log("Inicio", f"{escolha} entrou como Ativo de {player['nome']}.")
-                            st.rerun()
+                        if not player['ativo']: player['ativo'] = novo; adicionar_log("Inicio", f"{escolha} entrou como Ativo."); st.rerun()
                         else: st.error("Já tem Ativo!")
                     else:
-                        if len(player['banco']) < 5: 
-                            player['banco'].append(novo)
-                            adicionar_log("Inicio", f"{escolha} entrou no Banco de {player['nome']}.")
-                            st.rerun()
+                        if len(player['banco']) < 5: player['banco'].append(novo); adicionar_log("Inicio", f"{escolha} entrou no Banco."); st.rerun()
                         else: st.error("Banco Cheio!")
             else:
                 nm = st.text_input("Nome")
@@ -445,7 +460,7 @@ else:
             else:
                 st.warning("Sem Pokémon para evoluir.")
 
-    # --- 6. RENDERIZAÇÃO ---
+    # --- 7. MESA ---
     def checar_vitoria(id_oponente_chave):
         if st.session_state.Treinadores[id_oponente_chave]['premios'] <= 0: return True
         oponente = st.session_state.Treinadores[id_oponente_chave]
@@ -460,7 +475,7 @@ else:
         
         st.markdown(f"<div style='border:{borda}; opacity:{opacity}; background-color:#1e293b; padding:10px; border-radius:10px; margin-bottom:10px;'>", unsafe_allow_html=True)
         c_h1, c_h2 = st.columns([3, 1])
-        c_h1.markdown(f"<h4 style='margin:0'>{p['nome']}</h4>", unsafe_allow_html=True)
+        c_h1.markdown(f"<h4 style='margin:0'>{p['nome']} <span style='font-size:12px;color:#94a3b8'>({p['deck']})</span></h4>", unsafe_allow_html=True)
         c_h2.markdown(f"<h5 style='margin:0; text-align:right'>{p['premios']} 🎴</h5>", unsafe_allow_html=True)
         
         ativo = p['ativo']
@@ -491,14 +506,13 @@ else:
                         qtd = 2 if "ex" in ativo.nome.lower() else 1
                         st.session_state.Treinadores[op_key]['premios'] -= qtd
                         
-                        # --- SALVAR VITÓRIA NO RANKING ---
+                        # --- SALVAR VITORIA RANKING ---
                         if checar_vitoria(key):
                             st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
-                            # Recupera o deck (ativo)
-                            deck_vencedor = st.session_state.Treinadores[op_key]['ativo'].nome if st.session_state.Treinadores[op_key]['ativo'] else "Desconhecido"
-                            deck_perdedor = ativo.nome # Quem morreu foi o ativo do perdedor, normalmente define o deck
-                            salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], deck_vencedor, deck_perdedor)
-                        # ---------------------------------
+                            # Pega decks salvos no estado
+                            deck_v = st.session_state.Treinadores[op_key]['deck']
+                            deck_p = p['deck']
+                            salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], deck_v, deck_p)
                         
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
@@ -595,11 +609,11 @@ else:
                             q = 2 if "ex" in bp.nome.lower() else 1
                             st.session_state.Treinadores[op_key]['premios'] -= q
                             
-                            # SALVAR VITORIA NO BANCO
                             if checar_vitoria(key):
                                 st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
-                                deck_vencedor = st.session_state.Treinadores[op_key]['ativo'].nome if st.session_state.Treinadores[op_key]['ativo'] else "Desconhecido"
-                                salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], deck_vencedor, bp.nome)
+                                deck_v = st.session_state.Treinadores[op_key]['deck']
+                                deck_p = p['deck']
+                                salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], deck_v, deck_p)
                             
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
