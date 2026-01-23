@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 28.0 (Full Art)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 26.0 (Icons)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -29,22 +29,40 @@ def configurar_visual():
 
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
         
+        /* --- BOTÕES DO TOPO --- */
         div[data-testid="stPopover"] > div > button, .turn-btn button {
-            min-height: 45px !important; height: 45px !important; width: 100% !important;
-            border-radius: 8px !important; font-size: 15px !important; margin-bottom: 5px !important;
+            min-height: 45px !important;
+            height: 45px !important;
+            margin-top: 0px !important;
+            width: 100% !important;
+            border-radius: 8px !important;
+            font-size: 15px !important;
+            margin-bottom: 5px !important;
         }
+        
         div[data-testid="stPopover"] > div > button {
-            background-color: #1e293b !important; border: 1px solid #475569 !important; color: #e2e8f0 !important;
+            background-color: #1e293b !important;
+            border: 1px solid #475569 !important;
+            color: #e2e8f0 !important;
         }
         div[data-testid="stPopover"] > div > button:hover { background-color: #334155 !important; }
+
         .turn-btn button { 
-            background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold !important; border: 1px solid #FFC107 !important;
+            background-color: #FFC107 !important; 
+            color: #0f172a !important; 
+            font-weight: bold !important; 
+            border: 1px solid #FFC107 !important;
         }
         .turn-btn button:hover { background-color: #FFD54F !important; }
 
+        /* --- BOTÃO DE ATACAR --- */
         .atk-btn > button { 
-            background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; 
-            min-height: 45px !important; margin-top: 5px !important; width: 100% !important;
+            background-color: #FFC107 !important; 
+            color: #0f172a !important; 
+            font-weight: bold; 
+            min-height: 45px !important;
+            margin-top: 5px !important;
+            width: 100% !important;
         }
 
         .menu-item button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
@@ -69,46 +87,12 @@ def configurar_visual():
         .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 15px; display: block; }
         .hp-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-in-out; }
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
-        
-        /* CONTAINER DE ENERGIAS (Moderno) */
-        .energy-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 3px;
-            justify-content: center;
-            background-color: rgba(15, 23, 42, 0.6);
-            padding: 6px;
-            border-radius: 20px; /* Borda redonda estilo "pill" */
-            margin-top: 6px;
-            border: 1px solid #334155;
-            min-height: 32px;
-        }
-        .energy-icon {
-            width: 22px;
-            height: 22px;
-            filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.6));
-            transition: transform 0.2s;
-        }
-        .energy-icon:hover { transform: scale(1.2); }
     </style>
     """, unsafe_allow_html=True)
 
 configurar_visual()
 
-# --- 1. DADOS DE IMAGEM ---
-# Coloquei aqui os links oficiais. Se você tiver os seus, basta substituir a URL dentro das aspas.
-ENERGY_IMGS = {
-    "Planta 🌱": "https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/20px-Grass-attack.png",
-    "Fogo 🔥": "https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/20px-Fire-attack.png",
-    "Água 💧": "https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/20px-Water-attack.png",
-    "Elétrico ⚡": "https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/20px-Lightning-attack.png",
-    "Psíquico 🌀": "https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/20px-Psychic-attack.png",
-    "Luta 🥊": "https://archives.bulbagarden.net/media/upload/thumb/4/48/Fighting-attack.png/20px-Fighting-attack.png",
-    "Escuridão 🌙": "https://archives.bulbagarden.net/media/upload/thumb/a/ab/Darkness-attack.png/20px-Darkness-attack.png",
-    "Metal ⚙️": "https://archives.bulbagarden.net/media/upload/thumb/6/64/Metal-attack.png/20px-Metal-attack.png",
-    "Incolor ⭐": "https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png"
-}
-
+# --- 1. DADOS ---
 POKEDEX = POKEDEX = {
     ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
     ##                                                                                 DECK DE DRAGAPULT EX
@@ -268,22 +252,6 @@ class Pokemon:
                 if self.energias[t] <= 0: del self.energias[t]
             self.status = "Saudável"; return True, f"Pagou {custo}."
         return False, f"Falta energia ({total}/{custo})."
-
-# --- FUNÇÃO ATUALIZADA PARA GERAR IMAGENS ---
-def gerar_html_energia(energias_dict):
-    if not energias_dict: return "<div class='energy-container' style='opacity:0'>.</div>" # Espaço vazio fixo
-    html = "<div class='energy-container'>"
-    for tipo_chave, qtd in energias_dict.items():
-        # Mapeia "Fogo 🔥" -> "https://...fire.png"
-        img_url = ENERGY_IMGS.get(tipo_chave, "")
-        if img_url:
-            for _ in range(qtd):
-                html += f"<img src='{img_url}' class='energy-icon' title='{tipo_chave}'>"
-        else:
-            # Fallback se não achar a imagem
-            html += f"<span style='font-size:12px; margin:0 2px;'>{tipo_chave} x{qtd}</span>"
-    html += "</div>"
-    return html
 
 def inicializar_jogo():
     if 'Treinadores' not in st.session_state:
@@ -452,9 +420,8 @@ else:
             with c_img:
                 st.image(ativo.imagem_url, use_container_width=True)
                 if ativo.status != "Saudável": st.warning(ativo.status)
-                # --- ENERGIA COM IMAGENS ---
-                st.markdown(gerar_html_energia(ativo.energias), unsafe_allow_html=True)
-                
+                txt_en = " ".join([f"{k.split()[-1]}x{v}" for k,v in ativo.energias.items()])
+                if txt_en: st.markdown(f"<div style='background:#0f172a; padding:4px; border-radius:4px; margin-top:5px; font-size:12px; border:1px solid #334155; text-align:center;'>⚡ {txt_en}</div>", unsafe_allow_html=True)
                 if ativo.ferramenta != "Nenhuma": st.caption(f"🛠️ {ativo.ferramenta}")
 
             with c_info:
@@ -493,6 +460,7 @@ else:
                             op['ativo'].receber_dano(final)
                             adicionar_log("Ataque", f"{ativo.nome} causou {final} em {op['ativo'].nome}.", p['nome'])
                             
+                            # --- REGRA DE ATAQUE (PASSA TURNO) ---
                             logs_check = []
                             for p_chk in ["Treinador 1", "Treinador 2"]:
                                 if st.session_state.Treinadores[p_chk]['ativo']:
@@ -511,7 +479,7 @@ else:
                     with st.popover("Energia / Status / Tool", icon=":material/flash_on:"):
                         t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"])
                         with t1:
-                            escolha_e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"ae_{ativo.id_unico}")
+                            escolha_e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"ae_{ativo.id_unico}")
                             c1, c2 = st.columns(2)
                             with c1: 
                                 if st.button("Add", icon=":material/add:", key=f"ba_{ativo.id_unico}"): 
@@ -562,8 +530,8 @@ else:
                 with cols[i]:
                     st.image(bp.imagem_url, use_container_width=True)
                     st.markdown(f"<div style='text-align:center; font-size:11px; font-weight:bold; color:#cbd5e1; margin-top:-5px;'>HP: {bp.hp_atual}/{bp.hp_max}</div>", unsafe_allow_html=True)
-                    # --- ENERGIA COM IMAGENS (BANCO) ---
-                    st.markdown(gerar_html_energia(bp.energias), unsafe_allow_html=True)
+                    txt_en_b = " ".join([f"{k.split()[-1]}x{v}" for k,v in bp.energias.items()])
+                    if txt_en_b: st.markdown(f"<div style='background:#0f172a; padding:2px; border-radius:3px; margin-bottom:2px; font-size:10px; border:1px solid #334155; text-align:center;'>⚡ {txt_en_b}</div>", unsafe_allow_html=True)
                     
                     if bp.hp_atual == 0:
                         st.markdown('<div class="btn-red">', unsafe_allow_html=True)
@@ -591,7 +559,7 @@ else:
                         with st.popover("⚡", icon=":material/flash_on:", use_container_width=True):
                             t1, t2, t3 = st.tabs(["Add", "Del", "Tool"])
                             with t1:
-                                eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"aeb_{bp.id_unico}")
+                                eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"aeb_{bp.id_unico}")
                                 if st.button("Add", icon=":material/add:", key=f"baeb_{bp.id_unico}"): 
                                     bp.anexar_energia(eb)
                                     adicionar_log("Energia", f"Ligou {eb} no banco", p['nome'])
