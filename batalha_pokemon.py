@@ -107,7 +107,7 @@ POKEDEX = {
     "Ralts": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "", "recuo": 1, "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/SWSH12/SWSH12_PT-BR_67.png"},
     "Drifloon": {"hp": 70, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/SV01/SV01_PT-BR_89.png"},
     "Mew ex": {"hp": 180, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab": "Recomeçar", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/151/pt-br/SV3pt5_PTBR_151.png"},
-    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "recuo": 1, "hab": "Cartas Ocultas", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/ASR/ASR_046_R_EN_PNG.png"},
+    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "recuo": 1, "hab": "Cartas Na Manga", "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/SWSH10/SWSH10_PT-BR_46.png"},
     "Fezandipiti": {"hp": 120, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Adrena-Feromônio", "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_45.png"},
     "Yamask": {"hp": 70, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/RSV10PT5/RSV10PT5_PT-BR_39.png"},
     "Cofagrius": {"hp": 120, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "img": "https://assets.pokemon.com/static-assets/content-assets/cms2-pt-br/img/cards/web/RSV10PT5/RSV10PT5_PT-BR_40.png"},
@@ -577,6 +577,7 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
+
 
 
 
