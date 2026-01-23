@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 17.1 (Clean UI)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 17.2 (HP Fix)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -33,7 +33,6 @@ def configurar_visual():
         .game-btn > button { background-color: #334155 !important; color: white; }
         .atk-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; }
         .btn-red > button { background-color: #EF4444 !important; color: white; }
-        .small-btn > button { padding: 2px 0px !important; font-size: 11px !important; min-height: 25px !important; background-color: #0f172a !important; border: 1px solid #334155 !important; }
 
         .log-container { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #cbd5e1; padding: 4px 0; border-bottom: 1px solid #334155; }
         .tag-log { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-right: 8px; width: 70px; text-align: center; }
@@ -51,8 +50,21 @@ def configurar_visual():
         .main-title { font-size: 28px; font-weight: 800; color: #f1f5f9; }
         .turn-display { font-size: 18px; font-weight: bold; color: #FFC107; margin-bottom: 10px; }
         
-        /* Garante que a barra de vida tenha altura e cor de fundo */
-        .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 10px; display: block; }
+        /* --- CORREÇÃO DA BARRA DE VIDA --- */
+        .hp-container {
+            width: 100%;
+            background-color: #334155;
+            border-radius: 6px;
+            height: 12px; /* Altura fixa */
+            margin-bottom: 15px;
+            overflow: hidden; /* Garante que a barra não vaze */
+            border: 1px solid #475569;
+        }
+        .hp-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.6s ease-in-out; /* Animação suave */
+        }
         
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
     </style>
@@ -256,7 +268,7 @@ def adicionar_log(cat, msg):
 inicializar_jogo()
 
 # =================================================================================
-# === TELA DE RANKING (DASHBOARD) ===
+# === TELA DE RANKING ===
 # =================================================================================
 if st.session_state.tela_ranking:
     st.markdown('<div class="main-title">🏆 Ranking — PokéBattle</div>', unsafe_allow_html=True)
@@ -311,7 +323,7 @@ if st.session_state.tela_ranking:
                 </div>
                 """, unsafe_allow_html=True)
     else:
-        st.info("Nenhuma partida registrada ainda. Jogue para aparecer aqui!")
+        st.info("Nenhuma partida registrada ainda.")
 
 else:
     # =================================================================================
@@ -468,9 +480,15 @@ else:
 
             with c_info:
                 st.markdown(f"**{ativo.nome}** <span style='float:right; font-size:12px;'>{ativo.hp_atual}/{ativo.hp_max}</span>", unsafe_allow_html=True)
+                
+                # --- BARRA DE VIDA (CSS PURO AGORA) ---
                 pct = max(0, min(100, (ativo.hp_atual / ativo.hp_max) * 100))
                 color_hp = "#22c55e" if pct > 50 else ("#eab308" if pct > 20 else "#ef4444")
-                st.markdown(f"""<div class="hp-bar-bg"><div class="hp-bar-fill" style="width:{pct}%; background-color:{color_hp};"></div></div>""", unsafe_allow_html=True)
+                st.markdown(f"""
+                <div class="hp-container">
+                    <div class="hp-fill" style="width:{pct}%; background-color:{color_hp};"></div>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 if ativo.hp_atual == 0:
                     st.error("💀 NOCAUTEADO")
@@ -483,21 +501,18 @@ else:
                         qtd = 2 if "ex" in ativo.nome.lower() else 1
                         st.session_state.Treinadores[op_key]['premios'] -= qtd
                         
-                        # --- SALVAR VITORIA RANKING ---
                         if checar_vitoria(key):
                             st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
                             deck_v = st.session_state.Treinadores[op_key]['deck']
                             deck_p = p['deck']
                             salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], deck_v, deck_p)
-                        
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 else:
                     if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
                     
-                    # --- BOTÕES DE DANO REMOVIDOS AQUI ---
-                    
-                    dmg = st.number_input("Dano", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
+                    # SEM BOTÕES PEQUENOS, SÓ O INPUT
+                    dmg = st.number_input("Dano do ataque", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}")
                     st.session_state.dmg_buffer[ativo.id_unico] = dmg
 
                     st.markdown('<div class="atk-btn">', unsafe_allow_html=True)
