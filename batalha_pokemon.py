@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 23.1 (Size Fix)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 24.0 (Visual Split)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -123,7 +123,7 @@ def carregar_historico():
             return json.load(f)
     except: return []
 
-# --- SALVAR PARTIDA (COM LOG) ---
+# --- SALVAR PARTIDA ---
 def salvar_partida(vencedor, perdedor, deck_venc, deck_perd, log_partida):
     hist = carregar_historico()
     partida = {
@@ -345,6 +345,7 @@ else:
             local = st.radio("Local", ["Banco", "Ativo"], horizontal=True)
             if st.button("Adicionar"):
                 novo = Pokemon(escolha, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados.get("recuo", 1), dados["img"], dados.get("hab"))
+                # LOG NOVO
                 if local == "Ativo":
                     if not player['ativo']: 
                         adicionar_log("Inicio", f"Colocou {escolha} como Ativo.", player['nome'])
@@ -487,7 +488,7 @@ else:
 
         if p['banco']:
             st.markdown("---")
-            # --- FIX: SEMPRE 5 COLUNAS ---
+            # --- FIX: SEMPRE 5 COLUNAS (TAMANHO CORRIGIDO) ---
             cols = st.columns(max(5, len(p['banco'])))
             for i, bp in enumerate(p['banco']):
                 with cols[i]:
@@ -549,9 +550,25 @@ else:
         st.markdown(f"<h1 style='text-align:center'>🏆 {st.session_state.vencedor} VENCEU!</h1>", unsafe_allow_html=True)
         if st.button("Novo Jogo"): st.session_state.clear(); st.rerun()
     else:
-        c1, c2 = st.columns(2)
+        # --- DIVISÓRIA VISUAL FINAL ---
+        c1, c_div, c2 = st.columns([1, 0.1, 1])
         with c1: render_player("Treinador 1")
+        with c_div:
+            # Linha vertical
+            st.markdown(
+                """
+                <div style='
+                    height: 100%; 
+                    min-height: 800px;
+                    width: 1px; 
+                    background-color: #334155; 
+                    margin: 0 auto;
+                '></div>
+                """, 
+                unsafe_allow_html=True
+            )
         with c2: render_player("Treinador 2")
+        
         st.divider()
         st.subheader("📜 Registro")
         with st.container(height=300):
