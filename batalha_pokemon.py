@@ -311,7 +311,7 @@ else:
     c_title, c_spacer, c_buttons = st.columns([2, 1, 1.2])
     with c_title:
         st.markdown('<div class="main-title">⚔️ PokéBattle</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="turn-display">"Tuno De"👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="turn-display">Turno De 👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
     with c_buttons:
         with st.popover("⚙️ Menu", use_container_width=True):
@@ -606,5 +606,6 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
+
 
 
