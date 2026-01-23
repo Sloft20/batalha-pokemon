@@ -3,140 +3,135 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 9.0 (Clássico+Recuo)", page_icon="🔙", layout="wide")
+st.set_page_config(page_title="PokéBattle 10.0 (Ultimate UI)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (CSS DA VERSÃO 6.1 - O MELHOR) ---
+# --- 0. CONFIGURAÇÃO DE IMAGENS ---
+# Mude este link se você tiver um repositório melhor. 
+# Se usar "", ele usa os links individuais do dicionário POKEDEX.
+BASE_IMG_URL = "" 
+
+# --- 1. CSS PREMIUM (ESTILO DARK NAVY) ---
 def configurar_visual():
     st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
         html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
 
-        /* Fundo da Arena */
+        /* Fundo Geral */
         [data-testid="stAppViewContainer"] {
-            background-image: url("https://pokemonrevolution.net/forum/uploads/monthly_2021_03/DVMT-6OXcAE2rZY.jpg.afab972f972bd7fbd4253bc7aa1cf27f.jpg");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
+            background-color: #0f172a; /* Azul Navy Profundo */
+            color: #f1f5f9;
         }
-        
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
 
-        div[data-testid="stVerticalBlockBorderWrapper"] {
-            background-color: rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 15px;
-            backdrop-filter: blur(5px);
-        }
-
-        h1, h2, h3, p, span, div, label {
-            color: #FFFFFF !important;
-            text-shadow: 2px 2px 4px #000000;
-        }
-
-        .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
-            background-color: rgba(255, 255, 255, 0.15) !important;
-            color: white !important;
-            border: 0px solid transparent !important;
-            box-shadow: none !important;
-        }
-        .stSelectbox div[data-baseweb="select"]:focus-within > div {
-             border-color: transparent !important;
-             box-shadow: none !important;
-        }
-
-        /* BOTÕES PADRÃO (AMARELOS) */
-        .stButton > button {
-            background-color: #FFCB05 !important;
-            color: #2a3b96 !important;
+        /* Containers (Cartas e Painéis) */
+        div[data-testid="stVerticalBlockBorderWrapper"], div[data-testid="stExpander"] {
+            background-color: #1e293b; /* Azul um pouco mais claro */
+            border: 1px solid #334155;
             border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Inputs e Selects */
+        .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
+            background-color: #0f172a !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #475569 !important;
+            border-radius: 6px;
+        }
+
+        /* --- BOTÕES PERSONALIZADOS --- */
+        .stButton > button {
+            border-radius: 8px;
+            font-weight: 600;
             border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
+            transition: all 0.2s;
+        }
+
+        /* Botão AMARELO (Ação Principal - Atacar/Adicionar) */
+        .btn-yellow > button {
+            background-color: #FFC107 !important;
+            color: #0f172a !important;
+        }
+        .btn-yellow > button:hover { background-color: #FFD54F !important; transform: scale(1.02); }
+
+        /* Botão AZUL (Log/Ranking) */
+        .btn-blue > button {
+            background-color: #3B82F6 !important;
+            color: white !important;
+        }
+        
+        /* Botão VERMELHO (Reset/Dano) */
+        .btn-red > button {
+            background-color: #EF4444 !important;
+            color: white !important;
+        }
+
+        /* Botão VERDE (Turno) */
+        .btn-green > button {
+            background-color: #22c55e !important;
+            color: white !important;
+        }
+
+        /* Botões Pequenos de Dano (+10, +20) */
+        .btn-small > button {
+            background-color: #334155 !important;
+            color: white !important;
+            padding: 2px 8px !important;
+            font-size: 12px !important;
+            min-height: 0px !important;
+            height: 30px !important;
+        }
+        .btn-small > button:hover { background-color: #475569 !important; }
+
+        /* Badges (Etiquetas) */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
             font-weight: bold;
-            width: 100%;
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 5px;
-            transition: transform 0.1s;
+            margin-right: 5px;
         }
-        .stButton > button:hover {
-            transform: scale(1.02);
-            color: black !important;
-            background-color: #ffdb4d !important;
-        }
-        .stButton > button:focus, .stButton > button:active {
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-            color: #2a3b96 !important;
-            background-color: #FFCB05 !important;
+        .badge-ex { background-color: #FFC107; color: black; }
+        .badge-status { background-color: #22c55e; color: black; }
+        .badge-type { background-color: #64748b; color: white; }
+        
+        /* Barra de Progresso Custom */
+        .stProgress > div > div > div > div {
+            background-color: #22c55e; /* Verde Vida */
         }
 
-        /* BOTÃO DE HABILIDADE (AZUL) */
-        .hab-btn > button {
-            background-color: #3b4cca !important; 
-            color: white !important;
-        }
-        .hab-btn > button:hover {
-            background-color: #536dfe !important;
-        }
-        /* BOTÃO DE HABILIDADE USADA (CINZA) */
-        .hab-btn-used > button {
-            background-color: #555555 !important; 
-            color: #aaaaaa !important;
-            cursor: not-allowed;
-        }
-
-        /* BOTÃO PASSAR TURNO (VERDE) */
-        .turn-btn > button {
-            background-color: #4CAF50 !important;
-            color: white !important;
-            font-size: 20px !important;
-            padding: 15px 20px !important;
-        }
-        .turn-btn > button:hover {
-            background-color: #45a049 !important;
-        }
-
-        .log-entry {
-            padding: 5px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 14px;
-        }
+        hr { border-color: #334155; margin: 10px 0; }
     </style>
     """, unsafe_allow_html=True)
 
 configurar_visual()
 
-# --- 1. BANCO DE DADOS (COM RECUO) ---
+# --- 2. BANCO DE DADOS ---
 POKEDEX = {
-    # --- DECK DRAGAPULT EX ---
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
-    "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconnaissance (Olhar Topo)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
+    "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconnaissance", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
     "Dreepy": {"hp": 70, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN_PNG.png"},
-    "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab": "Clairvoyant Sense (Ligar + Draw 2)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
+    "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab": "Clairvoyant Sense", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
     "Natu": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_071_R_EN_PNG.png"},
-    "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Flip the Script (Draw 3)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SFA/SFA_038_R_EN_PNG.png"},
-
-    # --- DECK CHARIZARD EX ---
-    "Charizard ex": {"hp": 330, "tipo": "Escuridão 🌙", "fraq": "Planta 🌱", "res": "Nenhuma", "recuo": 2, "hab": "Infernal Reign (Buscar 3 Energias)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_125_R_EN_PNG.png"},
+    "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Flip the Script", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SFA/SFA_038_R_EN_PNG.png"},
+    "Charizard ex": {"hp": 330, "tipo": "Escuridão 🌙", "fraq": "Planta 🌱", "res": "Nenhuma", "recuo": 2, "hab": "Infernal Reign", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_125_R_EN_PNG.png"},
     "Charmeleon": {"hp": 90, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 2, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_027_R_EN_PNG.png"},
     "Charmander": {"hp": 70, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_026_R_EN_PNG.png"},
-    "Pidgeot ex": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 0, "hab": "Quick Search (Buscar Qualquer Carta)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_164_R_EN_PNG.png"},
-    "Pidgey": {"hp": 60, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "hab": "Call for Family (Buscar Básico)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_162_R_EN_PNG.png"},
-    "Moltres": {"hp": 120, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "hab": "Flare Symbol (+10 Dano Fogo)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_021_R_EN_PNG.png"},
-
-    # --- DECK GARDEVOIR EX ---
-    "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Psychic Embrace (Ligar do Descarte)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_086_R_EN_PNG.png"},
-    "Kirlia": {"hp": 80, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Refinement (Descarta 1, Draw 2)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_085_R_EN_PNG.png"},
+    "Pidgeot ex": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 0, "hab": "Quick Search", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_164_R_EN_PNG.png"},
+    "Pidgey": {"hp": 60, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "hab": "Call for Family", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_162_R_EN_PNG.png"},
+    "Moltres": {"hp": 120, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "hab": "Flare Symbol", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_021_R_EN_PNG.png"},
+    "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Psychic Embrace", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_086_R_EN_PNG.png"},
+    "Kirlia": {"hp": 80, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Refinement", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_085_R_EN_PNG.png"},
     "Ralts": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_084_R_EN_PNG.png"},
     "Drifloon": {"hp": 70, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_089_R_EN_PNG.png"},
     "Scream Tail": {"hp": 90, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_086_R_EN_PNG.png"},
-    "Mew ex": {"hp": 180, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 0, "hab": "Restart (Comprar até ter 3)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/MEW/MEW_151_R_EN_PNG.png"},
-    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "recuo": 1, "hab": "Concealed Cards (Descarta Energia, Draw 2)", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/ASR/ASR_046_R_EN_PNG.png"},
+    "Mew ex": {"hp": 180, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 0, "hab": "Restart", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/MEW/MEW_151_R_EN_PNG.png"},
+    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "recuo": 1, "hab": "Concealed Cards", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/ASR/ASR_046_R_EN_PNG.png"},
+    "Lugia VSTAR": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "hab": "Summoning Star", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_139_R_EN_PNG.png"},
+    "Lugia V": {"hp": 220, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_138_R_EN_PNG.png"},
+    "Archeops": {"hp": 150, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "hab": "Primal Turbo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_147_R_EN_PNG.png"},
 }
 
 TOOLS_DB = {
@@ -150,15 +145,22 @@ TOOLS_DB = {
     "TM: Devolution": {"efeito": "atk", "hp_bonus": 0},
 }
 
-# --- 2. CLASSE POKEMON ---
+# --- 3. CLASSES E LÓGICA ---
 class Pokemon:
     def __init__(self, nome, hp_max, tipo, fraqueza, resistencia, recuo, imagem_url="", habilidade=None):
         self.nome = nome
         self.hp_base = int(hp_max)
         self.hp_max = int(hp_max)
         self.hp_atual = int(hp_max)
-        link_padrao = "https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg"
-        self.imagem_url = imagem_url if imagem_url else link_padrao
+        
+        # Lógica de Imagem (Repositório Custom ou Padrão)
+        img_padrao = imagem_url if imagem_url else "https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg"
+        if BASE_IMG_URL:
+            # Exemplo: Se sua URL for "mysite.com/cards/", ele tentará "mysite.com/cards/Charizard ex.png"
+            self.imagem_url = f"{BASE_IMG_URL}/{nome}.png"
+        else:
+            self.imagem_url = img_padrao
+            
         self.id_unico = datetime.datetime.now().timestamp() + random.random()
         self.tipo = tipo
         self.fraqueza = fraqueza
@@ -167,10 +169,8 @@ class Pokemon:
         self.status = "Saudável"
         self.energias = {}
         self.ferramenta = "Nenhuma"
-        if habilidade:
-            self.habilidade = habilidade
-        else:
-            self.habilidade = POKEDEX[nome].get("hab") if nome in POKEDEX else None
+        if habilidade: self.habilidade = habilidade
+        else: self.habilidade = POKEDEX[nome].get("hab") if nome in POKEDEX else None
 
     def equipar_ferramenta(self, nome_ferramenta):
         if self.ferramenta in TOOLS_DB:
@@ -222,7 +222,11 @@ class Pokemon:
         self.fraqueza = nova_fraqueza
         self.resistencia = nova_resistencia
         self.recuo = novo_recuo
-        if nova_img: self.imagem_url = nova_img
+        
+        # Imagem
+        if BASE_IMG_URL: self.imagem_url = f"{BASE_IMG_URL}/{novo_nome}.png"
+        elif nova_img: self.imagem_url = nova_img
+        
         self.habilidade = nova_hab if nova_hab else (POKEDEX[novo_nome].get("hab") if novo_nome in POKEDEX else None)
         self.hp_atual = self.hp_max - dano_sofrido
         if self.hp_atual < 0: self.hp_atual = 0
@@ -239,14 +243,11 @@ class Pokemon:
             return True
         return False
     
-    # --- LÓGICA DE RECUO (MANTIDA DA V8) ---
     def tentar_recuar(self):
         total_energias = sum(self.energias.values())
         custo = self.recuo
-        if self.ferramenta == "Rescue Board (-1 Recuo)":
-            custo -= 1
-            if custo < 0: custo = 0
-            
+        if self.ferramenta == "Rescue Board (-1 Recuo)": custo = max(0, custo - 1)
+        
         if total_energias >= custo:
             removidas = 0
             chaves = list(self.energias.keys())
@@ -260,7 +261,6 @@ class Pokemon:
         else:
             return False, f"Precisa de {custo} energias (tem {total_energias})."
 
-# --- 3. GERENCIAMENTO DE ESTADO ---
 def inicializar_jogo():
     if 'Treinadores' not in st.session_state:
         st.session_state.Treinadores = {
@@ -271,340 +271,293 @@ def inicializar_jogo():
     if 'vencedor' not in st.session_state: st.session_state.vencedor = None
     if 'turno_atual' not in st.session_state: st.session_state.turno_atual = "Treinador 1"
     if 'habilidades_usadas' not in st.session_state: st.session_state.habilidades_usadas = []
+    # Buffer para dano calculado (dicionário para guardar o valor do input de cada pokemon)
+    if 'dmg_buffer' not in st.session_state: st.session_state.dmg_buffer = {}
 
 def adicionar_log(mensagem, tipo="neutro"):
     hora = datetime.datetime.now().strftime("%H:%M")
-    cor = "white"
-    if tipo == "ataque": cor = "#ffcccb" 
-    elif tipo == "energia": cor = "#fffacd" 
-    elif tipo == "cura": cor = "#90ee90" 
-    elif tipo == "ko": cor = "#ff4500" 
-    elif tipo == "tool": cor = "#add8e6"
-    st.session_state.log.insert(0, f"<div class='log-entry' style='color:{cor}'>[{hora}] {mensagem}</div>")
+    colors = {"ataque": "#f87171", "energia": "#c084fc", "cura": "#4ade80", "ko": "#fb923c", "tool": "#60a5fa", "neutro": "#94a3b8"}
+    c = colors.get(tipo, "white")
+    st.session_state.log.insert(0, f"<div class='log-entry' style='color:{c}'>[{hora}] {mensagem}</div>")
 
 inicializar_jogo()
 
-# --- 4. BARRA LATERAL (CLÁSSICA) ---
-with st.sidebar:
-    st.header("⚙️ Controle")
-    
-    # BOTÃO PASSAR TURNO
-    st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
-    if st.button("⏳ PASSAR TURNO", help="Limpa habilidades e passa a vez"):
-        st.session_state.habilidades_usadas = []
-        antigo = st.session_state.turno_atual
-        novo = "Treinador 2" if antigo == "Treinador 1" else "Treinador 1"
-        st.session_state.turno_atual = novo
-        nome_novo = st.session_state.Treinadores[novo]['nome']
-        adicionar_log(f"🕒 <b>Fim do turno de {st.session_state.Treinadores[antigo]['nome']}.</b> Vez de <b>{nome_novo}</b>!", "neutro")
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.divider()
+# --- 4. TOP BAR ---
+col_logo, col_buttons = st.columns([2, 3])
 
-    with st.expander("👤 Personalizar Nomes", expanded=True):
-        nome_t1_input = st.text_input("Nome Jogador 1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
-        nome_t2_input = st.text_input("Nome Jogador 2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
-        st.session_state.Treinadores["Treinador 1"]["nome"] = nome_t1_input
-        st.session_state.Treinadores["Treinador 2"]["nome"] = nome_t2_input
-    
-    st.subheader("🏆 Placar")
-    c1, c2 = st.columns(2)
-    n1 = st.session_state.Treinadores["Treinador 1"]["nome"]
-    p1 = st.session_state.Treinadores["Treinador 1"]["premios"]
-    n2 = st.session_state.Treinadores["Treinador 2"]["nome"]
-    p2 = st.session_state.Treinadores["Treinador 2"]["premios"]
-    c1.metric(n1, f"{p1} 🎴")
-    c2.metric(n2, f"{p2} 🎴")
-    
-    st.divider()
-    st.subheader("🪙 Moeda")
-    if st.button("Jogar Moeda"):
-        resultado = random.choice(["CARA (Heads)", "COROA (Tails)"])
-        adicionar_log(f"🪙 A moeda caiu em: {resultado}")
-        if "CARA" in resultado: st.success(f"{resultado}")
-        else: st.error(f"{resultado}")
-
-    st.divider()
-    st.info("Fim de Turno")
-    if st.button("🔄 Fase de Checkup (Auto)"):
-        logs_totais = []
-        for nome_jog in ["Treinador 1", "Treinador 2"]:
-            ativo = st.session_state.Treinadores[nome_jog]['ativo']
-            if ativo:
-                resultados = ativo.resolver_checkup()
-                if resultados: logs_totais.extend(resultados)
-        if logs_totais:
-            for log in logs_totais: adicionar_log(log, "ko")
-            st.success("Checkup realizado!")
+with col_logo:
+    st.markdown("### ⚔️ PokéBattle — Registro TCG")
+    # Edição de nomes compacta
+    with st.expander("👤 Jogadores (Editar)", expanded=False):
+        c1, c2 = st.columns(2)
+        n1 = c1.text_input("Treinador 1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
+        n2 = c2.text_input("Treinador 2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
+        if c1.button("Salvar Nomes"):
+            st.session_state.Treinadores["Treinador 1"]["nome"] = n1
+            st.session_state.Treinadores["Treinador 2"]["nome"] = n2
             st.rerun()
-        else: st.toast("Nenhum status para resolver.")
+    # Indicador de Turno
+    nome_vez = st.session_state.Treinadores[st.session_state.turno_atual]['nome']
+    st.markdown(f"**Vez de:** <span style='color:#FFC107'>{nome_vez}</span>", unsafe_allow_html=True)
 
-    st.divider()
-    st.subheader("💾 Salvar Registro")
-    if st.session_state.log:
-        texto_log = "REGISTRO DE BATALHA POKEMON TCG\n"
-        texto_log += f"Data: {datetime.datetime.now().strftime('%d/%m/%Y')}\n"
-        texto_log += f"Jogadores: {n1} vs {n2}\n-----------------------------------\n"
-        log_reverso = st.session_state.log[::-1]
-        for linha in log_reverso:
-            texto_limpo = re.sub('<[^<]+?>', '', linha)
-            texto_log += texto_limpo + "\n"
-        st.download_button(label="📄 Baixar Arquivo .txt", data=texto_log, file_name="registro_batalha.txt", mime="text/plain")
-    else: st.caption("O registro está vazio.")
-
-    st.divider()
-    st.subheader("➕ Gerenciar Cartas")
-    dono_key = st.selectbox("Treinador:", ["Treinador 1", "Treinador 2"], format_func=lambda x: st.session_state.Treinadores[x]['nome'])
-    modo = st.radio("Modo de Criação:", ["📚 Pokedex (Rápido)", "✍️ Manual (Customizado)"], horizontal=True)
-    
-    nome_final, hp_final, tipo_final, fraq_final, res_final, img_final, hab_final, recuo_final = "", 0, "", "", "", "", None, 1
-    
-    if "Pokedex" in modo:
-        escolha_pokedex = st.selectbox("Escolha o Pokémon:", list(POKEDEX.keys()))
-        dados = POKEDEX[escolha_pokedex]
-        st.image(dados["img"], width=100)
-        nome_final, hp_final, tipo_final, fraq_final, res_final, img_final = escolha_pokedex, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados["img"]
-        recuo_final = dados.get("recuo", 1)
-        hab_final = dados.get("hab")
-    else:
-        nome_final = st.text_input("Nome do Pokémon")
-        hp_final = st.number_input("HP Máximo", value=60, step=10)
-        img_final = st.text_input("Cole o Link da Imagem aqui 👇")
-        lista_tipos = ["Normal ⚪", "Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Dragão 🐉"]
-        tipo_final = st.selectbox("Tipo", lista_tipos)
-        fraq_final = st.selectbox("Fraqueza", lista_tipos)
-        res_final = st.selectbox("Resistência", ["Nenhuma"] + lista_tipos)
-        recuo_final = st.number_input("Custo de Recuo", value=1, step=1)
-        hab_final = st.text_input("Habilidade (Opcional):") or None
-
-    player_temp = st.session_state.Treinadores[dono_key]
-    nome_dono_display = player_temp['nome']
-    opcoes_evolucao = []
-    if player_temp['ativo']: opcoes_evolucao.append(f"[Ativo] {player_temp['ativo'].nome}")
-    for i, p in enumerate(player_temp['banco']): opcoes_evolucao.append(f"[Banco {i+1}] {p.nome}")
-    
-    acao = st.radio("Ação:", ["Novo Básico", "Evoluir"], horizontal=True)
-    alvo_evolucao = None
-    if acao == "Evoluir":
-        if opcoes_evolucao: alvo_evolucao = st.selectbox("Quem evolui?", opcoes_evolucao)
-        else: st.warning("Ninguém para evoluir.")
-    
-    destino = "Banco"
-    if acao == "Novo Básico": destino = st.radio("Onde colocar?", ["Ativo", "Banco"], horizontal=True)
-
-    if st.button("✨ Criar Carta", type="primary"):
-        if acao == "Novo Básico":
-            if nome_final:
-                novo = Pokemon(nome_final, hp_final, tipo_final, fraq_final, res_final, recuo_final, img_final, hab_final)
-                if destino == "Ativo" and player_temp['ativo'] is None:
-                    player_temp['ativo'] = novo
-                    adicionar_log(f"🆕 {nome_final} entrou como Ativo de {nome_dono_display}.", "neutro")
-                elif len(player_temp['banco']) < 5:
-                    player_temp['banco'].append(novo)
-                    adicionar_log(f"🆕 {nome_final} entrou no Banco de {nome_dono_display}.", "neutro")
-                else: st.error("Sem espaço!")
-                st.rerun()
-            else: st.error("O Pokémon precisa de um nome!")
-        elif acao == "Evoluir" and alvo_evolucao:
-            obj = player_temp['ativo'] if "[Ativo]" in alvo_evolucao else player_temp['banco'][int(alvo_evolucao.split("]")[0].split(" ")[1])-1]
-            antigo = obj.nome
-            obj.evoluir_para(nome_final, hp_final, tipo_final, fraq_final, res_final, recuo_final, img_final, hab_final)
-            adicionar_log(f"🧬 {antigo} evoluiu para {nome_final}!", "energia")
-            st.balloons()
+with col_buttons:
+    c_rank, c_log, c_clear, c_turn, c_new, c_save = st.columns(6)
+    with c_rank:
+        st.markdown('<div class="btn-blue">', unsafe_allow_html=True)
+        if st.button("🏆 Placar", use_container_width=True):
+            st.toast(f"P1: {st.session_state.Treinadores['Treinador 1']['premios']} | P2: {st.session_state.Treinadores['Treinador 2']['premios']}")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with c_log:
+        st.markdown('<div class="btn-blue">', unsafe_allow_html=True)
+        if st.session_state.log:
+            txt = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
+            st.download_button("⬇️ Log", txt, "log.txt", use_container_width=True)
+        else: st.button("⬇️ Log", disabled=True, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    with c_clear:
+        st.markdown('<div class="btn-red">', unsafe_allow_html=True)
+        if st.button("🧹 Limpar", use_container_width=True):
+            st.session_state.log = []
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    with c_turn:
+        st.markdown('<div class="btn-green">', unsafe_allow_html=True)
+        if st.button("➡ Turno", help="Passar Vez", use_container_width=True):
+            # Checkup
+            for p in ["Treinador 1", "Treinador 2"]:
+                if st.session_state.Treinadores[p]['ativo']:
+                    res = st.session_state.Treinadores[p]['ativo'].resolver_checkup()
+                    if res: 
+                        for r in res: adicionar_log(r, "ko")
+            st.session_state.habilidades_usadas = []
+            antigo = st.session_state.turno_atual
+            novo = "Treinador 2" if antigo == "Treinador 1" else "Treinador 1"
+            st.session_state.turno_atual = novo
+            adicionar_log(f"🕒 Fim de turno. Vez de {st.session_state.Treinadores[novo]['nome']}.", "neutro")
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    with c_new:
+        st.markdown('<div class="btn-blue">', unsafe_allow_html=True)
+        if st.button("🔄 Reset", use_container_width=True):
+            st.session_state.clear()
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    with c_save:
+        st.markdown('<div class="btn-yellow">', unsafe_allow_html=True)
+        st.button("💾 Salvar", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    if st.button("🗑️ Reiniciar Jogo"):
-        st.session_state.clear()
-        st.rerun()
+# --- 5. BARRA DE CRIAÇÃO (FUNDO AZUL ESCURO) ---
+st.markdown("---")
+st.markdown("##### 📦 Adicionar Pokémon")
+with st.container():
+    c1, c2, c3, c4, c5 = st.columns([1.5, 1.5, 2, 1.5, 1])
+    with c1:
+        dono = st.selectbox("Jogador", ["Treinador 1", "Treinador 2"], format_func=lambda x: st.session_state.Treinadores[x]['nome'], label_visibility="collapsed")
+    with c2:
+        deck_filter = st.selectbox("Filtro Tipo", ["Todos"] + sorted(list(set([v['tipo'] for k,v in POKEDEX.items()]))), label_visibility="collapsed")
+    with c3:
+        lista = list(POKEDEX.keys())
+        if deck_filter != "Todos": lista = [k for k,v in POKEDEX.items() if v['tipo'] == deck_filter]
+        escolha = st.selectbox("Pokémon", lista, label_visibility="collapsed")
+    with c4:
+        dest = st.selectbox("Destino", ["Banco", "Ativo"], label_visibility="collapsed")
+    with c5:
+        st.markdown('<div class="btn-yellow">', unsafe_allow_html=True)
+        if st.button("+ Adicionar", use_container_width=True):
+            d = POKEDEX[escolha]
+            n = Pokemon(escolha, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo",1), d["img"], d.get("hab"))
+            p = st.session_state.Treinadores[dono]
+            if dest == "Ativo" and p['ativo'] is None:
+                p['ativo'] = n
+                adicionar_log(f"🆕 {escolha} entrou como Ativo.", "neutro")
+            elif len(p['banco']) < 5:
+                p['banco'].append(n)
+                adicionar_log(f"🆕 {escolha} foi pro Banco.", "neutro")
+            else: st.error("Cheio!")
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# --- 5. LÓGICA DE VITÓRIA E RENDERIZAÇÃO ---
-def checar_vitoria(id_oponente_chave):
-    if st.session_state.Treinadores[id_oponente_chave]['premios'] <= 0: return True
-    oponente = st.session_state.Treinadores[id_oponente_chave]
-    if oponente['ativo'] is None and len(oponente['banco']) == 0: return True
-    return False
-
-def renderizar_mesa_jogador(id_jogador_chave):
-    player = st.session_state.Treinadores[id_jogador_chave]
-    nome_display = player['nome']
+# --- 6. RENDERIZAÇÃO DA CARTA ATIVA (ESTILO IMAGEM) ---
+def render_active_card(player_key, opponent_key):
+    player = st.session_state.Treinadores[player_key]
+    opponent = st.session_state.Treinadores[opponent_key]
     
-    eh_a_vez = (st.session_state.turno_atual == id_jogador_chave)
-    cor_texto = "#4CAF50" if eh_a_vez else ("#89CFF0" if id_jogador_chave == "Treinador 1" else "#FF6961")
-    border_color = "#4CAF50" if eh_a_vez else ("#89CFF0" if id_jogador_chave == "Treinador 1" else "#FF6961")
-    indicador_vez = "⚡ SUA VEZ ⚡" if eh_a_vez else "Aguardando..."
-    
-    id_oponente_chave = "Treinador 2" if id_jogador_chave == "Treinador 1" else "Treinador 1"
-    player_oponente = st.session_state.Treinadores[id_oponente_chave]
-    nome_oponente_display = player_oponente['nome']
-    ativo_oponente = player_oponente['ativo'] 
-    
-    st.markdown(f"""
-        <div style='background-color: rgba(0,0,0,0.5); padding: 5px; border-radius: 10px; text-align: center; margin-bottom: 10px; border: 2px solid {border_color};'>
-            <h2 style='margin:0; color: {cor_texto};'>{nome_display.upper()}</h2>
-            <p style='margin:0; color: {cor_texto}; font-weight: bold;'>{indicador_vez}</p>
-            <p style='margin:0; color: white;'>Prêmios Restantes: <strong>{player['premios']}</strong> 🎴</p>
-        </div>
-    """, unsafe_allow_html=True)
+    # Header Player
+    c_h1, c_h2 = st.columns([3, 1])
+    c_h1.markdown(f"#### {player['nome']}")
+    c_h2.markdown(f"**🏆 {player['premios']}**")
     
     ativo = player['ativo']
-    if ativo:
-        with st.container(border=True):
-            col_img, col_infos = st.columns([1, 2])
-            with col_img:
-                st.image(ativo.imagem_url, use_container_width=True)
-                st.caption(f"{ativo.tipo} | Fraco: {ativo.fraqueza}")
-                if ativo.status != "Saudável": st.warning(ativo.status)
-                txt_en = "".join([f"{k.split()[-1]}x{v} " for k,v in ativo.energias.items()])
-                if txt_en: st.markdown(f"**⚡ {txt_en}**")
-                if ativo.ferramenta != "Nenhuma": st.info(f"🛠️ {ativo.ferramenta}")
-                
-                if ativo.habilidade:
-                    ja_usou = ativo.id_unico in st.session_state.habilidades_usadas
-                    classe_btn = "hab-btn-used" if ja_usou else "hab-btn"
-                    label_btn = "✅ Usado" if ja_usou else f"✨ {ativo.habilidade}"
-                    st.markdown(f'<div class="{classe_btn}">', unsafe_allow_html=True)
-                    if st.button(label_btn, key=f"hab_{ativo.id_unico}", disabled=ja_usou):
-                        st.session_state.habilidades_usadas.append(ativo.id_unico)
-                        adicionar_log(f"✨ **{ativo.nome}** ativou a habilidade: **{ativo.habilidade}**!", "tool")
+    
+    # Caixa Principal (Card Container)
+    with st.container(): # Borda já aplicada pelo CSS global
+        if not ativo:
+            st.info("Sem Pokémon Ativo")
+            return
+
+        c_img, c_data = st.columns([1, 1.5])
+        
+        # --- COLUNA DA ESQUERDA: IMAGEM ---
+        with c_img:
+            st.image(ativo.imagem_url, use_container_width=True)
+            
+            # Badges Abaixo da Imagem
+            is_ex = "ex" in ativo.nome.lower() or "v" in ativo.nome.lower()
+            badges_html = ""
+            if is_ex: badges_html += "<span class='badge badge-ex'>★ EX/V</span>"
+            badges_html += f"<span class='badge badge-status'>{ativo.status}</span>"
+            badges_html += f"<span class='badge badge-type'>{ativo.tipo}</span>"
+            st.markdown(badges_html, unsafe_allow_html=True)
+            
+            # Recuo e Weakness
+            st.caption(f"Fraq: {ativo.fraqueza} | Res: {ativo.resistencia}")
+            
+            # Ação de Recuo
+            custo = ativo.recuo
+            if ativo.ferramenta == "Rescue Board (-1 Recuo)": custo = max(0, custo - 1)
+            if st.button(f"🏃 Recuar (Custo {custo})", key=f"run_{ativo.id_unico}", use_container_width=True):
+                pode, msg = ativo.tentar_recuar()
+                if pode:
+                    if player['banco']:
+                        player['banco'].append(ativo)
+                        player['ativo'] = None
+                        adicionar_log(f"🏃 {ativo.nome} recuou.", "neutro")
                         st.rerun()
+                    else: st.warning("Banco vazio!")
+                else: st.error(msg)
+
+        # --- COLUNA DA DIREITA: DADOS E AÇÕES ---
+        with c_data:
+            # Nome e HP
+            st.markdown(f"**{ativo.nome}**")
+            st.progress(ativo.hp_atual / ativo.hp_max)
+            st.caption(f"HP: {ativo.hp_atual} / {ativo.hp_max}")
+            
+            if ativo.hp_atual == 0:
+                st.error("💀 NOCAUTEADO")
+                st.markdown('<div class="btn-red">', unsafe_allow_html=True)
+                if st.button("Enviar p/ Descarte", key=f"ko_{ativo.id_unico}", use_container_width=True):
+                    player['descarte'].append(ativo)
+                    player['ativo'] = None
+                    adicionar_log(f"💀 {ativo.nome} nocauteado!", "ko")
+                    qtd = 2 if ("ex" in ativo.nome.lower() or "v" in ativo.nome.lower()) else 1
+                    opponent['premios'] -= qtd
+                    adicionar_log(f"🏆 Oponente pegou {qtd} prêmios!", "ko")
+                    if checar_vitoria(player_key): st.session_state.vencedor = opponent['nome'] # Se eu morri, checo se ele ganhou
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            else:
+                # --- CALCULADORA DE DANO (Nova Feature) ---
+                st.markdown("**Dano do Ataque**")
+                
+                # Inicializa buffer de dano
+                if ativo.id_unico not in st.session_state.dmg_buffer:
+                    st.session_state.dmg_buffer[ativo.id_unico] = 0
+                
+                # Botões de Atalho
+                cb1, cb2, cb3, cb4, cb5 = st.columns(5)
+                with cb1: 
+                    st.markdown('<div class="btn-red btn-small">', unsafe_allow_html=True)
+                    if st.button("Zerar", key=f"z_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] = 0; st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
+                with cb2: 
+                    st.markdown('<div class="btn-small">', unsafe_allow_html=True)
+                    if st.button("+10", key=f"p10_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] += 10; st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
+                with cb3: 
+                    st.markdown('<div class="btn-small">', unsafe_allow_html=True)
+                    if st.button("+20", key=f"p20_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] += 20; st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
+                with cb4: 
+                    st.markdown('<div class="btn-small">', unsafe_allow_html=True)
+                    if st.button("+50", key=f"p50_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] += 50; st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
+                with cb5: 
+                    st.markdown('<div class="btn-small">', unsafe_allow_html=True)
+                    if st.button("+100", key=f"p100_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] += 100; st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
 
-            with col_infos:
-                st.subheader(ativo.nome)
-                st.progress(ativo.hp_atual / ativo.hp_max)
-                st.write(f"HP: {ativo.hp_atual}/{ativo.hp_max}")
-                if ativo.hp_atual == 0:
-                    st.error("💀 NOCAUTEADO!")
-                    if st.button("Enviar p/ Descarte 💀", key=f"ko_{ativo.id_unico}"):
-                        player['descarte'].append(ativo)
-                        player['ativo'] = None
-                        adicionar_log(f"☠️ {ativo.nome} ({nome_display}) foi nocauteado!", "ko")
-                        qtd_premios = 2 if "ex" in ativo.nome.lower() else 1
-                        player_oponente['premios'] -= qtd_premios
-                        pl = "s" if qtd_premios > 1 else ""
-                        adicionar_log(f"🏆 {nome_oponente_display} pegou {qtd_premios} carta{pl} prêmio!", "ko")
-                        if checar_vitoria(id_jogador_chave): st.session_state.vencedor = nome_oponente_display
+                # Input numérico ligado ao buffer
+                dano_input = st.number_input("Valor", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"inp_{ativo.id_unico}", label_visibility="collapsed")
+                st.session_state.dmg_buffer[ativo.id_unico] = dano_input # Sincroniza manual
+
+                # Botão ATACAR
+                st.markdown('<div class="btn-yellow">', unsafe_allow_html=True)
+                if st.button("⚔️ Atacar", key=f"atk_{ativo.id_unico}", use_container_width=True):
+                    op_ativo = opponent['ativo']
+                    if op_ativo:
+                        mult = 2 if ativo.tipo == op_ativo.fraqueza else 1
+                        red = 30 if ativo.tipo == op_ativo.resistencia else 0
+                        final = (dano_input * mult) - red
+                        if final < 0: final = 0
+                        op_ativo.receber_dano(final)
+                        adicionar_log(f"⚔️ {ativo.nome} causou {final} de dano!", "ataque")
+                        st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                st.markdown("---")
+                # Habilidade e Energias
+                if ativo.habilidade:
+                    ja_usou = ativo.id_unico in st.session_state.habilidades_usadas
+                    label = "✅ Usado" if ja_usou else f"✨ {ativo.habilidade}"
+                    disabled = ja_usou
+                    st.markdown('<div class="btn-blue">', unsafe_allow_html=True)
+                    if st.button(label, key=f"hab_{ativo.id_unico}", disabled=disabled, use_container_width=True):
+                        st.session_state.habilidades_usadas.append(ativo.id_unico)
+                        adicionar_log(f"✨ {ativo.nome} usou {ativo.habilidade}!", "tool")
+                        st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
+                
+                with st.expander("⚡ Energia / Status"):
+                    c_e1, c_e2 = st.columns(2)
+                    with c_e1:
+                        e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀"], key=f"te_{ativo.id_unico}")
+                        if st.button("Add E", key=f"ade_{ativo.id_unico}"): 
+                            ativo.anexar_energia(e); st.rerun()
+                    with c_e2:
+                        st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}", on_change=lambda: setattr(ativo, 'status', st.session_state[f"st_{ativo.id_unico}"]))
+                    
+                    st.write("Energias atuais: " + " ".join([f"{k}x{v}" for k,v in ativo.energias.items()]))
+
+    # Banco
+    if player['banco']:
+        st.caption(f"Banco ({len(player['banco'])})")
+        cols = st.columns(5)
+        for i, p in enumerate(player['banco']):
+            with cols[i]:
+                st.image(p.imagem_url)
+                if p.hp_atual == 0:
+                    st.error("💀")
+                    if st.button("KO", key=f"kob_{p.id_unico}"):
+                        player['banco'].pop(i); player['descarte'].append(p)
+                        adicionar_log(f"💀 {p.nome} (Banco) morreu.", "ko")
+                        # Lógica prêmio
+                        qtd = 2 if "ex" in p.nome.lower() else 1
+                        opponent['premios'] -= qtd
+                        if checar_vitoria(id_jogador_chave): st.session_state.vencedor = opponent['nome']
                         st.rerun()
                 else:
-                    novo_status = st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}")
-                    if novo_status != ativo.status:
-                        ativo.status = novo_status
-                        st.rerun()
-                    with st.popover("⚡ Energia / 🛠️ Tool"):
-                        t1, t2, t3 = st.tabs(["Ligar Energia", "Tirar Energia", "Equipar Tool"])
-                        with t1:
-                            escolha = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"add_e_{ativo.id_unico}")
-                            if st.button("Ligar", key=f"btn_add_e_{ativo.id_unico}"):
-                                ativo.anexar_energia(escolha)
-                                adicionar_log(f"⚡ {ativo.nome} ligou Energia {escolha}.", "energia")
-                                st.rerun()
-                        with t2:
-                            if ativo.energias:
-                                rem = st.selectbox("Tirar", list(ativo.energias.keys()), key=f"rem_e_{ativo.id_unico}")
-                                if st.button("Descartar", key=f"btn_rem_e_{ativo.id_unico}"):
-                                    ativo.remover_energia(rem)
-                                    adicionar_log(f"🗑️ {ativo.nome} descartou Energia {rem}.", "energia")
-                                    st.rerun()
-                        with t3:
-                            lista_ferramentas = list(TOOLS_DB.keys())
-                            escolha_tool = st.selectbox("Ferramenta:", lista_ferramentas, key=f"tool_{ativo.id_unico}")
-                            if st.button("Equipar", key=f"btn_tool_{ativo.id_unico}"):
-                                ativo.equipar_ferramenta(escolha_tool)
-                                adicionar_log(f"🛠️ {ativo.nome} equipou {escolha_tool}.", "tool")
-                                st.rerun()
-                    st.divider()
-                    c_atk, c_self = st.columns(2)
-                    with c_atk:
-                        dano = st.number_input("Dano", step=10, key=f"d_{ativo.id_unico}")
-                        if st.button("⚔️ ATACAR", key=f"atk_{ativo.id_unico}"):
-                            if ativo_oponente:
-                                mult = 2 if ativo.tipo == ativo_oponente.fraqueza else 1
-                                red = 30 if ativo.tipo == ativo_oponente.resistencia else 0
-                                final = (dano * mult) - red
-                                if final < 0: final = 0
-                                ativo_oponente.receber_dano(final)
-                                msg_extra = " (x2)" if mult > 1 else " (-30)" if red > 0 else ""
-                                adicionar_log(f"⚔️ {ativo.nome} atacou {ativo_oponente.nome} causando {final} de dano{msg_extra}!", "ataque")
-                                st.rerun()
-                    with c_self:
-                        if st.button("💔 -10 Self", key=f"s_{ativo.id_unico}"):
-                             ativo.receber_dano(10)
-                             st.rerun()
-                        
-                        # --- BOTÃO RECUAR (COM CUSTO) ---
-                        custo = ativo.recuo
-                        if ativo.ferramenta == "Rescue Board (-1 Recuo)": custo = max(0, custo - 1)
-                        if st.button(f"🏃 Recuar ({custo})", key=f"r_{ativo.id_unico}"):
-                            pode, msg = ativo.tentar_recuar()
-                            if pode:
-                                if player['banco']:
-                                    player['banco'].append(ativo)
-                                    player['ativo'] = None
-                                    adicionar_log(f"🏃 {ativo.nome} recuou (Pagou {custo}).", "neutro")
-                                    st.rerun()
-                                else: st.warning("Banco Vazio!")
-                            else: st.error(msg)
-
-    if player['banco']:
-        with st.expander(f"Banco ({len(player['banco'])})", expanded=True):
-            cols = st.columns(5)
-            for i, p in enumerate(player['banco']):
-                with cols[i]:
-                    st.image(p.imagem_url, caption=p.nome)
-                    st.caption(f"HP: {p.hp_atual}")
-                    
-                    if p.hp_atual == 0:
-                        st.error("💀")
-                        if st.button("💀 Descartar", key=f"ko_banco_{p.id_unico}"):
-                            player['banco'].pop(i)
-                            player['descarte'].append(p)
-                            adicionar_log(f"💀 {p.nome} (Banco) foi nocauteado!", "ko")
-                            qtd_premios = 2 if "ex" in p.nome.lower() else 1
-                            player_oponente['premios'] -= qtd_premios
-                            pl = "s" if qtd_premios > 1 else ""
-                            adicionar_log(f"🏆 {nome_oponente_display} pegou {qtd_premios} carta{pl} prêmio (Banco)!", "ko")
-                            if checar_vitoria(id_jogador_chave): st.session_state.vencedor = nome_oponente_display
+                    if st.button("⬆️", key=f"up_{p.id_unico}"):
+                        if not player['ativo']: 
+                            player['ativo'] = player['banco'].pop(i); st.rerun()
+                    if st.button("💔", key=f"dmg_b_{p.id_unico}"):
+                        p.receber_dano(10); st.rerun()
+                    if p.habilidade:
+                        ja_usou = p.id_unico in st.session_state.habilidades_usadas
+                        if st.button("✨", key=f"hbb_{p.id_unico}", disabled=ja_usou, help=p.habilidade):
+                            st.session_state.habilidades_usadas.append(p.id_unico)
+                            adicionar_log(f"✨ {p.nome} (Banco) usou hab.", "tool")
                             st.rerun()
-                    else:
-                        if st.button("⬆️", key=f"up_{p.id_unico}"):
-                            if not player['ativo']:
-                                player['ativo'] = player['banco'].pop(i)
-                                adicionar_log(f"🆙 {p.nome} subiu para o Ativo!", "neutro")
-                                st.rerun()
-                        if st.button("💔", key=f"db_{p.id_unico}"):
-                            p.receber_dano(10)
-                            st.rerun()
-                        
-                        if p.habilidade:
-                            ja_usou = p.id_unico in st.session_state.habilidades_usadas
-                            classe_btn = "hab-btn-used" if ja_usou else "hab-btn"
-                            label_btn = "✅" if ja_usou else "✨"
-                            st.markdown(f'<div class="{classe_btn}">', unsafe_allow_html=True)
-                            if st.button(label_btn, key=f"hab_banco_{p.id_unico}", help=p.habilidade, disabled=ja_usou):
-                                st.session_state.habilidades_usadas.append(p.id_unico)
-                                adicionar_log(f"✨ **{p.nome}** (Banco) ativou: **{p.habilidade}**!", "tool")
-                                st.rerun()
-                            st.markdown('</div>', unsafe_allow_html=True)
-    
-    if player['descarte']:
-        with st.expander(f"🗑️ Descarte ({len(player['descarte'])})"):
-            for carta in player['descarte']: st.write(f"💀 {carta.nome}")
 
-# --- 6. TELA PRINCIPAL ---
+# --- 7. TELA PRINCIPAL ---
 if st.session_state.vencedor:
     st.balloons()
-    st.markdown(f"<h1 style='text-align: center; font-size: 80px; color: gold !important;'>🏆 {st.session_state.vencedor} VENCEU! 🏆</h1>", unsafe_allow_html=True)
-    if st.button("Jogar Novamente", type="primary"):
-        st.session_state.clear()
-        st.rerun()
+    st.title(f"🏆 {st.session_state.vencedor} VENCEU! 🏆")
+    if st.button("Reiniciar"):
+        st.session_state.clear(); st.rerun()
 else:
-    st.title("🏆 Arena PokéBattle 9.0 (Clássico)")
     c1, c2 = st.columns(2)
-    with c1: renderizar_mesa_jogador("Treinador 1")
-    with c2: renderizar_mesa_jogador("Treinador 2")
-
-    st.divider()
-    st.subheader("📜 Log de Batalha")
-    log_html = "".join(st.session_state.log)
-    st.markdown(f"<div style='max-height: 200px; overflow-y: auto; background-color: rgba(0,0,0,0.5); border-radius: 10px;'>{log_html}</div>", unsafe_allow_html=True)
+    with c1: render_active_card("Treinador 1", "Treinador 2")
+    with c2: render_active_card("Treinador 2", "Treinador 1")
