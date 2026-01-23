@@ -314,7 +314,7 @@ else:
     with c_buttons:
         with st.popover("⚙️ Menu", use_container_width=True):
             st.markdown('<div class="menu-item">', unsafe_allow_html=True)
-            if st.button("🏆 Placar", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
+            if st.button("🏆 Ranking", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
             if st.button("🪙 Moeda", use_container_width=True): r = random.choice(["CARA", "COROA"]); st.toast(f"{r}"); adicionar_log("Moeda", f"Resultado: {r}")
             if st.session_state.log:
                 txt = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
@@ -571,4 +571,5 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
+
 
