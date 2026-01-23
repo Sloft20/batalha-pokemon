@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 18.3 (Fixed)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 18.3 (Final Align)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -29,19 +29,25 @@ def configurar_visual():
 
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
         
-        /* Menu Button (Popover) */
-        div[data-testid="stPopover"] button {
+        /* --- CORREÇÃO DE ALINHAMENTO DO MENU E TURNO --- */
+        
+        /* Força o botão Gatilho do Popover (Menu) a ser igual aos outros */
+        div[data-testid="stPopover"] > div > button {
             background-color: #1e293b !important;
             border: 1px solid #475569 !important;
             color: #e2e8f0 !important;
             min-height: 45px !important;
             height: 45px !important;
+            line-height: 1.2 !important;
             margin-top: 0px !important;
             width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        div[data-testid="stPopover"] button:hover { background-color: #334155 !important; }
+        div[data-testid="stPopover"] > div > button:hover { background-color: #334155 !important; }
 
-        /* Turn Button */
+        /* Botão Fim Turno */
         .turn-btn button { 
             background-color: #FFC107 !important; 
             color: #0f172a !important; 
@@ -50,19 +56,26 @@ def configurar_visual():
             height: 45px !important;
             margin-top: 0px !important;
             font-size: 15px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .turn-btn button:hover { background-color: #FFD54F !important; }
 
-        /* Menu Items */
-        .menu-btn button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
+        /* Itens DENTRO do Menu */
+        .menu-item button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
 
-        /* Attack Button */
+        /* Botão de Ataque (Lado a Lado) */
         .atk-btn > button { 
             background-color: #FFC107 !important; 
             color: #0f172a !important; 
             font-weight: bold; 
-            min-height: 40px !important;
+            min-height: 42px !important;
+            height: 42px !important;
+            margin-top: 0px !important;
         }
+        
+        /* Outros */
         .btn-red > button { background-color: #EF4444 !important; color: white; }
         .game-btn > button { background-color: #334155 !important; color: white; }
 
@@ -131,14 +144,11 @@ TOOLS_DB = {
 HISTORY_FILE = "historico.json"
 LISTA_DECKS = ["Charizard ex", "Dragapult ex", "Lugia VSTAR", "Gardevoir ex", "Raging Bolt ex", "Iron Thorns ex", "Outro"]
 
-# --- CORREÇÃO DO ERRO DE SINTAXE AQUI ---
 def carregar_historico():
     if not os.path.exists(HISTORY_FILE): return []
     try:
-        with open(HISTORY_FILE, "r") as f:
-            return json.load(f)
-    except:
-        return []
+        with open(HISTORY_FILE, "r") as f: return json.load(f)
+    except: return []
 
 def salvar_partida(vencedor, perdedor, deck_venc, deck_perd):
     hist = carregar_historico()
@@ -256,7 +266,7 @@ if st.session_state.tela_ranking:
     st.markdown('<div class="main-title">🏆 Ranking</div>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1, 5])
     with c1:
-        st.markdown('<div class="menu-btn">', unsafe_allow_html=True)
+        st.markdown('<div class="menu-item">', unsafe_allow_html=True)
         if st.button("⬅ Voltar", use_container_width=True): st.session_state.tela_ranking = False; st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     with c2:
@@ -290,12 +300,11 @@ else:
         st.markdown(f'<div class="turn-display">👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
     with c_buttons:
-        # MENU E TURNO LADO A LADO
         cm_menu, cm_turn = st.columns([1, 1.2])
         
         with cm_menu:
             with st.popover("⚙️ Menu", use_container_width=True):
-                st.markdown('<div class="menu-btn">', unsafe_allow_html=True)
+                st.markdown('<div class="menu-item">', unsafe_allow_html=True)
                 if st.button("🏆 Placar", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
                 if st.button("🪙 Moeda", use_container_width=True): r = random.choice(["CARA", "COROA"]); st.toast(f"{r}"); adicionar_log("Moeda", f"Resultado: {r}")
                 if st.session_state.log:
@@ -410,22 +419,26 @@ else:
                 else:
                     if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
                     
-                    # --- DANO E BOTÃO DE ATAQUE RESTAURADOS AO NORMAL ---
-                    dmg = st.number_input("Dano do ataque", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
-                    st.session_state.dmg_buffer[ativo.id_unico] = dmg
-
-                    st.markdown('<div class="atk-btn">', unsafe_allow_html=True)
-                    if st.button("⚔️ ATACAR", key=f"atk_{ativo.id_unico}"):
-                        op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
-                        op = st.session_state.Treinadores[op_key]
-                        if op['ativo']:
-                            mult = 2 if ativo.tipo == op['ativo'].fraqueza else 1
-                            red = 30 if ativo.tipo == op['ativo'].resistencia else 0
-                            final = max(0, (dmg * mult) - red)
-                            op['ativo'].receber_dano(final)
-                            adicionar_log("Ataque", f"{p['nome']}: {ativo.nome} causou {final} em {op['ativo'].nome}.")
-                            st.rerun()
-                    st.markdown('</div>', unsafe_allow_html=True)
+                    # --- DANO E BOTÃO DE ATAQUE LADO A LADO ---
+                    c_dmg, c_atk_btn = st.columns([1.5, 1])
+                    
+                    with c_dmg:
+                        dmg = st.number_input("Dano", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
+                        st.session_state.dmg_buffer[ativo.id_unico] = dmg
+                    
+                    with c_atk_btn:
+                        st.markdown('<div class="atk-btn">', unsafe_allow_html=True)
+                        if st.button("⚔️ ATACAR", key=f"atk_{ativo.id_unico}"):
+                            op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
+                            op = st.session_state.Treinadores[op_key]
+                            if op['ativo']:
+                                mult = 2 if ativo.tipo == op['ativo'].fraqueza else 1
+                                red = 30 if ativo.tipo == op['ativo'].resistencia else 0
+                                final = max(0, (dmg * mult) - red)
+                                op['ativo'].receber_dano(final)
+                                adicionar_log("Ataque", f"{p['nome']}: {ativo.nome} causou {final} em {op['ativo'].nome}.")
+                                st.rerun()
+                        st.markdown('</div>', unsafe_allow_html=True)
                     
                     with st.popover("⚡ Energia / Status / Tool"):
                         t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"])
@@ -480,7 +493,9 @@ else:
                             st.session_state.Treinadores[op_key]['premios'] -= 2 if "ex" in bp.nome.lower() else 1
                             if checar_vitoria(key):
                                 st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
-                                salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], st.session_state.Treinadores[op_key]['deck'], p['deck'])
+                                deck_v = st.session_state.Treinadores[op_key]['deck']
+                                deck_p = p['deck']
+                                salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], deck_v, deck_p)
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
                     else:
