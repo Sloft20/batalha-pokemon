@@ -6,9 +6,9 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 20.2 (Ultimate)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 21.0 (Log Update)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL ---
+# --- 0. CONFIGURAÇÃO VISUAL (Mantido v20.2) ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -29,42 +29,24 @@ def configurar_visual():
 
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
         
-        /* --- BOTÕES DO TOPO (ESTILO V20.0) --- */
-        /* Garante altura e estilo idêntico para Menu e Fim Turno */
+        /* Botões Topo (Pilha) */
         div[data-testid="stPopover"] > div > button, .turn-btn button {
-            min-height: 45px !important;
-            height: 45px !important;
-            width: 100% !important;
-            border-radius: 8px !important;
-            font-size: 15px !important;
-            margin-bottom: 5px !important; /* Espaço entre eles na pilha */
+            min-height: 45px !important; height: 45px !important; width: 100% !important;
+            border-radius: 8px !important; font-size: 15px !important; margin-bottom: 5px !important;
         }
-        
-        /* Cor do Menu */
         div[data-testid="stPopover"] > div > button {
-            background-color: #1e293b !important;
-            border: 1px solid #475569 !important;
-            color: #e2e8f0 !important;
+            background-color: #1e293b !important; border: 1px solid #475569 !important; color: #e2e8f0 !important;
         }
         div[data-testid="stPopover"] > div > button:hover { background-color: #334155 !important; }
-
-        /* Cor do Fim Turno */
         .turn-btn button { 
-            background-color: #FFC107 !important; 
-            color: #0f172a !important; 
-            font-weight: bold !important; 
-            border: 1px solid #FFC107 !important;
+            background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold !important; border: 1px solid #FFC107 !important;
         }
         .turn-btn button:hover { background-color: #FFD54F !important; }
 
-        /* --- BOTÃO DE ATACAR (ESTILO V20.1) --- */
+        /* Botão Atacar */
         .atk-btn > button { 
-            background-color: #FFC107 !important; 
-            color: #0f172a !important; 
-            font-weight: bold; 
-            min-height: 45px !important;
-            margin-top: 5px !important;
-            width: 100% !important;
+            background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; 
+            min-height: 45px !important; margin-top: 5px !important; width: 100% !important;
         }
 
         .menu-item button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
@@ -86,10 +68,8 @@ def configurar_visual():
         
         .main-title { font-size: 26px; font-weight: 800; color: #f1f5f9; line-height: 1.2; }
         .turn-display { font-size: 16px; font-weight: bold; color: #FFC107; margin-bottom: 10px; }
-        
         .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 15px; display: block; }
         .hp-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-in-out; }
-        
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
     </style>
     """, unsafe_allow_html=True)
@@ -141,12 +121,19 @@ def carregar_historico():
     try:
         with open(HISTORY_FILE, "r") as f:
             return json.load(f)
-    except:
-        return []
+    except: return []
 
-def salvar_partida(vencedor, perdedor, deck_venc, deck_perd):
+# --- SALVAR PARTIDA (AGORA SALVA O LOG) ---
+def salvar_partida(vencedor, perdedor, deck_venc, deck_perd, log_partida):
     hist = carregar_historico()
-    partida = {"data": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), "vencedor": vencedor, "perdedor": perdedor, "deck_vencedor": deck_venc, "deck_perdedor": deck_perd}
+    partida = {
+        "data": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "vencedor": vencedor,
+        "perdedor": perdedor,
+        "deck_vencedor": deck_venc,
+        "deck_perdedor": deck_perd,
+        "log": log_partida # Salva todo o histórico do chat
+    }
     hist.append(partida)
     with open(HISTORY_FILE, "w") as f: json.dump(hist, f)
 
@@ -246,10 +233,15 @@ def inicializar_jogo():
     if 'dmg_buffer' not in st.session_state: st.session_state.dmg_buffer = {}
     if 'tela_ranking' not in st.session_state: st.session_state.tela_ranking = False
 
-def adicionar_log(cat, msg):
+# --- LOG ATUALIZADO (ACEITA NOME DO JOGADOR) ---
+def adicionar_log(cat, msg, player=None):
     hora = datetime.datetime.now().strftime("%H:%M")
     css_class = {"Inicio": "tag-inicio", "Turno": "tag-turno", "Ataque": "tag-ataque", "Energia": "tag-energia", "Tool": "tag-tool", "KO": "tag-ko", "Status": "tag-status", "Moeda": "tag-tool"}.get(cat, "tag-log")
-    st.session_state.log.insert(0, f"<div class='log-container'><span style='color:#64748b;margin-right:8px'>[{hora}]</span><span class='tag-log {css_class}'>{cat}</span><span>{msg}</span></div>")
+    
+    # Adiciona o nome do jogador se fornecido
+    prefixo = f"<b>{player}</b>: " if player else ""
+    
+    st.session_state.log.insert(0, f"<div class='log-container'><span style='color:#64748b;margin-right:8px'>[{hora}]</span><span class='tag-log {css_class}'>{cat}</span><span>{prefixo}{msg}</span></div>")
 
 inicializar_jogo()
 
@@ -288,13 +280,13 @@ else:
     # =================================================================================
     # === TELA DE JOGO ===
     # =================================================================================
-    c_title, c_spacer, c_buttons = st.columns([2, 1, 1.2]) # Coluna direita mais estreita
+    c_title, c_spacer, c_buttons = st.columns([2, 1, 1.2])
     with c_title:
         st.markdown('<div class="main-title">⚔️ PokéBattle</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="turn-display">👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
     with c_buttons:
-        # MENU E TURNO EM PILHA (UM EM CIMA DO OUTRO)
+        # MENU E TURNO EM PILHA
         with st.popover("⚙️ Menu", use_container_width=True):
             st.markdown('<div class="menu-item">', unsafe_allow_html=True)
             if st.button("🏆 Placar", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
@@ -344,9 +336,19 @@ else:
             local = st.radio("Local", ["Banco", "Ativo"], horizontal=True)
             if st.button("Adicionar"):
                 novo = Pokemon(escolha, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados.get("recuo", 1), dados["img"], dados.get("hab"))
-                if local == "Ativo" and not player['ativo']: player['ativo'] = novo; st.rerun()
-                elif local == "Banco" and len(player['banco']) < 5: player['banco'].append(novo); st.rerun()
-                else: st.error("Ocupado!")
+                # CORREÇÃO DE LOG AQUI: Adicionar antes do rerun e com nome do jogador
+                if local == "Ativo":
+                    if not player['ativo']: 
+                        adicionar_log("Inicio", f"Colocou {escolha} como Ativo.", player['nome'])
+                        player['ativo'] = novo 
+                        st.rerun()
+                    else: st.error("Ocupado!")
+                elif local == "Banco":
+                    if len(player['banco']) < 5: 
+                        adicionar_log("Inicio", f"Colocou {escolha} no Banco.", player['nome'])
+                        player['banco'].append(novo) 
+                        st.rerun()
+                    else: st.error("Banco Cheio!")
         
         elif acao == "Evoluir":
             opcoes = []
@@ -358,7 +360,8 @@ else:
                     d = POKEDEX[escolha_evo]
                     obj = player['ativo'] if "[Ativo]" in alvo_str else player['banco'][int(alvo_str.split("]")[0].split(" ")[1])-1]
                     obj.evoluir_para(escolha_evo, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo",1), d["img"], d.get("hab"))
-                    adicionar_log("Energia", f"{obj.nome} evoluiu!"); st.rerun()
+                    adicionar_log("Energia", f"{obj.nome} evoluiu!", player['nome']) # Log com nome
+                    st.rerun()
 
     def checar_vitoria(id_oponente_chave):
         if st.session_state.Treinadores[id_oponente_chave]['premios'] <= 0: return True
@@ -399,16 +402,19 @@ else:
                     st.error("💀 NOCAUTEADO")
                     st.markdown('<div class="btn-red">', unsafe_allow_html=True)
                     if st.button("Enviar p/ Descarte", key=f"ko_{ativo.id_unico}"):
-                        p['descarte'].append(ativo); p['ativo'] = None; adicionar_log("KO", f"💀 {ativo.nome} caiu!")
+                        p['descarte'].append(ativo); p['ativo'] = None; 
+                        adicionar_log("KO", f"💀 {ativo.nome} caiu!", p['nome']) # Log KO
                         op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                         st.session_state.Treinadores[op_key]['premios'] -= 2 if "ex" in ativo.nome.lower() else 1
                         if checar_vitoria(key):
                             st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
-                            salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], st.session_state.Treinadores[op_key]['deck'], p['deck'])
+                            # SALVAR COM LOG AQUI
+                            salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], st.session_state.Treinadores[op_key]['deck'], p['deck'], list(st.session_state.log))
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 else:
                     if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
+                    
                     dmg = st.number_input("Dano do ataque", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
                     st.session_state.dmg_buffer[ativo.id_unico] = dmg
 
@@ -421,7 +427,7 @@ else:
                             red = 30 if ativo.tipo == op['ativo'].resistencia else 0
                             final = max(0, (dmg * mult) - red)
                             op['ativo'].receber_dano(final)
-                            adicionar_log("Ataque", f"{p['nome']}: {ativo.nome} causou {final} em {op['ativo'].nome}.")
+                            adicionar_log("Ataque", f"{ativo.nome} causou {final} em {op['ativo'].nome}.", p['nome']) # Log Atk
                             st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                     
@@ -431,14 +437,23 @@ else:
                             escolha_e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"ae_{ativo.id_unico}")
                             c1, c2 = st.columns(2)
                             with c1: 
-                                if st.button("➕", key=f"ba_{ativo.id_unico}"): ativo.anexar_energia(escolha_e); st.rerun()
+                                if st.button("➕", key=f"ba_{ativo.id_unico}"): 
+                                    ativo.anexar_energia(escolha_e)
+                                    adicionar_log("Energia", f"Ligou {escolha_e}", p['nome'])
+                                    st.rerun()
                             with c2:
-                                if st.button("➖", key=f"br_{ativo.id_unico}"): ativo.remover_energia(escolha_e); st.rerun()
+                                if st.button("➖", key=f"br_{ativo.id_unico}"): 
+                                    ativo.remover_energia(escolha_e)
+                                    adicionar_log("Energia", f"Removeu {escolha_e}", p['nome'])
+                                    st.rerun()
                         with t2:
                             st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}", on_change=lambda: setattr(ativo, 'status', st.session_state[f"st_{ativo.id_unico}"]))
                         with t3:
                             tl = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tl_{ativo.id_unico}")
-                            if st.button("Equipar", key=f"btl_{ativo.id_unico}"): ativo.equipar_ferramenta(tl); st.rerun()
+                            if st.button("Equipar", key=f"btl_{ativo.id_unico}"): 
+                                ativo.equipar_ferramenta(tl)
+                                adicionar_log("Tool", f"Equipou {tl}", p['nome'])
+                                st.rerun()
 
                     if ativo.habilidade:
                         ja = ativo.id_unico in st.session_state.habilidades_usadas
@@ -447,7 +462,7 @@ else:
                         st.markdown(f'<div class="{cls}">', unsafe_allow_html=True)
                         if st.button(lbl, key=f"hab_{ativo.id_unico}", disabled=ja):
                             st.session_state.habilidades_usadas.append(ativo.id_unico)
-                            adicionar_log("Tool", f"✨ {ativo.nome} usou {ativo.habilidade}.")
+                            adicionar_log("Tool", f"{ativo.nome} usou habilidade.", p['nome'])
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
                     
@@ -456,7 +471,10 @@ else:
                     if st.button(f"🏃 Recuar ({custo})", key=f"run_{ativo.id_unico}"):
                         pode, msg = ativo.tentar_recuar()
                         if pode:
-                            if p['banco']: p['banco'].append(ativo); p['ativo'] = None; adicionar_log("Inicio", f"🏃 {ativo.nome} recuou."); st.rerun()
+                            if p['banco']: 
+                                p['banco'].append(ativo); p['ativo'] = None
+                                adicionar_log("Inicio", f"{ativo.nome} recuou.", p['nome'])
+                                st.rerun()
                             else: st.warning("Banco vazio!")
                         else: st.error(msg)
 
@@ -473,21 +491,23 @@ else:
                     if bp.hp_atual == 0:
                         st.markdown('<div class="btn-red">', unsafe_allow_html=True)
                         if st.button("💀", key=f"ko_b_{bp.id_unico}"):
-                            p['banco'].pop(i); p['descarte'].append(bp); adicionar_log("KO", f"💀 {bp.nome} (Banco) caiu!")
+                            p['banco'].pop(i); p['descarte'].append(bp); 
+                            adicionar_log("KO", f"💀 {bp.nome} (Banco) caiu!", p['nome'])
                             op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                             st.session_state.Treinadores[op_key]['premios'] -= 2 if "ex" in bp.nome.lower() else 1
                             if checar_vitoria(key):
                                 st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
-                                deck_v = st.session_state.Treinadores[op_key]['deck']
-                                deck_p = p['deck']
-                                salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], deck_v, deck_p)
+                                salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], st.session_state.Treinadores[op_key]['deck'], p['deck'], list(st.session_state.log))
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
                     else:
                         c_up, c_dmg = st.columns(2)
                         with c_up: 
                             if st.button("⬆️", key=f"up_{bp.id_unico}"): 
-                                if not p['ativo']: p['ativo'] = p['banco'].pop(i); st.rerun()
+                                if not p['ativo']: 
+                                    adicionar_log("Inicio", f"{bp.nome} subiu para o Ativo.", p['nome'])
+                                    p['ativo'] = p['banco'].pop(i)
+                                    st.rerun()
                         with c_dmg: 
                             if st.button("💔", key=f"dmb_{bp.id_unico}"): bp.receber_dano(10); st.rerun()
                         
@@ -495,7 +515,10 @@ else:
                             t1, t2, t3 = st.tabs(["Add", "Del", "Tool"])
                             with t1:
                                 eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀"], key=f"aeb_{bp.id_unico}")
-                                if st.button("Add", key=f"baeb_{bp.id_unico}"): bp.anexar_energia(eb); st.rerun()
+                                if st.button("Add", key=f"baeb_{bp.id_unico}"): 
+                                    bp.anexar_energia(eb)
+                                    adicionar_log("Energia", f"Ligou {eb} no banco", p['nome'])
+                                    st.rerun()
                             with t2:
                                 if bp.energias:
                                     rb = st.selectbox("Rem", list(bp.energias.keys()), key=f"reb_{bp.id_unico}")
@@ -508,7 +531,7 @@ else:
                             ja = bp.id_unico in st.session_state.habilidades_usadas
                             if st.button("✨", key=f"hbb_{bp.id_unico}", disabled=ja, help=bp.habilidade):
                                 st.session_state.habilidades_usadas.append(bp.id_unico)
-                                adicionar_log("Tool", f"✨ {bp.nome} (Banco) hab.")
+                                adicionar_log("Tool", f"✨ {bp.nome} (Banco) hab.", p['nome'])
                                 st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
