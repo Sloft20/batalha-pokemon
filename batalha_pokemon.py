@@ -132,7 +132,7 @@ TOOLS_DB = {
 }
 
 HISTORY_FILE = "historico.json"
-LISTA_DECKS = ["Charizard ex", "Dragapult ex", "Lugia VSTAR", "Gardevoir ex", "Raging Bolt ex", "Iron Thorns ex", "Outro"]
+LISTA_DECKS = ["Charizard ex", "Dragapult ex", "Gardevoir ex", "Outro"]
 
 def carregar_historico():
     if not os.path.exists(HISTORY_FILE): return []
@@ -577,6 +577,7 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
+
 
 
 
