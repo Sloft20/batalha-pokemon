@@ -3,103 +3,116 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 8.0 (Dark UI)", page_icon="⚔️", layout="wide")
+# Ajuste de layout para 'wide' e ícone
+st.set_page_config(page_title="PokéBattle 8.1 (Stable UI)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (TEMA DARK + TOP BAR) ---
+# --- 0. CONFIGURAÇÃO VISUAL (DARK + COMPACTO/MENOS ZOOM) ---
 def configurar_visual():
     st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap');
         html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
 
-        /* Fundo Geral (Dark Blue/Navy) */
+        /* --- 1. REDUÇÃO GERAL DE ESPAÇAMENTO (O EFEITO "MENOS ZOOM") --- */
+        /* Diminui o padding do container principal do Streamlit */
+        .block-container {
+            padding-top: 2rem !important;
+            padding-bottom: 1rem !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            max-width: 95% !important; /* Usa mais a largura da tela */
+        }
+        /* Diminui o espaço entre os elementos */
+        div[data-testid="column"] {
+            gap: 0.5rem !important; 
+        }
+        /* Reduz tamanho dos títulos para ficar proporcional */
+        h2 { font-size: 1.6rem !important; }
+        h3 { font-size: 1.3rem !important; }
+        h4 { font-size: 1.1rem !important; }
+        p, div, label, button { font-size: 14px !important; }
+
+        /* --- 2. TEMA DARK --- */
+        /* Fundo Geral */
         [data-testid="stAppViewContainer"] {
             background-color: #0E1117;
             background-image: radial-gradient(circle at 50% 50%, #1c2331 0%, #0E1117 100%);
             color: #ffffff;
         }
-        
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
 
-        /* Estilo dos Containers (Vidro Escuro) */
+        /* Containers (Vidro Escuro) */
         div[data-testid="stVerticalBlockBorderWrapper"], div[data-testid="stExpander"] {
             background-color: #161b22;
             border: 1px solid #30363d;
-            border-radius: 10px;
+            border-radius: 8px; /* Bordas ligeiramente menos arredondadas */
+            padding: 10px !important; /* Menos padding interno */
         }
 
-        h1, h2, h3, p, span, div, label {
-            color: #E6EDF3 !important;
-        }
+        h1, h2, h3, h4, p, span, div, label { color: #E6EDF3 !important; }
 
-        /* Inputs Escuros */
+        /* Inputs Escuros e mais compactos */
         .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
             background-color: #0d1117 !important;
             color: #c9d1d9 !important;
             border: 1px solid #30363d !important;
-            border-radius: 6px;
+            border-radius: 4px;
+            min-height: 32px !important; /* Inputs mais finos */
         }
+        /* Ajuste fino para o selectbox não ficar desalinhado */
+        .stSelectbox div[data-baseweb="select"] { margin-top: 0px !important; }
 
-        /* --- ESTILIZAÇÃO DOS BOTÕES (BASEADO NA IMAGEM) --- */
-        
+        /* --- 3. BOTÕES (MAIS COMPACTOS) --- */
         /* Botão Padrão (Dark) */
         .stButton > button {
             background-color: #21262d !important;
             color: #c9d1d9 !important;
             border: 1px solid #30363d !important;
-            border-radius: 6px;
+            border-radius: 4px;
             font-weight: 600;
+            padding: 0.4rem 0.8rem !important; /* Botões mais finos na altura */
             transition: all 0.2s;
+            font-size: 13px !important; /* Fonte ligeiramente menor nos botões */
         }
         .stButton > button:hover {
             background-color: #30363d !important;
             border-color: #8b949e !important;
         }
 
-        /* Botão AMARELO (Ação Principal/Fim de Turno/Adicionar) */
-        .primary-btn > button {
-            background-color: #FFCB05 !important;
-            color: #21262d !important;
-            border: none !important;
-        }
-        .primary-btn > button:hover {
-            background-color: #e6b800 !important;
-        }
+        /* Cores Específicas */
+        .primary-btn > button { background-color: #FFCB05 !important; color: #21262d !important; border: none !important; }
+        .primary-btn > button:hover { background-color: #e6b800 !important; }
 
-        /* Botão VERMELHO (Reset/Dano) */
-        .danger-btn > button {
-            background-color: #da3633 !important;
-            color: white !important;
-            border: none !important;
-        }
+        .danger-btn > button { background-color: #da3633 !important; color: white !important; border: none !important; }
+        
+        .turn-btn > button { background-color: #4CAF50 !important; color: white !important; border: none !important; }
+        .turn-btn > button:hover { background-color: #45a049 !important; }
 
-        /* Botão AZUL (Habilidade) */
-        .hab-btn > button {
-            background-color: #238636 !important; /* Verde/Azul Github style */
-            color: white !important;
-        }
+        .hab-btn > button { background-color: #238636 !important; color: white !important; }
 
         /* Container de Criação (Faixa Azul) */
         .creation-container {
             background-color: #1f2937;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 5px solid #FFCB05;
-            margin-bottom: 20px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-left: 4px solid #FFCB05;
+            margin-bottom: 15px;
+            margin-top: 10px;
         }
 
         .log-entry {
-            padding: 4px;
+            padding: 2px 4px;
             border-bottom: 1px solid #30363d;
-            font-size: 13px;
+            font-size: 12px;
             font-family: monospace;
         }
+        hr { margin: 0.8em 0 !important; border-color: #30363d; }
     </style>
     """, unsafe_allow_html=True)
 
 configurar_visual()
 
-# --- 1. BANCO DE DADOS (COM CUSTO DE RECUO) ---
+# --- 1. BANCO DE DADOS ---
 POKEDEX = {
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
     "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconnaissance", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
@@ -146,9 +159,9 @@ class Pokemon:
         self.tipo = tipo
         self.fraqueza = fraqueza
         self.resistencia = resistencia
-        self.recuo = recuo # Custo de Recuo
+        self.recuo = recuo
         self.status = "Saudável"
-        self.energias = {} # Ex: {"Fogo": 2}
+        self.energias = {}
         self.ferramenta = "Nenhuma"
         if habilidade: self.habilidade = habilidade
         else: self.habilidade = POKEDEX[nome].get("hab") if nome in POKEDEX else None
@@ -193,45 +206,17 @@ class Pokemon:
                 logs.append(f"🪙 Deu COROA! {self.nome} continua dormindo.")
         return logs
 
-    def evoluir_para(self, novo_nome, novo_hp, novo_tipo, nova_fraqueza, nova_resistencia, novo_recuo, nova_img, nova_hab=None):
-        dano_sofrido = self.hp_max - self.hp_atual
-        self.nome = novo_nome
-        self.hp_base = int(novo_hp)
-        bonus_ferramenta = TOOLS_DB[self.ferramenta]["hp_bonus"]
-        self.hp_max = self.hp_base + bonus_ferramenta
-        self.tipo = novo_tipo
-        self.fraqueza = nova_fraqueza
-        self.resistencia = nova_resistencia
-        self.recuo = novo_recuo
-        if nova_img: self.imagem_url = nova_img
-        self.habilidade = nova_hab if nova_hab else (POKEDEX[novo_nome].get("hab") if novo_nome in POKEDEX else None)
-        self.hp_atual = self.hp_max - dano_sofrido
-        if self.hp_atual < 0: self.hp_atual = 0
-        self.status = "Saudável"
-
     def anexar_energia(self, tipo_energia):
         if tipo_energia in self.energias: self.energias[tipo_energia] += 1
         else: self.energias[tipo_energia] = 1
 
-    def remover_energia(self, tipo_energia):
-        if tipo_energia in self.energias:
-            self.energias[tipo_energia] -= 1
-            if self.energias[tipo_energia] <= 0: del self.energias[tipo_energia]
-            return True
-        return False
-    
-    # --- NOVO: LÓGICA DE RECUO ---
     def tentar_recuar(self):
         total_energias = sum(self.energias.values())
         custo = self.recuo
-        
-        # Rescue Board reduz recuo em 1
         if self.ferramenta == "Rescue Board (-1 Recuo)":
-            custo -= 1
-            if custo < 0: custo = 0
+            custo = max(0, custo - 1)
             
         if total_energias >= custo:
-            # Remove energias (Simples: remove as primeiras que achar)
             removidas = 0
             chaves = list(self.energias.keys())
             for tipo in chaves:
@@ -239,7 +224,6 @@ class Pokemon:
                     self.energias[tipo] -= 1
                     removidas += 1
                 if self.energias[tipo] <= 0: del self.energias[tipo]
-            
             self.status = "Saudável"
             return True, f"Pagou {custo} de energia e recuou."
         else:
@@ -265,44 +249,53 @@ def adicionar_log(mensagem, tipo="neutro"):
 
 inicializar_jogo()
 
-# --- 4. TOP BAR (LAYOUT BASEADO NA IMAGEM) ---
-col_title, col_actions = st.columns([1.5, 2.5])
+# --- 4. TOP BAR (LAYOUT ESTÁVEL E COMPACTO) ---
+# Divide a tela: Título/Jogadores na esquerda, Botões na direita
+col_title_area, col_buttons_area = st.columns([1.2, 2.8])
 
-with col_title:
-    st.markdown("## ⚔️ PokéBattle — Registro TCG")
+with col_title_area:
+    st.markdown("### ⚔️ PokéBattle TCG")
     
-    # Nomes dos Jogadores (Lado Esquerdo, abaixo do título)
-    with st.expander("👤 Jogadores (Editar)", expanded=False):
+    # Expander mais compacto para nomes
+    with st.expander("👥 Jogadores", expanded=False):
         c1, c2 = st.columns(2)
-        n1 = c1.text_input("Treinador 1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
-        n2 = c2.text_input("Treinador 2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
-        if c1.button("Salvar Nomes"):
+        n1 = c1.text_input("J1", value=st.session_state.Treinadores["Treinador 1"]["nome"], label_visibility="collapsed")
+        n2 = c2.text_input("J2", value=st.session_state.Treinadores["Treinador 2"]["nome"], label_visibility="collapsed")
+        if c1.button("Salvar"):
             st.session_state.Treinadores["Treinador 1"]["nome"] = n1
             st.session_state.Treinadores["Treinador 2"]["nome"] = n2
             st.rerun()
             
-    # Indicador de Turno
     t_atual = st.session_state.Treinadores[st.session_state.turno_atual]['nome']
-    st.markdown(f"**Vez de:** <span style='color:#FFCB05'>{t_atual}</span>", unsafe_allow_html=True)
+    st.markdown(f"<small>Vez de: <span style='color:#FFCB05; font-weight:bold;'>{t_atual}</span></small>", unsafe_allow_html=True)
 
-with col_actions:
-    # Botões Superiores (Direita)
-    c_rank, c_log, c_clear, c_turn, c_new, c_save = st.columns(6)
+with col_buttons_area:
+    # AQUI ESTÁ A CORREÇÃO: Definimos as colunas UMA VEZ SÓ para elas sempre existirem.
+    # Usamos larguras fixas pequenas para manter tudo alinhado à direita.
+    # O primeiro '0.1' é um espaçador para empurrar tudo para a direita.
+    c_space, c_rank, c_log, c_clear, c_turn, c_reset = st.columns([0.1, 1, 1, 1, 1.3, 1])
     
     with c_rank:
-        if st.button("🏆 Placar"):
+        if st.button("🏆 Placar", use_container_width=True):
             st.toast(f"P1: {st.session_state.Treinadores['Treinador 1']['premios']} | P2: {st.session_state.Treinadores['Treinador 2']['premios']}")
+    
     with c_log:
+        # O botão sempre existe, mas fica desativado se não tiver log
         if st.session_state.log:
             txt = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
-            st.download_button("⬇️ Log", txt, "log.txt")
+            st.download_button("⬇️ Log", txt, "log.txt", use_container_width=True)
+        else:
+            st.button("⬇️ Log", disabled=True, use_container_width=True)
+            
     with c_clear:
-        if st.button("🧹 Limpar"):
+        # O botão sempre existe
+        if st.button("🧹 Limpar", use_container_width=True, disabled=not st.session_state.log):
             st.session_state.log = []
             st.rerun()
+            
     with c_turn:
-        st.markdown('<div class="primary-btn">', unsafe_allow_html=True)
-        if st.button("➡ Fim Turno", help="Passa a vez + Checkup"):
+        st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
+        if st.button("➡ Fim Turno", help="Passa a vez + Checkup", use_container_width=True):
             # Checkup Auto
             for p in ["Treinador 1", "Treinador 2"]:
                 if st.session_state.Treinadores[p]['ativo']:
@@ -318,28 +311,24 @@ with col_actions:
             adicionar_log(f"🕒 Fim de turno de {st.session_state.Treinadores[antigo]['nome']}.", "neutro")
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-    with c_new:
+        
+    with c_reset:
         st.markdown('<div class="danger-btn">', unsafe_allow_html=True)
-        if st.button("🔄 Reset"):
+        if st.button("🔄 Reset", use_container_width=True):
             st.session_state.clear()
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-    with c_save:
-        if st.button("💾 Salvar"):
-            st.balloons() # Apenas visual por enquanto
 
-# --- 5. ÁREA DE CRIAÇÃO (FAIXA AZUL/ESCURA) ---
+# --- 5. ÁREA DE CRIAÇÃO (COMPACTA) ---
 st.markdown('<div class="creation-container">', unsafe_allow_html=True)
-st.markdown("#### 📦 Adicionar Pokémon (Rápido)")
-c_cri_1, c_cri_2, c_cri_3, c_cri_4, c_cri_5 = st.columns([1.5, 2, 2, 1.5, 1])
+st.markdown("##### 📦 Adicionar Pokémon (Rápido)")
+c_cri_1, c_cri_2, c_cri_3, c_cri_4, c_cri_5 = st.columns([1.2, 1.8, 2, 1.2, 1])
 
 with c_cri_1:
-    dono = st.selectbox("Jogador", ["Treinador 1", "Treinador 2"], format_func=lambda x: st.session_state.Treinadores[x]['nome'], label_visibility="collapsed")
+    dono = st.selectbox("Dono", ["Treinador 1", "Treinador 2"], format_func=lambda x: st.session_state.Treinadores[x]['nome'], label_visibility="collapsed")
 with c_cri_2:
-    # Filtro de Deck (Simulado com selectbox de tipos ou nomes)
-    deck_filter = st.selectbox("Deck/Tipo", ["Todos"] + sorted(list(set([v['tipo'] for k,v in POKEDEX.items()]))), label_visibility="collapsed")
+    deck_filter = st.selectbox("Tipo Filter", ["Todos"] + sorted(list(set([v['tipo'] for k,v in POKEDEX.items()]))), label_visibility="collapsed")
 with c_cri_3:
-    # Filtra pokedex
     lista_pokes = list(POKEDEX.keys())
     if deck_filter != "Todos":
         lista_pokes = [k for k,v in POKEDEX.items() if v['tipo'] == deck_filter]
@@ -350,18 +339,15 @@ with c_cri_5:
     st.markdown('<div class="primary-btn">', unsafe_allow_html=True)
     if st.button("+ Add", use_container_width=True):
         dados = POKEDEX[escolha]
-        # Criação
         novo = Pokemon(escolha, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados.get("recuo", 1), dados["img"], dados.get("hab"))
         player = st.session_state.Treinadores[dono]
-        
         if dest == "Ativo" and player['ativo'] is None:
             player['ativo'] = novo
             adicionar_log(f"🆕 {escolha} entrou como Ativo de {player['nome']}.", "neutro")
         elif len(player['banco']) < 5:
             player['banco'].append(novo)
             adicionar_log(f"🆕 {escolha} entrou no Banco de {player['nome']}.", "neutro")
-        else:
-            st.error("Sem espaço!")
+        else: st.error("Cheio!")
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
@@ -375,47 +361,38 @@ def checar_vitoria(id_oponente_chave):
 
 def renderizar_mesa_jogador(id_jogador_chave):
     player = st.session_state.Treinadores[id_jogador_chave]
-    
-    # Visual da vez
     eh_vez = (st.session_state.turno_atual == id_jogador_chave)
     borda = "2px solid #FFCB05" if eh_vez else "1px solid #30363d"
     
-    st.markdown(f"<div style='border:{borda}; background-color:#0d1117; padding:10px; border-radius:10px; margin-bottom:10px;'>", unsafe_allow_html=True)
+    st.markdown(f"<div style='border:{borda}; background-color:#0d1117; padding:8px; border-radius:8px; margin-bottom:8px;'>", unsafe_allow_html=True)
     
-    # Header do Jogador (Nome + Prêmios)
     c_head_1, c_head_2 = st.columns([3, 1])
-    c_head_1.markdown(f"<h3 style='margin:0;'>{player['nome']}</h3>", unsafe_allow_html=True)
-    c_head_2.markdown(f"<h4 style='margin:0; text-align:right;'>{player['premios']} 🎴</h4>", unsafe_allow_html=True)
+    c_head_1.markdown(f"<h4 style='margin:0;'>{player['nome']}</h4>", unsafe_allow_html=True)
+    c_head_2.markdown(f"<small style='float:right;'>{player['premios']} 🎴</small>", unsafe_allow_html=True)
     
     ativo = player['ativo']
     if ativo:
         st.markdown("---")
         with st.container():
-            col_img, col_infos = st.columns([1, 2])
+            col_img, col_infos = st.columns([0.8, 2.2])
             with col_img:
                 st.image(ativo.imagem_url, use_container_width=True)
-                # Display de Energia e Status
-                status_icon = "✅" if ativo.status == "Saudável" else ativo.status[-1]
-                st.caption(f"{status_icon} {ativo.status}")
-                
+                st.caption(f"{ativo.status}")
                 txt_en = " ".join([f"{k.split()[-1]}x{v}" for k,v in ativo.energias.items()])
-                if txt_en: st.markdown(f"**⚡ {txt_en}**")
-                
-                # Botão Habilidade
+                if txt_en: st.markdown(f"<small>⚡ {txt_en}</small>", unsafe_allow_html=True)
                 if ativo.habilidade:
                     ja_usou = ativo.id_unico in st.session_state.habilidades_usadas
                     cls = "stButton" if ja_usou else "hab-btn"
-                    lbl = "✅ Usado" if ja_usou else f"✨ {ativo.habilidade}"
+                    lbl = "✅" if ja_usou else f"✨ {ativo.habilidade}"
                     st.markdown(f'<div class="{cls}">', unsafe_allow_html=True)
-                    if st.button(lbl, key=f"hat_{ativo.id_unico}", disabled=ja_usou):
+                    if st.button(lbl, key=f"hat_{ativo.id_unico}", disabled=ja_usou, use_container_width=True):
                         st.session_state.habilidades_usadas.append(ativo.id_unico)
                         adicionar_log(f"✨ {ativo.nome} usou {ativo.habilidade}!", "tool")
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
 
             with col_infos:
-                # Info Principal
-                st.markdown(f"**{ativo.nome}** <span style='float:right'>HP: {ativo.hp_atual}/{ativo.hp_max}</span>", unsafe_allow_html=True)
+                st.markdown(f"**{ativo.nome}** <span style='float:right; font-size:12px;'>HP: {ativo.hp_atual}/{ativo.hp_max}</span>", unsafe_allow_html=True)
                 st.progress(ativo.hp_atual / ativo.hp_max)
                 
                 if ativo.hp_atual == 0:
@@ -424,7 +401,6 @@ def renderizar_mesa_jogador(id_jogador_chave):
                         player['descarte'].append(ativo)
                         player['ativo'] = None
                         adicionar_log(f"💀 {ativo.nome} caiu!", "ko")
-                        # Prêmios
                         op_key = "Treinador 2" if id_jogador_chave == "Treinador 1" else "Treinador 1"
                         qtd = 2 if "ex" in ativo.nome.lower() else 1
                         st.session_state.Treinadores[op_key]['premios'] -= qtd
@@ -432,13 +408,11 @@ def renderizar_mesa_jogador(id_jogador_chave):
                         if checar_vitoria(id_jogador_chave): st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
                         st.rerun()
                 else:
-                    # Controles de Batalha
                     c_act_1, c_act_2, c_act_3 = st.columns(3)
-                    with c_act_1:
-                        dmg = st.number_input("Dano", step=10, key=f"dmg_{ativo.id_unico}", label_visibility="collapsed")
+                    with c_act_1: dmg = st.number_input("Dano", step=10, key=f"dmg_{ativo.id_unico}", label_visibility="collapsed")
                     with c_act_2:
                         st.markdown('<div class="primary-btn">', unsafe_allow_html=True)
-                        if st.button("⚔️ Atacar", key=f"atk_{ativo.id_unico}"):
+                        if st.button("⚔️ Atacar", key=f"atk_{ativo.id_unico}", use_container_width=True):
                             op_key = "Treinador 2" if id_jogador_chave == "Treinador 1" else "Treinador 1"
                             op_ativo = st.session_state.Treinadores[op_key]['ativo']
                             if op_ativo:
@@ -451,11 +425,9 @@ def renderizar_mesa_jogador(id_jogador_chave):
                                 st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
                     with c_act_3:
-                        # --- LÓGICA DE RECUO COM CUSTO ---
                         custo = ativo.recuo
                         if ativo.ferramenta == "Rescue Board (-1 Recuo)": custo = max(0, custo - 1)
-                        
-                        if st.button(f"🏃 Recuar ({custo})", key=f"run_{ativo.id_unico}"):
+                        if st.button(f"🏃 Recuar ({custo})", key=f"run_{ativo.id_unico}", use_container_width=True):
                             pode, msg = ativo.tentar_recuar()
                             if pode:
                                 if player['banco']:
@@ -463,13 +435,10 @@ def renderizar_mesa_jogador(id_jogador_chave):
                                     player['ativo'] = None
                                     adicionar_log(f"🏃 {ativo.nome} recuou (Pagou {custo}).", "neutro")
                                     st.rerun()
-                                else:
-                                    st.warning("Banco vazio!")
-                            else:
-                                st.error(msg)
+                                else: st.warning("Banco vazio!")
+                            else: st.error(msg)
 
-                    # Tools e Energia
-                    with st.popover("⚡ Energia / Status / Tool"):
+                    with st.popover("⚡ / 🛠️ / Status"):
                         st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}", on_change=lambda: setattr(ativo, 'status', st.session_state[f"st_{ativo.id_unico}"]))
                         e = st.selectbox("Add Energia", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"ae_{ativo.id_unico}")
                         if st.button("Adicionar", key=f"bae_{ativo.id_unico}"): 
@@ -480,20 +449,18 @@ def renderizar_mesa_jogador(id_jogador_chave):
                             ativo.equipar_ferramenta(tl)
                             st.rerun()
 
-    # Banco
     if player['banco']:
         st.markdown("---")
         st.caption(f"Banco ({len(player['banco'])})")
         cols = st.columns(5)
         for i, p in enumerate(player['banco']):
             with cols[i]:
-                st.image(p.imagem_url)
+                st.image(p.imagem_url, use_container_width=True)
                 if p.hp_atual == 0:
-                    if st.button("💀 KO", key=f"kob_{p.id_unico}"):
+                    if st.button("💀 KO", key=f"kob_{p.id_unico}", use_container_width=True):
                         player['banco'].pop(i)
                         player['descarte'].append(p)
                         adicionar_log(f"💀 {p.nome} (Banco) morreu.", "ko")
-                        # Prêmios
                         op_key = "Treinador 2" if id_jogador_chave == "Treinador 1" else "Treinador 1"
                         qtd = 2 if "ex" in p.nome.lower() else 1
                         st.session_state.Treinadores[op_key]['premios'] -= qtd
@@ -501,24 +468,23 @@ def renderizar_mesa_jogador(id_jogador_chave):
                         if checar_vitoria(id_jogador_chave): st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
                         st.rerun()
                 else:
-                    if st.button("⬆️", key=f"up_{p.id_unico}"):
+                    if st.button("⬆️", key=f"up_{p.id_unico}", use_container_width=True):
                         if not player['ativo']:
                             player['ativo'] = player['banco'].pop(i)
                             adicionar_log(f"🆙 {p.nome} subiu!", "neutro")
                             st.rerun()
-                    if st.button("💔", key=f"dmb_{p.id_unico}"):
+                    if st.button("💔", key=f"dmb_{p.id_unico}", use_container_width=True):
                         p.receber_dano(10)
                         st.rerun()
                     if p.habilidade:
                         ja_usou = p.id_unico in st.session_state.habilidades_usadas
                         cls = "stButton" if ja_usou else "hab-btn"
                         st.markdown(f'<div class="{cls}">', unsafe_allow_html=True)
-                        if st.button("✨", key=f"hb_{p.id_unico}", help=p.habilidade, disabled=ja_usou):
+                        if st.button("✨", key=f"hb_{p.id_unico}", help=p.habilidade, disabled=ja_usou, use_container_width=True):
                             st.session_state.habilidades_usadas.append(p.id_unico)
                             adicionar_log(f"✨ {p.nome} (Banco) usou hab.", "tool")
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
-
     st.markdown("</div>", unsafe_allow_html=True)
 
 # --- 7. TELA PRINCIPAL ---
@@ -532,8 +498,3 @@ else:
     c1, c2 = st.columns(2)
     with c1: renderizar_mesa_jogador("Treinador 1")
     with c2: renderizar_mesa_jogador("Treinador 2")
-    
-    # Log no rodapé (opcional, já que tem botão de download)
-    with st.expander("📜 Histórico Recente"):
-        log_html = "".join(st.session_state.log[:10]) # Mostra só os ultimos 10
-        st.markdown(f"{log_html}", unsafe_allow_html=True)
