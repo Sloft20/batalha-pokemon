@@ -3,7 +3,7 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 12.1 (Clean Turn)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 12.2 (PT-BR)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -40,7 +40,7 @@ def configurar_visual():
             border-radius: 6px;
         }
 
-        /* --- BOTÕES DO TOPO --- */
+        /* Botões Topo */
         .top-btn > button {
             border-radius: 6px;
             border: 1px solid #475569 !important;
@@ -48,11 +48,11 @@ def configurar_visual():
             color: #e2e8f0 !important;
             font-size: 13px !important;
             padding: 0px 10px !important;
-            min-height: 40px !important; /* Altura padrão */
+            min-height: 40px !important;
         }
         .top-btn > button:hover { background-color: #334155 !important; border-color: #94a3b8 !important; }
 
-        /* Botão FIM TURNO (Destaque) */
+        /* Botão FIM TURNO */
         .turn-btn > button {
             background-color: #FFC107 !important;
             color: #0f172a !important;
@@ -62,30 +62,13 @@ def configurar_visual():
         }
         .turn-btn > button:hover { background-color: #FFD54F !important; }
 
-        /* --- BOTÕES DA MESA --- */
-        .game-btn > button {
-            background-color: #334155 !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 6px;
-            width: 100%;
-        }
-        .atk-btn > button {
-            background-color: #FFC107 !important;
-            color: #0f172a !important;
-            font-weight: bold;
-            border: none !important;
-        }
+        /* Botões Jogo */
+        .game-btn > button { background-color: #334155 !important; color: white !important; border: none !important; border-radius: 6px; width: 100%; }
+        .atk-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; border: none !important; }
         .btn-red > button { background-color: #EF4444 !important; color: white !important; }
         
         /* Botões Pequenos (+10) */
-        .small-btn > button {
-            padding: 2px 0px !important;
-            font-size: 11px !important;
-            min-height: 25px !important;
-            background-color: #0f172a !important;
-            border: 1px solid #334155 !important;
-        }
+        .small-btn > button { padding: 2px 0px !important; font-size: 11px !important; min-height: 25px !important; background-color: #0f172a !important; border: 1px solid #334155 !important; }
 
         /* Barra de Vida */
         .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 10px; }
@@ -93,60 +76,49 @@ def configurar_visual():
 
         .log-entry { padding: 3px; border-bottom: 1px solid #334155; font-size: 12px; font-family: monospace; }
         
-        /* TEXTO DO TURNO (NOVO) */
-        .turn-display {
-            font-size: 18px;
-            font-weight: bold;
-            color: #FFC107;
-            margin-top: -15px;
-            margin-bottom: 10px;
-        }
-        .main-title {
-            font-size: 28px;
-            font-weight: 800;
-            color: #f1f5f9;
-            margin-bottom: 0px;
-        }
+        /* Texto Turno */
+        .turn-display { font-size: 18px; font-weight: bold; color: #FFC107; margin-top: -15px; margin-bottom: 10px; }
+        .main-title { font-size: 28px; font-weight: 800; color: #f1f5f9; margin-bottom: 0px; }
     </style>
     """, unsafe_allow_html=True)
 
 configurar_visual()
 
-# --- 1. BANCO DE DADOS ---
+# --- 1. BANCO DE DADOS (TRADUZIDO) ---
 POKEDEX = {
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
-    "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconnaissance", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
+    "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconhecimento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
     "Dreepy": {"hp": 70, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN_PNG.png"},
-    "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab": "Clairvoyant Sense", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
+    "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab": "Sentido Clarividente", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
     "Natu": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_071_R_EN_PNG.png"},
-    "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Flip the Script", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SFA/SFA_038_R_EN_PNG.png"},
-    "Charizard ex": {"hp": 330, "tipo": "Escuridão 🌙", "fraq": "Planta 🌱", "res": "Nenhuma", "recuo": 2, "hab": "Infernal Reign", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_125_R_EN_PNG.png"},
+    "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Virar o Jogo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SFA/SFA_038_R_EN_PNG.png"},
+    "Charizard ex": {"hp": 330, "tipo": "Escuridão 🌙", "fraq": "Planta 🌱", "res": "Nenhuma", "recuo": 2, "hab": "Reino Infernal", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_125_R_EN_PNG.png"},
     "Charmeleon": {"hp": 90, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 2, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_027_R_EN_PNG.png"},
     "Charmander": {"hp": 70, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_026_R_EN_PNG.png"},
-    "Pidgeot ex": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 0, "hab": "Quick Search", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_164_R_EN_PNG.png"},
-    "Pidgey": {"hp": 60, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "hab": "Call for Family", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_162_R_EN_PNG.png"},
-    "Moltres": {"hp": 120, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "hab": "Flare Symbol", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_021_R_EN_PNG.png"},
-    "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Psychic Embrace", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_086_R_EN_PNG.png"},
-    "Kirlia": {"hp": 80, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Refinement", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_085_R_EN_PNG.png"},
+    "Pidgeot ex": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 0, "hab": "Busca Rápida", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_164_R_EN_PNG.png"},
+    "Pidgey": {"hp": 60, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "hab": "Chamar a Família", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_162_R_EN_PNG.png"},
+    "Moltres": {"hp": 120, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "hab": "Símbolo de Fogo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_021_R_EN_PNG.png"},
+    "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Abraço Psíquico", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_086_R_EN_PNG.png"},
+    "Kirlia": {"hp": 80, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "hab": "Refinamento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_085_R_EN_PNG.png"},
     "Ralts": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_084_R_EN_PNG.png"},
     "Drifloon": {"hp": 70, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_089_R_EN_PNG.png"},
     "Scream Tail": {"hp": 90, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_086_R_EN_PNG.png"},
-    "Mew ex": {"hp": 180, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 0, "hab": "Restart", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/MEW/MEW_151_R_EN_PNG.png"},
-    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "recuo": 1, "hab": "Concealed Cards", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/ASR/ASR_046_R_EN_PNG.png"},
-    "Lugia VSTAR": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "hab": "Summoning Star", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_139_R_EN_PNG.png"},
+    "Mew ex": {"hp": 180, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 0, "hab": "Reinício", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/MEW/MEW_151_R_EN_PNG.png"},
+    "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "recuo": 1, "hab": "Cartas Ocultas", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/ASR/ASR_046_R_EN_PNG.png"},
+    "Lugia VSTAR": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "hab": "Astro Invocador", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_139_R_EN_PNG.png"},
     "Lugia V": {"hp": 220, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_138_R_EN_PNG.png"},
-    "Archeops": {"hp": 150, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "hab": "Primal Turbo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_147_R_EN_PNG.png"},
+    "Archeops": {"hp": 150, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "hab": "Turbo Primitivo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_147_R_EN_PNG.png"},
 }
 
 TOOLS_DB = {
     "Nenhuma": {"efeito": "nada", "hp_bonus": 0},
-    "Bravery Charm (+50 HP)": {"efeito": "hp", "hp_bonus": 50},
-    "Hero's Cape (+100 HP)": {"efeito": "hp", "hp_bonus": 100},
-    "Maximum Belt (+50 Dmg ex)": {"efeito": "dmg", "hp_bonus": 0},
-    "Defiance Band (+30 Dmg)": {"efeito": "dmg", "hp_bonus": 0},
-    "Rescue Board (-1 Recuo)": {"efeito": "util", "hp_bonus": 0},
-    "TM: Evolution": {"efeito": "atk", "hp_bonus": 0},
-    "TM: Devolution": {"efeito": "atk", "hp_bonus": 0},
+    "Pingente de Bravura (+50 HP)": {"efeito": "hp", "hp_bonus": 50},
+    "Capa do Herói (+100 HP)": {"efeito": "hp", "hp_bonus": 100},
+    "Cinto Máximo (+50 Dano ex)": {"efeito": "dmg", "hp_bonus": 0},
+    "Faixa de Desafio (+30 Dano)": {"efeito": "dmg", "hp_bonus": 0},
+    "Skate de Resgate (-1 Recuo)": {"efeito": "util", "hp_bonus": 0},
+    "MT: Evolução": {"efeito": "atk", "hp_bonus": 0},
+    "MT: Devolução": {"efeito": "atk", "hp_bonus": 0},
 }
 
 # --- 2. CLASSES ---
@@ -201,7 +173,7 @@ class Pokemon:
             else: logs.append(f"🪙 {self.nome} dormindo.")
         return logs
 
-    def evoluir_para(self, novo_nome, novo_hp, novo_tipo, nova_fraqueza, nova_resistencia, novo_recuo, nova_img, nova_hab=None):
+    def evoluir_para(self, novo_nome, novo_hp, novo_tipo, nova_fraqueza, nova_resistencia, nova_img, nova_hab=None):
         dano_sofrido = self.hp_max - self.hp_atual
         self.nome = novo_nome
         self.hp_base = int(novo_hp)
@@ -210,9 +182,11 @@ class Pokemon:
         self.tipo = novo_tipo
         self.fraqueza = nova_fraqueza
         self.resistencia = nova_resistencia
-        self.recuo = novo_recuo
+        # Custo de recuo deve ser atualizado tbm, mas por simplificação mantemos ou pegamos do DB
+        dados_novos = POKEDEX.get(novo_nome, {})
+        self.recuo = dados_novos.get("recuo", 1) 
         if nova_img: self.imagem_url = nova_img
-        self.habilidade = nova_hab if nova_hab else (POKEDEX[novo_nome].get("hab") if novo_nome in POKEDEX else None)
+        self.habilidade = nova_hab if nova_hab else dados_novos.get("hab")
         self.hp_atual = self.hp_max - dano_sofrido
         if self.hp_atual < 0: self.hp_atual = 0
         self.status = "Saudável"
@@ -231,7 +205,7 @@ class Pokemon:
     def tentar_recuar(self):
         total_energias = sum(self.energias.values())
         custo = self.recuo
-        if self.ferramenta == "Rescue Board (-1 Recuo)": custo = max(0, custo - 1)
+        if self.ferramenta == "Skate de Resgate (-1 Recuo)": custo = max(0, custo - 1)
         if total_energias >= custo:
             removidas = 0
             chaves = list(self.energias.keys())
@@ -265,39 +239,32 @@ def adicionar_log(mensagem, tipo="neutro"):
 
 inicializar_jogo()
 
-# --- 4. TOP BAR (TEXTO DE TURNO EM VEZ DE BARRA) ---
+# --- 4. TOP BAR ---
 col_top_title, col_top_actions = st.columns([1.5, 3])
 
 with col_top_title:
-    # 1. Título maior e sem barra visual
     st.markdown('<div class="main-title">⚔️ PokéBattle</div>', unsafe_allow_html=True)
-    
-    # 2. Indicador de Turno (Apenas Texto, Logo abaixo)
     nome_vez = st.session_state.Treinadores[st.session_state.turno_atual]['nome']
     st.markdown(f'<div class="turn-display">👉 Vez de: {nome_vez}</div>', unsafe_allow_html=True)
 
 with col_top_actions:
     c_p1, c_coin, c_reset, c_log, c_turn = st.columns([1, 1, 1, 1, 1.5])
-    
     with c_p1:
         st.markdown('<div class="top-btn">', unsafe_allow_html=True)
         if st.button("🏆 Placar", use_container_width=True):
             st.toast(f"P1: {st.session_state.Treinadores['Treinador 1']['premios']} | P2: {st.session_state.Treinadores['Treinador 2']['premios']}")
         st.markdown('</div>', unsafe_allow_html=True)
-        
     with c_coin:
         st.markdown('<div class="top-btn">', unsafe_allow_html=True)
         if st.button("🪙 Moeda", use_container_width=True):
             r = random.choice(["CARA", "COROA"])
             st.toast(f"Moeda: {r}"); adicionar_log(f"🪙 Moeda: {r}")
         st.markdown('</div>', unsafe_allow_html=True)
-        
     with c_reset:
         st.markdown('<div class="top-btn">', unsafe_allow_html=True)
         if st.button("🗑️ Reset", use_container_width=True):
             st.session_state.clear(); st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-        
     with c_log:
         st.markdown('<div class="top-btn">', unsafe_allow_html=True)
         if st.session_state.log:
@@ -305,12 +272,9 @@ with col_top_actions:
             st.download_button("📜 Log", txt, "log.txt", use_container_width=True)
         else: st.button("📜 Log", disabled=True, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
-        
     with c_turn:
-        # BOTÃO FUNDIDO
         st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
         if st.button("➡ Fim Turno", help="Faz Checkup e Passa Vez", use_container_width=True):
-            # 1. Checkup
             logs_check = []
             for p in ["Treinador 1", "Treinador 2"]:
                 if st.session_state.Treinadores[p]['ativo']:
@@ -318,8 +282,6 @@ with col_top_actions:
                     if r: logs_check.extend(r)
             if logs_check:
                 for l in logs_check: adicionar_log(l, "ko")
-            
-            # 2. Passa
             st.session_state.habilidades_usadas = []
             antigo = st.session_state.turno_atual
             novo = "Treinador 2" if antigo == "Treinador 1" else "Treinador 1"
@@ -393,8 +355,11 @@ def render_player(key):
         with c_img:
             st.image(ativo.imagem_url, use_container_width=True)
             if ativo.status != "Saudável": st.warning(ativo.status)
+            
+            # Energias na carta (Resumo)
             txt_en = " ".join([f"{k.split()[-1]}x{v}" for k,v in ativo.energias.items()])
             if txt_en: st.markdown(f"<div style='background:#0f172a; padding:4px; border-radius:4px; margin-top:5px; font-size:12px; border:1px solid #334155; text-align:center;'>⚡ {txt_en}</div>", unsafe_allow_html=True)
+            
             if ativo.ferramenta != "Nenhuma": st.caption(f"🛠️ {ativo.ferramenta}")
 
         with c_info:
@@ -453,21 +418,32 @@ def render_player(key):
                         st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
                 
-                with st.popover("⚡ Energia / Status / Tool"):
-                    t1, t2, t3, t4 = st.tabs(["+ E", "- E", "Stat", "Tool"])
-                    with t1:
-                        e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"ae_{ativo.id_unico}")
-                        if st.button("Add", key=f"bae_{ativo.id_unico}"): ativo.anexar_energia(e); st.rerun()
-                    with t2:
-                        if ativo.energias:
-                            r = st.selectbox("Remover", list(ativo.energias.keys()), key=f"re_{ativo.id_unico}")
-                            if st.button("Del", key=f"bre_{ativo.id_unico}"): ativo.remover_energia(r); st.rerun()
-                        else: st.info("Vazio")
-                    with t3:
-                        st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}", on_change=lambda: setattr(ativo, 'status', st.session_state[f"st_{ativo.id_unico}"]))
-                    with t4:
-                        tl = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tl_{ativo.id_unico}")
-                        if st.button("Equipar", key=f"btl_{ativo.id_unico}"): ativo.equipar_ferramenta(tl); st.rerun()
+                # --- MENU EFICIENTE (PEDIDO) ---
+                with st.popover("⚡ Energia / Status / Ferramenta"):
+                    t_en, t_st, t_tl = st.tabs(["Energia", "Status", "Ferramenta"])
+                    
+                    # 1. ABA DE ENERGIA UNIFICADA
+                    with t_en:
+                        escolha_e = st.selectbox("Tipo de Energia", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"ae_{ativo.id_unico}")
+                        ce_1, ce_2 = st.columns(2)
+                        with ce_1:
+                            if st.button("➕ Adicionar", key=f"bae_{ativo.id_unico}", use_container_width=True):
+                                ativo.anexar_energia(escolha_e); st.rerun()
+                        with ce_2:
+                            if st.button("➖ Remover", key=f"bre_{ativo.id_unico}", use_container_width=True):
+                                if escolha_e in ativo.energias: ativo.remover_energia(escolha_e); st.rerun()
+                                else: st.toast("Não possui essa energia!")
+                        
+                        st.caption("Atuais: " + " ".join([f"{k.split()[-1]}x{v}" for k,v in ativo.energias.items()]))
+
+                    # 2. ABA STATUS
+                    with t_st:
+                        st.selectbox("Condição", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}", on_change=lambda: setattr(ativo, 'status', st.session_state[f"st_{ativo.id_unico}"]))
+                    
+                    # 3. ABA FERRAMENTAS
+                    with t_tl:
+                        tl = st.selectbox("Escolher", list(TOOLS_DB.keys()), key=f"tl_{ativo.id_unico}")
+                        if st.button("Equipar", key=f"btl_{ativo.id_unico}", use_container_width=True): ativo.equipar_ferramenta(tl); st.rerun()
 
                 if ativo.habilidade:
                     ja = ativo.id_unico in st.session_state.habilidades_usadas
@@ -481,7 +457,7 @@ def render_player(key):
                     st.markdown('</div>', unsafe_allow_html=True)
                 
                 custo = ativo.recuo
-                if ativo.ferramenta == "Rescue Board (-1 Recuo)": custo = max(0, custo - 1)
+                if ativo.ferramenta == "Skate de Resgate (-1 Recuo)": custo = max(0, custo - 1)
                 if st.button(f"🏃 Recuar ({custo})", key=f"run_{ativo.id_unico}"):
                     pode, msg = ativo.tentar_recuar()
                     if pode:
