@@ -98,7 +98,7 @@ configurar_visual()
 
 # URLs das energias oficiais
 ENERGY_IMGS = {
-    "Planta 🌱": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/grass.png",
+    "Planta 🌱": "https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/20px-Grass-attack.png",
     "Fogo 🔥": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fire.png",
     "Água 💧": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/water.png",
     "Elétrico ⚡": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/lightning.png",
@@ -609,3 +609,4 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
+
