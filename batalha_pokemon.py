@@ -3,9 +3,9 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 11.0 (Sidebar Dark)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 12.0 (Pro UI)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (DARK + SIDEBAR + SEM BORDAS) ---
+# --- 0. CONFIGURAÇÃO VISUAL (DARK NAVY + TOP BAR COMPACTA) ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -19,7 +19,7 @@ def configurar_visual():
         }
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
         
-        /* Sidebar */
+        /* Sidebar (Para criar cartas) */
         [data-testid="stSidebar"] {
             background-color: #1e293b;
             border-right: 1px solid #334155;
@@ -29,7 +29,7 @@ def configurar_visual():
         div[data-testid="stVerticalBlockBorderWrapper"], div[data-testid="stExpander"] {
             background-color: #1e293b;
             border: 1px solid #334155;
-            border-radius: 12px;
+            border-radius: 8px;
         }
 
         /* Inputs Escuros */
@@ -40,75 +40,74 @@ def configurar_visual():
             border-radius: 6px;
         }
 
-        /* --- BOTÕES (SEM BORDAS BRANCAS) --- */
-        .stButton > button {
-            border-radius: 8px;
-            font-weight: 600;
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-            transition: all 0.2s;
-            width: 100%;
+        /* --- BOTÕES DA TOP BAR (COMPACTOS) --- */
+        .top-btn > button {
+            border-radius: 6px;
+            border: 1px solid #475569 !important;
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+            font-size: 13px !important;
+            padding: 0px 10px !important;
+            min-height: 35px !important;
+            margin-top: 0px !important;
         }
+        .top-btn > button:hover { background-color: #334155 !important; border-color: #94a3b8 !important; }
 
-        /* Botão Padrão (Dark Blue) */
-        .stButton > button {
-            background-color: #334155 !important;
-            color: white !important;
-        }
-        .stButton > button:hover { background-color: #475569 !important; }
-
-        /* Botão AMARELO (Ação) */
-        .btn-yellow > button {
+        /* Botão DESTAQUE (Fim Turno) */
+        .turn-btn > button {
             background-color: #FFC107 !important;
             color: #0f172a !important;
+            font-weight: bold !important;
+            border: none !important;
+            min-height: 35px !important;
         }
-        .btn-yellow > button:hover { background-color: #FFD54F !important; transform: scale(1.02); }
+        .turn-btn > button:hover { background-color: #FFD54F !important; }
 
-        /* Botão VERMELHO (Dano/KO) */
-        .btn-red > button {
-            background-color: #EF4444 !important;
+        /* --- BOTÕES DA MESA --- */
+        .game-btn > button {
+            background-color: #334155 !important;
             color: white !important;
+            border: none !important;
+            border-radius: 6px;
+            width: 100%;
         }
+        .game-btn > button:hover { background-color: #475569 !important; }
 
-        /* Botão VERDE (Turno) */
-        .btn-green > button {
-            background-color: #22c55e !important;
-            color: white !important;
-            height: 50px;
-            font-size: 18px !important;
-        }
-
-        /* Botão AZUL (Habilidade) */
-        .btn-blue > button {
-            background-color: #3B82F6 !important;
-            color: white !important;
-        }
-        
-        /* Botões Pequenos (+10, +20) */
-        .btn-small > button {
-            padding: 2px 5px !important;
-            font-size: 12px !important;
-            min-height: 30px !important;
-        }
-
-        /* Badges */
-        .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
+        .atk-btn > button {
+            background-color: #FFC107 !important;
+            color: #0f172a !important;
             font-weight: bold;
-            margin-right: 5px;
+            border: none !important;
         }
-        .badge-ex { background-color: #FFC107; color: black; }
-        .badge-status { background-color: #22c55e; color: black; }
+        .atk-btn > button:hover { background-color: #FFD54F !important; }
+
+        /* Botões Pequenos (+10) */
+        .small-btn > button {
+            padding: 2px 0px !important;
+            font-size: 11px !important;
+            min-height: 25px !important;
+            background-color: #0f172a !important;
+            border: 1px solid #334155 !important;
+        }
+
+        /* Barra de Vida Customizada */
+        .hp-bar-bg {
+            width: 100%;
+            background-color: #334155;
+            border-radius: 4px;
+            height: 10px;
+            margin-bottom: 10px;
+        }
+        .hp-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+
+        .log-entry { padding: 3px; border-bottom: 1px solid #334155; font-size: 12px; font-family: monospace; }
         
-        .log-entry {
-            padding: 4px;
-            border-bottom: 1px solid #334155;
-            font-size: 13px;
-        }
+        /* Ajuste para o título ficar pequeno */
+        .small-title { font-size: 14px; font-weight: bold; color: #94a3b8; padding-top: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -151,7 +150,7 @@ TOOLS_DB = {
     "TM: Devolution": {"efeito": "atk", "hp_bonus": 0},
 }
 
-# --- 2. CLASSE POKEMON ---
+# --- 2. CLASSES ---
 class Pokemon:
     def __init__(self, nome, hp_max, tipo, fraqueza, resistencia, recuo, imagem_url="", habilidade=None):
         self.nome = nome
@@ -246,7 +245,7 @@ class Pokemon:
             return True, f"Pagou {custo} de energia."
         else: return False, f"Precisa de {custo} energias."
 
-# --- 3. GERENCIAMENTO DE ESTADO ---
+# --- 3. ESTADO ---
 def inicializar_jogo():
     if 'Treinadores' not in st.session_state:
         st.session_state.Treinadores = {
@@ -267,24 +266,74 @@ def adicionar_log(mensagem, tipo="neutro"):
 
 inicializar_jogo()
 
-# --- 4. BARRA LATERAL (VOLTOU) ---
+# --- 4. TOP BAR (ACTION BAR) ---
+# Título pequeno à esquerda, Botões à direita
+col_top_title, col_top_actions = st.columns([1, 2])
+
+with col_top_title:
+    st.markdown('<div class="small-title">⚔️ PokéBattle 12.0</div>', unsafe_allow_html=True)
+
+with col_top_actions:
+    # Cria colunas para os botões globais
+    c_p1, c_coin, c_reset, c_log, c_turn = st.columns([1, 1, 1, 1, 1.5])
+    
+    with c_p1:
+        st.markdown('<div class="top-btn">', unsafe_allow_html=True)
+        if st.button("🏆 Placar", use_container_width=True):
+            st.toast(f"P1: {st.session_state.Treinadores['Treinador 1']['premios']} | P2: {st.session_state.Treinadores['Treinador 2']['premios']}")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with c_coin:
+        st.markdown('<div class="top-btn">', unsafe_allow_html=True)
+        if st.button("🪙 Moeda", use_container_width=True):
+            r = random.choice(["CARA", "COROA"])
+            st.toast(f"Moeda: {r}"); adicionar_log(f"🪙 Moeda: {r}")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with c_reset:
+        st.markdown('<div class="top-btn">', unsafe_allow_html=True)
+        if st.button("🗑️ Reset", use_container_width=True):
+            st.session_state.clear(); st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with c_log:
+        st.markdown('<div class="top-btn">', unsafe_allow_html=True)
+        if st.session_state.log:
+            txt = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
+            st.download_button("📜 Log", txt, "log.txt", use_container_width=True)
+        else: st.button("📜 Log", disabled=True, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with c_turn:
+        # BOTÃO FUNDIDO: FIM TURNO + CHECKUP
+        st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
+        if st.button("➡ Fim Turno", help="Faz Checkup e Passa Vez", use_container_width=True):
+            # 1. Faz Checkup em todos
+            logs_check = []
+            for p in ["Treinador 1", "Treinador 2"]:
+                if st.session_state.Treinadores[p]['ativo']:
+                    r = st.session_state.Treinadores[p]['ativo'].resolver_checkup()
+                    if r: logs_check.extend(r)
+            if logs_check:
+                for l in logs_check: adicionar_log(l, "ko")
+                st.toast("Checkup Realizado!")
+            
+            # 2. Passa Turno
+            st.session_state.habilidades_usadas = []
+            antigo = st.session_state.turno_atual
+            novo = "Treinador 2" if antigo == "Treinador 1" else "Treinador 1"
+            st.session_state.turno_atual = novo
+            adicionar_log(f"🕒 Fim de turno de {st.session_state.Treinadores[antigo]['nome']}.", "neutro")
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("---")
+
+# --- 5. SIDEBAR (CONFIGURAÇÃO APENAS) ---
 with st.sidebar:
-    st.markdown("### ⚙️ Controle")
+    st.header("⚙️ Configuração")
     
-    st.markdown('<div class="btn-green">', unsafe_allow_html=True)
-    if st.button("⏳ PASSAR TURNO", help="Limpa habilidades e passa a vez"):
-        st.session_state.habilidades_usadas = []
-        antigo = st.session_state.turno_atual
-        novo = "Treinador 2" if antigo == "Treinador 1" else "Treinador 1"
-        st.session_state.turno_atual = novo
-        nome_novo = st.session_state.Treinadores[novo]['nome']
-        adicionar_log(f"🕒 <b>Fim do turno.</b> Vez de <b>{nome_novo}</b>!", "neutro")
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.divider()
-    
-    with st.expander("👤 Jogadores", expanded=True):
+    with st.expander("👤 Editar Nomes", expanded=True):
         n1 = st.text_input("J1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
         n2 = st.text_input("J2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
         if st.button("Salvar Nomes"):
@@ -292,43 +341,8 @@ with st.sidebar:
             st.session_state.Treinadores["Treinador 2"]["nome"] = n2
             st.rerun()
     
-    st.markdown("### 🏆 Placar")
-    c1, c2 = st.columns(2)
-    c1.metric(n1, f"{st.session_state.Treinadores['Treinador 1']['premios']} 🎴")
-    c2.metric(n2, f"{st.session_state.Treinadores['Treinador 2']['premios']} 🎴")
-    
-    st.divider()
-    
-    st.markdown('<div class="btn-yellow">', unsafe_allow_html=True)
-    if st.button("🔄 Checkup Auto"):
-        logs_totais = []
-        for p in ["Treinador 1", "Treinador 2"]:
-            if st.session_state.Treinadores[p]['ativo']:
-                res = st.session_state.Treinadores[p]['ativo'].resolver_checkup()
-                if res: logs_totais.extend(res)
-        if logs_totais:
-            for l in logs_totais: adicionar_log(l, "ko")
-            st.success("Checkup OK")
-            st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown("---")
-    if st.button("🪙 Moeda"):
-        res = random.choice(["CARA", "COROA"])
-        adicionar_log(f"🪙 Moeda: {res}")
-        st.toast(f"Moeda: {res}")
-
-    if st.button("🗑️ Reset Jogo"):
-        st.session_state.clear()
-        st.rerun()
-
-    if st.session_state.log:
-        txt_log = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
-        st.download_button("💾 Baixar Log", txt_log, "log.txt")
-
-    st.divider()
-    st.markdown("### ➕ Add Pokémon")
-    dono_key = st.selectbox("Dono", ["Treinador 1", "Treinador 2"], format_func=lambda x: st.session_state.Treinadores[x]['nome'])
+    st.markdown("### ➕ Adicionar Carta")
+    dono_key = st.selectbox("Treinador", ["Treinador 1", "Treinador 2"], format_func=lambda x: st.session_state.Treinadores[x]['nome'])
     modo = st.radio("Modo", ["📚 Pokedex", "✍️ Manual"])
     
     if "Pokedex" in modo:
@@ -340,49 +354,65 @@ with st.sidebar:
             player = st.session_state.Treinadores[dono_key]
             if not player['ativo']: player['ativo'] = novo
             elif len(player['banco']) < 5: player['banco'].append(novo)
-            else: st.error("Cheio!")
+            else: st.error("Banco Cheio!")
             st.rerun()
     else:
         nome_m = st.text_input("Nome")
         hp_m = st.number_input("HP", value=60, step=10)
         img_m = st.text_input("URL Imagem")
-        if st.button("Criar Manual"):
+        if st.button("Criar"):
             novo = Pokemon(nome_m, hp_m, "Normal", "Nenhuma", "Nenhuma", 1, img_m)
             player = st.session_state.Treinadores[dono_key]
             if not player['ativo']: player['ativo'] = novo
             elif len(player['banco']) < 5: player['banco'].append(novo)
             st.rerun()
 
-# --- 5. MESA ---
+# --- 6. RENDERIZAÇÃO DA MESA ---
+def checar_vitoria(id_oponente_chave):
+    if st.session_state.Treinadores[id_oponente_chave]['premios'] <= 0: return True
+    oponente = st.session_state.Treinadores[id_oponente_chave]
+    if oponente['ativo'] is None and len(oponente['banco']) == 0: return True
+    return False
+
 def render_player(key):
     p = st.session_state.Treinadores[key]
     eh_vez = (st.session_state.turno_atual == key)
-    borda = "2px solid #FFCB05" if eh_vez else "1px solid #334155"
+    borda = "2px solid #FFC107" if eh_vez else "1px solid #334155"
+    opacity = "1" if eh_vez else "0.8"
     
-    st.markdown(f"<div style='border:{borda}; background-color:#1e293b; padding:10px; border-radius:10px; margin-bottom:10px;'>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='margin:0'>{p['nome']}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<div style='border:{borda}; opacity:{opacity}; background-color:#1e293b; padding:10px; border-radius:10px; margin-bottom:10px;'>", unsafe_allow_html=True)
+    
+    # Header Player
+    c_h1, c_h2 = st.columns([3, 1])
+    c_h1.markdown(f"<h4 style='margin:0'>{p['nome']}</h4>", unsafe_allow_html=True)
+    c_h2.markdown(f"<h5 style='margin:0; text-align:right'>{p['premios']} 🎴</h5>", unsafe_allow_html=True)
     
     ativo = p['ativo']
     if ativo:
         st.markdown("---")
-        c_img, c_info = st.columns([1, 2])
+        c_img, c_info = st.columns([1, 1.8])
+        
         with c_img:
             st.image(ativo.imagem_url, use_container_width=True)
+            # STATUS VISÍVEIS
+            if ativo.status != "Saudável": st.warning(ativo.status)
             
-            # --- STATUS / ENERGIA VISÍVEL (Pedido Atendido) ---
-            badges = ""
-            if "ex" in ativo.nome.lower(): badges += "<span class='badge badge-ex'>EX</span>"
-            badges += f"<span class='badge badge-status'>{ativo.status}</span>"
-            st.markdown(badges, unsafe_allow_html=True)
-            
-            # Energias visíveis na carta
+            # ENERGIA VISÍVEL (Pedido Atendido)
             txt_en = " ".join([f"{k.split()[-1]}x{v}" for k,v in ativo.energias.items()])
-            if txt_en: st.markdown(f"<div style='background:#0f172a; padding:5px; border-radius:5px; margin-top:5px; font-size:12px; border:1px solid #334155;'>⚡ {txt_en}</div>", unsafe_allow_html=True)
+            if txt_en: st.markdown(f"<div style='background:#0f172a; padding:4px; border-radius:4px; margin-top:5px; font-size:12px; border:1px solid #334155; text-align:center;'>⚡ {txt_en}</div>", unsafe_allow_html=True)
+            
             if ativo.ferramenta != "Nenhuma": st.caption(f"🛠️ {ativo.ferramenta}")
 
         with c_info:
-            st.markdown(f"**{ativo.nome}** <span style='float:right'>HP: {ativo.hp_atual}/{ativo.hp_max}</span>", unsafe_allow_html=True)
-            st.progress(ativo.hp_atual / ativo.hp_max)
+            # HP Bar Custom
+            st.markdown(f"**{ativo.nome}** <span style='float:right; font-size:12px;'>{ativo.hp_atual}/{ativo.hp_max}</span>", unsafe_allow_html=True)
+            pct = max(0, min(100, (ativo.hp_atual / ativo.hp_max) * 100))
+            color_hp = "#22c55e" if pct > 50 else ("#eab308" if pct > 20 else "#ef4444")
+            st.markdown(f"""
+                <div class="hp-bar-bg">
+                    <div class="hp-bar-fill" style="width:{pct}%; background-color:{color_hp};"></div>
+                </div>
+            """, unsafe_allow_html=True)
             
             if ativo.hp_atual == 0:
                 st.error("💀 NOCAUTEADO")
@@ -394,33 +424,34 @@ def render_player(key):
                     op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                     qtd = 2 if "ex" in ativo.nome.lower() else 1
                     st.session_state.Treinadores[op_key]['premios'] -= qtd
+                    if checar_vitoria(key): st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
             else:
-                # Calculadora Dano
+                # --- CALCULADORA DANO ---
                 if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
                 cb1, cb2, cb3, cb4 = st.columns(4)
                 with cb1: 
-                    st.markdown('<div class="btn-small">', unsafe_allow_html=True)
+                    st.markdown('<div class="small-btn">', unsafe_allow_html=True)
                     if st.button("0", key=f"z_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] = 0; st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 with cb2: 
-                    st.markdown('<div class="btn-small">', unsafe_allow_html=True)
+                    st.markdown('<div class="small-btn">', unsafe_allow_html=True)
                     if st.button("+10", key=f"p10_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] += 10; st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 with cb3: 
-                    st.markdown('<div class="btn-small">', unsafe_allow_html=True)
+                    st.markdown('<div class="small-btn">', unsafe_allow_html=True)
                     if st.button("+20", key=f"p20_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] += 20; st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 with cb4: 
-                    st.markdown('<div class="btn-small">', unsafe_allow_html=True)
+                    st.markdown('<div class="small-btn">', unsafe_allow_html=True)
                     if st.button("+50", key=f"p50_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] += 50; st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 
                 dmg = st.number_input("Dano", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
                 st.session_state.dmg_buffer[ativo.id_unico] = dmg
 
-                st.markdown('<div class="btn-yellow">', unsafe_allow_html=True)
+                st.markdown('<div class="atk-btn">', unsafe_allow_html=True)
                 if st.button("⚔️ ATACAR", key=f"atk_{ativo.id_unico}"):
                     op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                     op = st.session_state.Treinadores[op_key]
@@ -434,42 +465,49 @@ def render_player(key):
                         st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
                 
-                # --- MENU COMPLETO (Consertado) ---
-                with st.popover("⚡ Energia / Status / 🛠️"):
-                    t1, t2, t3, t4 = st.tabs(["+ Energia", "- Energia", "Status", "Tool"])
-                    
-                    with t1: # Add Energia
+                # --- MENU COMPLETO (Pedido Atendido) ---
+                with st.popover("⚡ Energia / Status / Tool"):
+                    t1, t2, t3, t4 = st.tabs(["+ E", "- E", "Stat", "Tool"])
+                    with t1:
                         e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️"], key=f"ae_{ativo.id_unico}")
-                        if st.button("Adicionar", key=f"bae_{ativo.id_unico}"): 
-                            ativo.anexar_energia(e); st.rerun()
-                    
-                    with t2: # Remove Energia (VOLTOU!)
+                        if st.button("Add", key=f"bae_{ativo.id_unico}"): ativo.anexar_energia(e); st.rerun()
+                    with t2:
                         if ativo.energias:
                             r = st.selectbox("Remover", list(ativo.energias.keys()), key=f"re_{ativo.id_unico}")
-                            if st.button("Remover", key=f"bre_{ativo.id_unico}"): 
-                                ativo.remover_energia(r); st.rerun()
-                        else: st.info("Sem energias.")
-
-                    with t3: # Status
-                        st.selectbox("Condição", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}", on_change=lambda: setattr(ativo, 'status', st.session_state[f"st_{ativo.id_unico}"]))
-                    
-                    with t4: # Tools (VOLTOU!)
-                        tl = st.selectbox("Ferramenta", list(TOOLS_DB.keys()), key=f"tl_{ativo.id_unico}")
-                        if st.button("Equipar", key=f"btl_{ativo.id_unico}"):
-                            ativo.equipar_ferramenta(tl); st.rerun()
+                            if st.button("Del", key=f"bre_{ativo.id_unico}"): ativo.remover_energia(r); st.rerun()
+                        else: st.info("Vazio")
+                    with t3:
+                        st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_{ativo.id_unico}", on_change=lambda: setattr(ativo, 'status', st.session_state[f"st_{ativo.id_unico}"]))
+                    with t4:
+                        tl = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tl_{ativo.id_unico}")
+                        if st.button("Equipar", key=f"btl_{ativo.id_unico}"): ativo.equipar_ferramenta(tl); st.rerun()
 
                 # Habilidade
                 if ativo.habilidade:
                     ja = ativo.id_unico in st.session_state.habilidades_usadas
-                    cls = "stButton" if ja else "btn-blue"
-                    lbl = "✅ Usado" if ja else f"✨ {ativo.habilidade}"
+                    cls = "game-btn" if ja else "game-btn" # Estilo padrao, logica no texto
+                    lbl = "✅ Hab Usada" if ja else f"✨ {ativo.habilidade}"
                     st.markdown(f'<div class="{cls}">', unsafe_allow_html=True)
                     if st.button(lbl, key=f"hab_{ativo.id_unico}", disabled=ja):
                         st.session_state.habilidades_usadas.append(ativo.id_unico)
                         adicionar_log(f"✨ {ativo.nome} usou {ativo.habilidade}!", "tool")
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
-    
+                
+                # Recuo
+                custo = ativo.recuo
+                if ativo.ferramenta == "Rescue Board (-1 Recuo)": custo = max(0, custo - 1)
+                if st.button(f"🏃 Recuar ({custo})", key=f"run_{ativo.id_unico}"):
+                    pode, msg = ativo.tentar_recuar()
+                    if pode:
+                        if p['banco']:
+                            p['banco'].append(ativo)
+                            p['ativo'] = None
+                            adicionar_log(f"🏃 {ativo.nome} recuou.", "neutro")
+                            st.rerun()
+                        else: st.warning("Banco vazio!")
+                    else: st.error(msg)
+
     # Banco
     if p['banco']:
         st.markdown("---")
@@ -482,7 +520,6 @@ def render_player(key):
                     if st.button("💀", key=f"ko_b_{bp.id_unico}"):
                         p['banco'].pop(i); p['descarte'].append(bp)
                         adicionar_log(f"💀 {bp.nome} (Banco) caiu!", "ko")
-                        # Premio
                         op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                         q = 2 if "ex" in bp.nome.lower() else 1
                         st.session_state.Treinadores[op_key]['premios'] -= q
@@ -491,8 +528,7 @@ def render_player(key):
                 else:
                     if st.button("⬆️", key=f"up_{bp.id_unico}"):
                         if not p['ativo']: p['ativo'] = p['banco'].pop(i); st.rerun()
-                    if st.button("💔", key=f"dmb_{bp.id_unico}"):
-                        bp.receber_dano(10); st.rerun()
+                    if st.button("💔", key=f"dmb_{bp.id_unico}"): bp.receber_dano(10); st.rerun()
                     if bp.habilidade:
                         ja = bp.id_unico in st.session_state.habilidades_usadas
                         if st.button("✨", key=f"hbb_{bp.id_unico}", disabled=ja, help=bp.habilidade):
@@ -502,17 +538,12 @@ def render_player(key):
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 6. RENDERIZAÇÃO ---
+# --- 7. TELA PRINCIPAL ---
 if st.session_state.vencedor:
     st.balloons()
-    st.title(f"🏆 {st.session_state.vencedor} VENCEU!")
+    st.markdown(f"<h1 style='text-align:center'>🏆 {st.session_state.vencedor} VENCEU!</h1>", unsafe_allow_html=True)
     if st.button("Novo Jogo"): st.session_state.clear(); st.rerun()
 else:
-    st.title("🏆 PokéBattle 11.0")
     c1, c2 = st.columns(2)
     with c1: render_player("Treinador 1")
     with c2: render_player("Treinador 2")
-    
-    st.divider()
-    st.subheader("📜 Histórico")
-    st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
