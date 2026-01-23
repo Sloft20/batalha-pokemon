@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 17.0 (Bench Energy)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 17.1 (Clean UI)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -51,6 +51,9 @@ def configurar_visual():
         .main-title { font-size: 28px; font-weight: 800; color: #f1f5f9; }
         .turn-display { font-size: 18px; font-weight: bold; color: #FFC107; margin-bottom: 10px; }
         
+        /* Garante que a barra de vida tenha altura e cor de fundo */
+        .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 10px; display: block; }
+        
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
     </style>
     """, unsafe_allow_html=True)
@@ -61,7 +64,7 @@ configurar_visual()
 POKEDEX = {
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
     "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconhecimento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
-    "Dreepy": {"hp": 70, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://repositorio.sbrauble.com/arquivos/in/pokemon_bkp/cd/362/5031_039.jpg"},
+    "Dreepy": {"hp": 70, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN_PNG.png"},
     "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "hab": "Sentido Clarividente", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
     "Natu": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_071_R_EN_PNG.png"},
     "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "hab": "Virar o Jogo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SFA/SFA_038_R_EN_PNG.png"},
@@ -185,7 +188,7 @@ class Pokemon:
             else: logs.append(f"🪙 {self.nome} dormindo.")
         return logs
 
-    def evoluir_para(self, novo_nome, novo_hp, novo_tipo, nova_fraqueza, nova_resistencia, novo_recuo, nova_img, nova_hab=None):
+    def evoluir_para(self, novo_nome, novo_hp, novo_tipo, nova_fraqueza, nova_resistencia, nova_recuo, nova_img, nova_hab=None):
         dano = self.hp_max - self.hp_atual
         self.nome = novo_nome
         self.hp_base = int(novo_hp)
@@ -266,7 +269,6 @@ if st.session_state.tela_ranking:
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # --- NOVO BOTÃO DE RESET (PEDIDO) ---
     with col_reset:
         st.markdown('<div class="btn-red">', unsafe_allow_html=True)
         if st.button("🗑️ Resetar Dados", use_container_width=True):
@@ -480,32 +482,20 @@ else:
                         op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
                         qtd = 2 if "ex" in ativo.nome.lower() else 1
                         st.session_state.Treinadores[op_key]['premios'] -= qtd
+                        
+                        # --- SALVAR VITORIA RANKING ---
                         if checar_vitoria(key):
                             st.session_state.vencedor = st.session_state.Treinadores[op_key]['nome']
                             deck_v = st.session_state.Treinadores[op_key]['deck']
                             deck_p = p['deck']
                             salvar_partida(st.session_state.Treinadores[op_key]['nome'], p['nome'], deck_v, deck_p)
+                        
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 else:
                     if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
-                    cb1, cb2, cb3, cb4 = st.columns(4)
-                    with cb1: 
-                        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
-                        if st.button("0", key=f"z_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] = 0; st.rerun()
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    with cb2: 
-                        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
-                        if st.button("+10", key=f"p10_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] += 10; st.rerun()
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    with cb3: 
-                        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
-                        if st.button("+20", key=f"p20_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] += 20; st.rerun()
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    with cb4: 
-                        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
-                        if st.button("+50", key=f"p50_{ativo.id_unico}"): st.session_state.dmg_buffer[ativo.id_unico] += 50; st.rerun()
-                        st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    # --- BOTÕES DE DANO REMOVIDOS AQUI ---
                     
                     dmg = st.number_input("Dano", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
                     st.session_state.dmg_buffer[ativo.id_unico] = dmg
@@ -571,7 +561,6 @@ else:
             for i, bp in enumerate(p['banco']):
                 with cols[i]:
                     st.image(bp.imagem_url, use_container_width=True)
-                    # --- MOSTRAR ENERGIA NO BANCO (PEDIDO ATENDIDO) ---
                     txt_en_b = " ".join([f"{k.split()[-1]}x{v}" for k,v in bp.energias.items()])
                     if txt_en_b: st.markdown(f"<div style='background:#0f172a; padding:2px; border-radius:3px; margin-bottom:2px; font-size:10px; border:1px solid #334155; text-align:center;'>⚡ {txt_en_b}</div>", unsafe_allow_html=True)
                     
@@ -598,7 +587,6 @@ else:
                         with c_dmg:
                             if st.button("💔", key=f"dmb_{bp.id_unico}"): bp.receber_dano(10); st.rerun()
                         
-                        # --- MENU ENERGIA NO BANCO (PEDIDO ATENDIDO) ---
                         with st.popover("⚡", use_container_width=True):
                             t1, t2, t3 = st.tabs(["Add", "Del", "Tool"])
                             with t1:
@@ -635,4 +623,3 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
-
