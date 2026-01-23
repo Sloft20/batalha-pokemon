@@ -3,9 +3,9 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 12.0 (Pro UI)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 12.1 (Clean Turn)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL (DARK NAVY + TOP BAR COMPACTA) ---
+# --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -19,7 +19,7 @@ def configurar_visual():
         }
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
         
-        /* Sidebar (Para criar cartas) */
+        /* Sidebar */
         [data-testid="stSidebar"] {
             background-color: #1e293b;
             border-right: 1px solid #334155;
@@ -40,7 +40,7 @@ def configurar_visual():
             border-radius: 6px;
         }
 
-        /* --- BOTÕES DA TOP BAR (COMPACTOS) --- */
+        /* --- BOTÕES DO TOPO --- */
         .top-btn > button {
             border-radius: 6px;
             border: 1px solid #475569 !important;
@@ -48,18 +48,17 @@ def configurar_visual():
             color: #e2e8f0 !important;
             font-size: 13px !important;
             padding: 0px 10px !important;
-            min-height: 35px !important;
-            margin-top: 0px !important;
+            min-height: 40px !important; /* Altura padrão */
         }
         .top-btn > button:hover { background-color: #334155 !important; border-color: #94a3b8 !important; }
 
-        /* Botão DESTAQUE (Fim Turno) */
+        /* Botão FIM TURNO (Destaque) */
         .turn-btn > button {
             background-color: #FFC107 !important;
             color: #0f172a !important;
             font-weight: bold !important;
             border: none !important;
-            min-height: 35px !important;
+            min-height: 40px !important;
         }
         .turn-btn > button:hover { background-color: #FFD54F !important; }
 
@@ -71,16 +70,14 @@ def configurar_visual():
             border-radius: 6px;
             width: 100%;
         }
-        .game-btn > button:hover { background-color: #475569 !important; }
-
         .atk-btn > button {
             background-color: #FFC107 !important;
             color: #0f172a !important;
             font-weight: bold;
             border: none !important;
         }
-        .atk-btn > button:hover { background-color: #FFD54F !important; }
-
+        .btn-red > button { background-color: #EF4444 !important; color: white !important; }
+        
         /* Botões Pequenos (+10) */
         .small-btn > button {
             padding: 2px 0px !important;
@@ -90,24 +87,26 @@ def configurar_visual():
             border: 1px solid #334155 !important;
         }
 
-        /* Barra de Vida Customizada */
-        .hp-bar-bg {
-            width: 100%;
-            background-color: #334155;
-            border-radius: 4px;
-            height: 10px;
-            margin-bottom: 10px;
-        }
-        .hp-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.5s;
-        }
+        /* Barra de Vida */
+        .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 10px; }
+        .hp-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
 
         .log-entry { padding: 3px; border-bottom: 1px solid #334155; font-size: 12px; font-family: monospace; }
         
-        /* Ajuste para o título ficar pequeno */
-        .small-title { font-size: 14px; font-weight: bold; color: #94a3b8; padding-top: 10px; }
+        /* TEXTO DO TURNO (NOVO) */
+        .turn-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFC107;
+            margin-top: -15px;
+            margin-bottom: 10px;
+        }
+        .main-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #f1f5f9;
+            margin-bottom: 0px;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -266,15 +265,18 @@ def adicionar_log(mensagem, tipo="neutro"):
 
 inicializar_jogo()
 
-# --- 4. TOP BAR (ACTION BAR) ---
-# Título pequeno à esquerda, Botões à direita
-col_top_title, col_top_actions = st.columns([1, 2])
+# --- 4. TOP BAR (TEXTO DE TURNO EM VEZ DE BARRA) ---
+col_top_title, col_top_actions = st.columns([1.5, 3])
 
 with col_top_title:
-    st.markdown('<div class="small-title">⚔️ PokéBattle 12.0</div>', unsafe_allow_html=True)
+    # 1. Título maior e sem barra visual
+    st.markdown('<div class="main-title">⚔️ PokéBattle</div>', unsafe_allow_html=True)
+    
+    # 2. Indicador de Turno (Apenas Texto, Logo abaixo)
+    nome_vez = st.session_state.Treinadores[st.session_state.turno_atual]['nome']
+    st.markdown(f'<div class="turn-display">👉 Vez de: {nome_vez}</div>', unsafe_allow_html=True)
 
 with col_top_actions:
-    # Cria colunas para os botões globais
     c_p1, c_coin, c_reset, c_log, c_turn = st.columns([1, 1, 1, 1, 1.5])
     
     with c_p1:
@@ -305,10 +307,10 @@ with col_top_actions:
         st.markdown('</div>', unsafe_allow_html=True)
         
     with c_turn:
-        # BOTÃO FUNDIDO: FIM TURNO + CHECKUP
+        # BOTÃO FUNDIDO
         st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
         if st.button("➡ Fim Turno", help="Faz Checkup e Passa Vez", use_container_width=True):
-            # 1. Faz Checkup em todos
+            # 1. Checkup
             logs_check = []
             for p in ["Treinador 1", "Treinador 2"]:
                 if st.session_state.Treinadores[p]['ativo']:
@@ -316,9 +318,8 @@ with col_top_actions:
                     if r: logs_check.extend(r)
             if logs_check:
                 for l in logs_check: adicionar_log(l, "ko")
-                st.toast("Checkup Realizado!")
             
-            # 2. Passa Turno
+            # 2. Passa
             st.session_state.habilidades_usadas = []
             antigo = st.session_state.turno_atual
             novo = "Treinador 2" if antigo == "Treinador 1" else "Treinador 1"
@@ -329,11 +330,10 @@ with col_top_actions:
 
 st.markdown("---")
 
-# --- 5. SIDEBAR (CONFIGURAÇÃO APENAS) ---
+# --- 5. SIDEBAR (CONFIG) ---
 with st.sidebar:
     st.header("⚙️ Configuração")
-    
-    with st.expander("👤 Editar Nomes", expanded=True):
+    with st.expander("👤 Nomes", expanded=False):
         n1 = st.text_input("J1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
         n2 = st.text_input("J2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
         if st.button("Salvar Nomes"):
@@ -341,7 +341,7 @@ with st.sidebar:
             st.session_state.Treinadores["Treinador 2"]["nome"] = n2
             st.rerun()
     
-    st.markdown("### ➕ Adicionar Carta")
+    st.markdown("### ➕ Adicionar")
     dono_key = st.selectbox("Treinador", ["Treinador 1", "Treinador 2"], format_func=lambda x: st.session_state.Treinadores[x]['nome'])
     modo = st.radio("Modo", ["📚 Pokedex", "✍️ Manual"])
     
@@ -354,7 +354,7 @@ with st.sidebar:
             player = st.session_state.Treinadores[dono_key]
             if not player['ativo']: player['ativo'] = novo
             elif len(player['banco']) < 5: player['banco'].append(novo)
-            else: st.error("Banco Cheio!")
+            else: st.error("Cheio!")
             st.rerun()
     else:
         nome_m = st.text_input("Nome")
@@ -367,7 +367,7 @@ with st.sidebar:
             elif len(player['banco']) < 5: player['banco'].append(novo)
             st.rerun()
 
-# --- 6. RENDERIZAÇÃO DA MESA ---
+# --- 6. RENDERIZAÇÃO ---
 def checar_vitoria(id_oponente_chave):
     if st.session_state.Treinadores[id_oponente_chave]['premios'] <= 0: return True
     oponente = st.session_state.Treinadores[id_oponente_chave]
@@ -382,7 +382,6 @@ def render_player(key):
     
     st.markdown(f"<div style='border:{borda}; opacity:{opacity}; background-color:#1e293b; padding:10px; border-radius:10px; margin-bottom:10px;'>", unsafe_allow_html=True)
     
-    # Header Player
     c_h1, c_h2 = st.columns([3, 1])
     c_h1.markdown(f"<h4 style='margin:0'>{p['nome']}</h4>", unsafe_allow_html=True)
     c_h2.markdown(f"<h5 style='margin:0; text-align:right'>{p['premios']} 🎴</h5>", unsafe_allow_html=True)
@@ -391,28 +390,18 @@ def render_player(key):
     if ativo:
         st.markdown("---")
         c_img, c_info = st.columns([1, 1.8])
-        
         with c_img:
             st.image(ativo.imagem_url, use_container_width=True)
-            # STATUS VISÍVEIS
             if ativo.status != "Saudável": st.warning(ativo.status)
-            
-            # ENERGIA VISÍVEL (Pedido Atendido)
             txt_en = " ".join([f"{k.split()[-1]}x{v}" for k,v in ativo.energias.items()])
             if txt_en: st.markdown(f"<div style='background:#0f172a; padding:4px; border-radius:4px; margin-top:5px; font-size:12px; border:1px solid #334155; text-align:center;'>⚡ {txt_en}</div>", unsafe_allow_html=True)
-            
             if ativo.ferramenta != "Nenhuma": st.caption(f"🛠️ {ativo.ferramenta}")
 
         with c_info:
-            # HP Bar Custom
             st.markdown(f"**{ativo.nome}** <span style='float:right; font-size:12px;'>{ativo.hp_atual}/{ativo.hp_max}</span>", unsafe_allow_html=True)
             pct = max(0, min(100, (ativo.hp_atual / ativo.hp_max) * 100))
             color_hp = "#22c55e" if pct > 50 else ("#eab308" if pct > 20 else "#ef4444")
-            st.markdown(f"""
-                <div class="hp-bar-bg">
-                    <div class="hp-bar-fill" style="width:{pct}%; background-color:{color_hp};"></div>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div class="hp-bar-bg"><div class="hp-bar-fill" style="width:{pct}%; background-color:{color_hp};"></div></div>""", unsafe_allow_html=True)
             
             if ativo.hp_atual == 0:
                 st.error("💀 NOCAUTEADO")
@@ -428,7 +417,6 @@ def render_player(key):
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
             else:
-                # --- CALCULADORA DANO ---
                 if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
                 cb1, cb2, cb3, cb4 = st.columns(4)
                 with cb1: 
@@ -465,7 +453,6 @@ def render_player(key):
                         st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
                 
-                # --- MENU COMPLETO (Pedido Atendido) ---
                 with st.popover("⚡ Energia / Status / Tool"):
                     t1, t2, t3, t4 = st.tabs(["+ E", "- E", "Stat", "Tool"])
                     with t1:
@@ -482,10 +469,9 @@ def render_player(key):
                         tl = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tl_{ativo.id_unico}")
                         if st.button("Equipar", key=f"btl_{ativo.id_unico}"): ativo.equipar_ferramenta(tl); st.rerun()
 
-                # Habilidade
                 if ativo.habilidade:
                     ja = ativo.id_unico in st.session_state.habilidades_usadas
-                    cls = "game-btn" if ja else "game-btn" # Estilo padrao, logica no texto
+                    cls = "game-btn" if ja else "game-btn"
                     lbl = "✅ Hab Usada" if ja else f"✨ {ativo.habilidade}"
                     st.markdown(f'<div class="{cls}">', unsafe_allow_html=True)
                     if st.button(lbl, key=f"hab_{ativo.id_unico}", disabled=ja):
@@ -494,7 +480,6 @@ def render_player(key):
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 
-                # Recuo
                 custo = ativo.recuo
                 if ativo.ferramenta == "Rescue Board (-1 Recuo)": custo = max(0, custo - 1)
                 if st.button(f"🏃 Recuar ({custo})", key=f"run_{ativo.id_unico}"):
@@ -508,7 +493,6 @@ def render_player(key):
                         else: st.warning("Banco vazio!")
                     else: st.error(msg)
 
-    # Banco
     if p['banco']:
         st.markdown("---")
         cols = st.columns(5)
