@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 18.5 (Nuclear Fix)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 18.6 (Perfect Buttons)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -27,61 +27,62 @@ def configurar_visual():
             background-color: #0f172a !important; color: #e2e8f0 !important; border: 1px solid #475569 !important; border-radius: 6px;
         }
 
-        /* --- SOLUÇÃO NUCLEAR DE ALINHAMENTO --- */
+        .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
         
-        /* 1. Força as colunas a centralizarem o conteúdo verticalmente */
-        div[data-testid="column"] {
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-        }
-
-        /* 2. Botão do Menu (Popover) - Estilo Forçado */
+        /* --- BOTÕES TOPO: GÊMEOS --- */
+        
+        /* 1. Botão MENU (Popover) */
         div[data-testid="stPopover"] > div > button {
             background-color: #1e293b !important;
             border: 1px solid #475569 !important;
             color: #e2e8f0 !important;
-            height: 50px !important; /* Altura fixa */
+            height: 50px !important;      /* ALTURA FIXA */
             min-height: 50px !important;
-            max-height: 50px !important;
-            margin: 0px !important;
             width: 100% !important;
+            margin: 0px !important;
             border-radius: 8px !important;
-            padding: 0px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
         }
         div[data-testid="stPopover"] > div > button:hover { background-color: #334155 !important; }
 
-        /* 3. Botão Fim Turno - Estilo Forçado Idêntico */
+        /* 2. Botão FIM TURNO (Igualzinho ao Menu) */
         .turn-btn button { 
             background-color: #FFC107 !important; 
             color: #0f172a !important; 
             font-weight: bold !important; 
-            height: 50px !important; /* Altura fixa igual */
+            border: 1px solid #FFC107 !important; /* Borda para igualar tamanho */
+            height: 50px !important;      /* ALTURA FIXA IGUAL */
             min-height: 50px !important;
-            max-height: 50px !important;
-            margin: 0px !important;
             width: 100% !important;
+            margin: 0px !important;
             border-radius: 8px !important;
-            padding: 0px !important;
+            font-size: 16px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            font-size: 16px !important;
-            border: none !important;
         }
-        .turn-btn button:hover { background-color: #FFD54F !important; }
-        
-        /* Remove espaçamento extra dos containers do Streamlit */
-        .element-container { margin-bottom: 0px !important; }
+        .turn-btn button:hover { background-color: #FFD54F !important; border-color: #FFD54F !important; }
+
+        /* Alinhamento de Colunas */
+        div[data-testid="column"] {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+        }
 
         /* --- RESTO DO CSS --- */
         .menu-item button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
         
-        /* Botão Atacar e Input Dano (Lado a Lado) */
-        .atk-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; min-height: 42px; height: 42px; margin: 0px !important; }
+        .atk-btn > button { 
+            background-color: #FFC107 !important; 
+            color: #0f172a !important; 
+            font-weight: bold; 
+            height: 42px !important;
+            min-height: 42px !important;
+            margin: 0px !important;
+        }
         
         .btn-red > button { background-color: #EF4444 !important; color: white; }
         .game-btn > button { background-color: #334155 !important; color: white; }
@@ -307,7 +308,7 @@ else:
         st.markdown(f'<div class="turn-display">👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
     with c_buttons:
-        # ALINHAMENTO IGUAL PARA OS DOIS BOTÕES
+        # MENU E TURNO LADO A LADO
         cm_menu, cm_turn = st.columns([1, 1]) 
         
         with cm_menu:
