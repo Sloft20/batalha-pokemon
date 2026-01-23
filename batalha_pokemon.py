@@ -591,7 +591,7 @@ else:
                         with st.popover("⚡", icon=":material/flash_on:", use_container_width=True):
                             t1, t2, t3 = st.tabs(["Add", "Del", "Tool"])
                             with t1:
-                                eb = st.selectbox("Tipo", ["Fogo 🔥", "img":"https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png"", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"aeb_{bp.id_unico}")
+                                eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"aeb_{bp.id_unico}")
                                 if st.button("Add", icon=":material/add:", key=f"baeb_{bp.id_unico}"): 
                                     bp.anexar_energia(eb)
                                     adicionar_log("Energia", f"Ligou {eb} no banco", p['nome'])
@@ -628,4 +628,5 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
+
 
