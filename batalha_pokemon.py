@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 18.3 (Final Align)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 18.4 (Align Fix)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -29,43 +29,48 @@ def configurar_visual():
 
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
         
-        /* --- CORREÇÃO DE ALINHAMENTO DO MENU E TURNO --- */
+        /* --- ALINHAMENTO PERFEITO (MENU vs FIM TURNO) --- */
         
-        /* Força o botão Gatilho do Popover (Menu) a ser igual aos outros */
+        /* 1. Botão do Menu (Gatilho do Popover) */
         div[data-testid="stPopover"] > div > button {
             background-color: #1e293b !important;
             border: 1px solid #475569 !important;
             color: #e2e8f0 !important;
-            min-height: 45px !important;
-            height: 45px !important;
-            line-height: 1.2 !important;
-            margin-top: 0px !important;
-            width: 100%;
+            min-height: 42px !important;
+            height: 42px !important; /* Altura Exata */
+            margin: 0px !important;
+            width: 100% !important;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;
         }
         div[data-testid="stPopover"] > div > button:hover { background-color: #334155 !important; }
 
-        /* Botão Fim Turno */
+        /* 2. Botão Fim Turno */
         .turn-btn button { 
             background-color: #FFC107 !important; 
             color: #0f172a !important; 
             font-weight: bold !important; 
-            min-height: 45px !important;
-            height: 45px !important;
-            margin-top: 0px !important;
-            font-size: 15px !important;
+            min-height: 42px !important;
+            height: 42px !important; /* Altura Exata igual ao Menu */
+            margin: 0px !important;
+            width: 100% !important;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;
+            font-size: 15px !important;
+            border: none !important;
         }
         .turn-btn button:hover { background-color: #FFD54F !important; }
 
-        /* Itens DENTRO do Menu */
+        /* Itens internos do Menu */
         .menu-item button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
 
-        /* Botão de Ataque (Lado a Lado) */
+        /* Botão de Ataque */
         .atk-btn > button { 
             background-color: #FFC107 !important; 
             color: #0f172a !important; 
@@ -147,8 +152,10 @@ LISTA_DECKS = ["Charizard ex", "Dragapult ex", "Lugia VSTAR", "Gardevoir ex", "R
 def carregar_historico():
     if not os.path.exists(HISTORY_FILE): return []
     try:
-        with open(HISTORY_FILE, "r") as f: return json.load(f)
-    except: return []
+        with open(HISTORY_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
 def salvar_partida(vencedor, perdedor, deck_venc, deck_perd):
     hist = carregar_historico()
@@ -300,7 +307,7 @@ else:
         st.markdown(f'<div class="turn-display">👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
     with c_buttons:
-        cm_menu, cm_turn = st.columns([1, 1.2])
+        cm_menu, cm_turn = st.columns([1, 1]) # COLUNAS IGUAIS PARA ALINHAMENTO IGUAL
         
         with cm_menu:
             with st.popover("⚙️ Menu", use_container_width=True):
@@ -419,7 +426,7 @@ else:
                 else:
                     if ativo.id_unico not in st.session_state.dmg_buffer: st.session_state.dmg_buffer[ativo.id_unico] = 0
                     
-                    # --- DANO E BOTÃO DE ATAQUE LADO A LADO ---
+                    # --- ALINHAMENTO LADO A LADO ---
                     c_dmg, c_atk_btn = st.columns([1.5, 1])
                     
                     with c_dmg:
