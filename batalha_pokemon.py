@@ -3,9 +3,9 @@ import datetime
 import random 
 import re 
 
-st.set_page_config(page_title="PokéBattle 13.1 (Fixed)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 13.2 (Aligned)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL ---
+# --- 0. CONFIGURAÇÃO VISUAL (CORRIGIDA) ---
 def configurar_visual():
     st.markdown("""
     <style>
@@ -36,9 +36,49 @@ def configurar_visual():
             border-radius: 6px;
         }
 
-        /* Botões */
+        /* --- CORREÇÃO DE ALINHAMENTO --- */
+        /* Força as colunas a alinharem os botões verticalmente */
+        div[data-testid="column"] {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Botões Genéricos */
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
-        .turn-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; }
+
+        /* Botões do Topo (Ajuste Profundo para pegar o Download também) */
+        .top-btn button, .top-btn div[data-testid="stDownloadButton"] button {
+            border-radius: 6px;
+            border: 1px solid #475569 !important;
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+            font-size: 13px !important;
+            padding: 0px 10px !important;
+            min-height: 40px !important;
+            height: 40px !important; /* Força altura igual */
+            margin-top: 0px !important;
+            width: 100%;
+            line-height: 1.2 !important;
+        }
+        .top-btn button:hover, .top-btn div[data-testid="stDownloadButton"] button:hover { 
+            background-color: #334155 !important; 
+            border-color: #94a3b8 !important; 
+        }
+
+        /* Botão FIM TURNO (Ajustado para bater a altura) */
+        .turn-btn button {
+            background-color: #FFC107 !important;
+            color: #0f172a !important;
+            font-weight: bold !important;
+            border: none !important;
+            min-height: 40px !important;
+            height: 40px !important;
+            margin-top: 0px !important;
+        }
+        .turn-btn button:hover { background-color: #FFD54F !important; }
+
+        /* Botões da Mesa */
         .game-btn > button { background-color: #334155 !important; color: white !important; }
         .atk-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; }
         .btn-red > button { background-color: #EF4444 !important; color: white !important; }
@@ -64,7 +104,7 @@ def configurar_visual():
 
 configurar_visual()
 
-# --- 1. BANCO DE DADOS ---
+# --- 1. BANCO DE DADOS (PT-BR) ---
 POKEDEX = {
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
     "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "hab": "Reconhecimento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
@@ -108,7 +148,8 @@ class Pokemon:
         self.hp_base = int(hp_max)
         self.hp_max = int(hp_max)
         self.hp_atual = int(hp_max)
-        self.imagem_url = imagem_url if imagem_url else "https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg"
+        img_padrao = "https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg"
+        self.imagem_url = imagem_url if imagem_url else img_padrao
         self.id_unico = datetime.datetime.now().timestamp() + random.random()
         self.tipo = tipo
         self.fraqueza = fraqueza
@@ -148,7 +189,7 @@ class Pokemon:
             else: logs.append(f"🪙 {self.nome} dormindo.")
         return logs
 
-    def evoluir_para(self, novo_nome, novo_hp, novo_tipo, nova_fraqueza, nova_resistencia, novo_recuo, nova_img, nova_hab=None):
+    def evoluir_para(self, novo_nome, novo_hp, novo_tipo, nova_fraqueza, nova_resistencia, nova_img, nova_hab=None):
         dano = self.hp_max - self.hp_atual
         self.nome = novo_nome
         self.hp_base = int(novo_hp)
@@ -156,9 +197,10 @@ class Pokemon:
         self.tipo = novo_tipo
         self.fraqueza = nova_fraqueza
         self.resistencia = nova_resistencia
-        self.recuo = novo_recuo
+        dados = POKEDEX.get(novo_nome, {})
+        self.recuo = dados.get("recuo", 1)
         if nova_img: self.imagem_url = nova_img
-        self.habilidade = nova_hab
+        self.habilidade = nova_hab if nova_hab else dados.get("hab")
         self.hp_atual = self.hp_max - dano
         if self.hp_atual < 0: self.hp_atual = 0
         self.status = "Saudável"
@@ -189,7 +231,7 @@ class Pokemon:
             return True, f"Pagou {custo}."
         return False, f"Falta energia ({total}/{custo})."
 
-# --- 3. LOGICA DO JOGO ---
+# --- 3. ESTADO ---
 def inicializar_jogo():
     if 'Treinadores' not in st.session_state:
         st.session_state.Treinadores = {
@@ -213,30 +255,42 @@ def adicionar_log(cat, msg):
 
 inicializar_jogo()
 
-# --- 4. TOP BAR ---
-c_title, c_acts = st.columns([1.5, 3])
-with c_title:
-    st.markdown('<div class="main-title">⚔️ PokéBattle</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="turn-display">👉 Vez de: {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
+# --- 4. TOP BAR (ALINHADA) ---
+col_top_title, col_top_actions = st.columns([1.5, 3])
 
-with c_acts:
-    c1, c2, c3, c4, c5 = st.columns([1, 1, 1, 1, 1.5])
-    with c1: 
-        if st.button("🏆 Placar"): st.toast(f"P1: {st.session_state.Treinadores['Treinador 1']['premios']} | P2: {st.session_state.Treinadores['Treinador 2']['premios']}")
-    with c2:
-        if st.button("🪙 Moeda"): 
+with col_top_title:
+    st.markdown('<div class="main-title">⚔️ PokéBattle</div>', unsafe_allow_html=True)
+    nome_vez = st.session_state.Treinadores[st.session_state.turno_atual]['nome']
+    st.markdown(f'<div class="turn-display">👉 Vez de: {nome_vez}</div>', unsafe_allow_html=True)
+
+with col_top_actions:
+    c_p1, c_coin, c_reset, c_log, c_turn = st.columns([1, 1, 1, 1, 1.5])
+    with c_p1:
+        st.markdown('<div class="top-btn">', unsafe_allow_html=True)
+        if st.button("🏆 Placar", use_container_width=True):
+            st.toast(f"P1: {st.session_state.Treinadores['Treinador 1']['premios']} | P2: {st.session_state.Treinadores['Treinador 2']['premios']}")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with c_coin:
+        st.markdown('<div class="top-btn">', unsafe_allow_html=True)
+        if st.button("🪙 Moeda", use_container_width=True):
             r = random.choice(["CARA", "COROA"])
             st.toast(f"Moeda: {r}"); adicionar_log("Moeda", f"Resultado: {r}")
-    with c3:
-        if st.button("🗑️ Reset"): st.session_state.clear(); st.rerun()
-    with c4:
+        st.markdown('</div>', unsafe_allow_html=True)
+    with c_reset:
+        st.markdown('<div class="top-btn">', unsafe_allow_html=True)
+        if st.button("🗑️ Reset", use_container_width=True):
+            st.session_state.clear(); st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    with c_log:
+        st.markdown('<div class="top-btn">', unsafe_allow_html=True)
         if st.session_state.log:
             txt = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
-            st.download_button("📜 Baixar", txt, "log.txt")
-        else: st.button("📜 Baixar", disabled=True)
-    with c5:
+            st.download_button("📜 Baixar", txt, "log.txt", use_container_width=True)
+        else: st.button("📜 Baixar", disabled=True, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    with c_turn:
         st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
-        if st.button("➡ Fim Turno"):
+        if st.button("➡ Fim Turno", help="Faz Checkup e Passa Vez", use_container_width=True):
             logs_check = []
             for p in ["Treinador 1", "Treinador 2"]:
                 if st.session_state.Treinadores[p]['ativo']:
@@ -253,9 +307,9 @@ with c_acts:
 
 st.markdown("---")
 
-# --- 5. SIDEBAR (CONFIGURAÇÃO / ADICIONAR / EVOLUIR - DE VOLTA!) ---
+# --- 5. SIDEBAR (COMPLETA) ---
 with st.sidebar:
-    st.header("⚙️ Gerenciar")
+    st.header("⚙️ Configuração")
     with st.expander("👤 Nomes", expanded=False):
         n1 = st.text_input("J1", value=st.session_state.Treinadores["Treinador 1"]["nome"])
         n2 = st.text_input("J2", value=st.session_state.Treinadores["Treinador 2"]["nome"])
@@ -263,13 +317,10 @@ with st.sidebar:
             st.session_state.Treinadores["Treinador 1"]["nome"] = n1
             st.session_state.Treinadores["Treinador 2"]["nome"] = n2
             st.rerun()
-
-    st.divider()
     
-    # --- LÓGICA DE ADICIONAR / EVOLUIR (RESTAURADA) ---
+    st.markdown("### ➕ Gerenciar Cartas")
     dono_key = st.selectbox("Treinador", ["Treinador 1", "Treinador 2"], format_func=lambda x: st.session_state.Treinadores[x]['nome'])
     player = st.session_state.Treinadores[dono_key]
-    
     acao = st.radio("Ação", ["Novo Básico", "Evoluir"], horizontal=True)
     
     if acao == "Novo Básico":
@@ -279,7 +330,7 @@ with st.sidebar:
             dados = POKEDEX[escolha]
             st.image(dados["img"], width=80)
             local = st.radio("Local", ["Banco", "Ativo"], horizontal=True)
-            if st.button("✨ Criar Carta"):
+            if st.button("Adicionar"):
                 novo = Pokemon(escolha, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados.get("recuo", 1), dados["img"], dados.get("hab"))
                 if local == "Ativo":
                     if not player['ativo']: 
@@ -298,13 +349,12 @@ with st.sidebar:
             hp = st.number_input("HP", value=60, step=10)
             im = st.text_input("Img URL")
             local = st.radio("Local", ["Banco", "Ativo"], horizontal=True)
-            if st.button("Criar Manual"):
+            if st.button("Criar"):
                 novo = Pokemon(nm, hp, "Normal", "Nenhuma", "Nenhuma", 1, im)
                 if local == "Ativo" and not player['ativo']: player['ativo'] = novo; st.rerun()
                 elif local == "Banco" and len(player['banco']) < 5: player['banco'].append(novo); st.rerun()
     
     elif acao == "Evoluir":
-        # Lista de candidatos a evoluir
         opcoes = []
         if player['ativo']: opcoes.append(f"[Ativo] {player['ativo'].nome}")
         for i, p in enumerate(player['banco']): opcoes.append(f"[Banco {i+1}] {p.nome}")
@@ -334,7 +384,7 @@ with st.sidebar:
         else:
             st.warning("Sem Pokémon para evoluir.")
 
-# --- 6. MESA ---
+# --- 6. RENDERIZAÇÃO ---
 def checar_vitoria(id_oponente_chave):
     if st.session_state.Treinadores[id_oponente_chave]['premios'] <= 0: return True
     oponente = st.session_state.Treinadores[id_oponente_chave]
@@ -419,7 +469,7 @@ def render_player(key):
                         st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
                 
-                # --- MENU DE ENERGIA UNIFICADO (PEDIDO ATENDIDO) ---
+                # --- MENU UNIFICADO ---
                 with st.popover("⚡ Energia / Status / Tool"):
                     t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"])
                     with t1:
