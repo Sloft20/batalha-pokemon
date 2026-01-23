@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 19.0 (Force Align)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 20.0 (Stable Layout)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -29,55 +29,33 @@ def configurar_visual():
 
         .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
         
-        /* ============================================================ */
-        /* === CORREÇÃO FINAL DE ALINHAMENTO DO TOPO === */
-        /* ============================================================ */
-        
-        /* 1. Alinha as colunas para baixo (Bottom Align) para garantir base igual */
-        div[data-testid="column"] {
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: flex-end !important;
+        /* Botões de Menu e Turno (Estilo Unificado para Pilha) */
+        div[data-testid="stPopover"] > div > button, .turn-btn button {
+            min-height: 45px !important;
+            height: 45px !important;
+            margin-top: 0px !important;
+            width: 100% !important;
+            border-radius: 8px !important;
+            font-size: 15px !important;
         }
-
-        /* 2. Botão MENU (Popover Trigger) */
+        
+        /* Cores Específicas */
         div[data-testid="stPopover"] > div > button {
             background-color: #1e293b !important;
             border: 1px solid #475569 !important;
             color: #e2e8f0 !important;
-            height: 50px !important;
-            min-height: 50px !important;
-            width: 100% !important;
-            margin: 0px 0px 0px 0px !important; /* Zera margens */
-            padding: 0px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            line-height: 1 !important;
         }
         div[data-testid="stPopover"] > div > button:hover { background-color: #334155 !important; }
 
-        /* 3. Botão FIM TURNO */
         .turn-btn button { 
             background-color: #FFC107 !important; 
             color: #0f172a !important; 
             font-weight: bold !important; 
             border: 1px solid #FFC107 !important;
-            height: 50px !important;
-            min-height: 50px !important;
-            width: 100% !important;
-            margin: 0px 0px 0px 0px !important; /* Zera margens */
-            padding: 0px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 16px !important;
-            line-height: 1 !important;
         }
-        .turn-btn button:hover { background-color: #FFD54F !important; border-color: #FFD54F !important; }
+        .turn-btn button:hover { background-color: #FFD54F !important; }
 
-        /* ============================================================ */
-
+        /* Resto do CSS */
         .menu-item button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
         .atk-btn > button { background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; min-height: 42px; height: 42px; margin: 0px !important; }
         .btn-red > button { background-color: #EF4444 !important; color: white; }
@@ -298,40 +276,41 @@ else:
     # =================================================================================
     # === TELA DE JOGO ===
     # =================================================================================
-    c_title, c_spacer, c_buttons = st.columns([2, 1, 2])
+    
+    # 1. Título e Turno (Esquerda)
+    c_title, c_spacer, c_buttons = st.columns([2, 1, 1.2]) # Coluna da direita mais estreita
+    
     with c_title:
         st.markdown('<div class="main-title">⚔️ PokéBattle</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="turn-display">👉 {st.session_state.Treinadores[st.session_state.turno_atual]["nome"]}</div>', unsafe_allow_html=True)
 
+    # 2. Botões (Direita) - MUDANÇA DE LAYOUT
     with c_buttons:
-        cm_menu, cm_turn = st.columns([1, 1]) 
-        
-        with cm_menu:
-            with st.popover("⚙️ Menu", use_container_width=True):
-                st.markdown('<div class="menu-item">', unsafe_allow_html=True)
-                if st.button("🏆 Placar", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
-                if st.button("🪙 Moeda", use_container_width=True): r = random.choice(["CARA", "COROA"]); st.toast(f"{r}"); adicionar_log("Moeda", f"Resultado: {r}")
-                if st.session_state.log:
-                    txt = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
-                    st.download_button("📜 Baixar Log", txt, "log.txt", use_container_width=True)
-                if st.button("🗑️ Reset Jogo", use_container_width=True): st.session_state.clear(); st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-                
-        with cm_turn:
-            st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
-            if st.button("➡ Fim Turno", use_container_width=True):
-                logs_check = []
-                for p in ["Treinador 1", "Treinador 2"]:
-                    if st.session_state.Treinadores[p]['ativo']:
-                        r = st.session_state.Treinadores[p]['ativo'].resolver_checkup(); logs_check.extend(r)
-                for l in logs_check: adicionar_log("Status", l)
-                st.session_state.habilidades_usadas = []
-                ant = st.session_state.turno_atual
-                novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
-                st.session_state.turno_atual = novo
-                adicionar_log("Turno", f"Início de {st.session_state.Treinadores[novo]['nome']}.")
-                st.rerun()
+        # Pilha Vertical: Menu em cima, Fim Turno em baixo
+        with st.popover("⚙️ Menu", use_container_width=True):
+            st.markdown('<div class="menu-item">', unsafe_allow_html=True)
+            if st.button("🏆 Placar", use_container_width=True): st.session_state.tela_ranking = True; st.rerun()
+            if st.button("🪙 Moeda", use_container_width=True): r = random.choice(["CARA", "COROA"]); st.toast(f"{r}"); adicionar_log("Moeda", f"Resultado: {r}")
+            if st.session_state.log:
+                txt = "\n".join([re.sub('<[^<]+?>', '', l) for l in st.session_state.log[::-1]])
+                st.download_button("📜 Baixar Log", txt, "log.txt", use_container_width=True)
+            if st.button("🗑️ Reset Jogo", use_container_width=True): st.session_state.clear(); st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
+            
+        st.markdown('<div class="turn-btn">', unsafe_allow_html=True)
+        if st.button("➡ Fim Turno", use_container_width=True):
+            logs_check = []
+            for p in ["Treinador 1", "Treinador 2"]:
+                if st.session_state.Treinadores[p]['ativo']:
+                    r = st.session_state.Treinadores[p]['ativo'].resolver_checkup(); logs_check.extend(r)
+            for l in logs_check: adicionar_log("Status", l)
+            st.session_state.habilidades_usadas = []
+            ant = st.session_state.turno_atual
+            novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
+            st.session_state.turno_atual = novo
+            adicionar_log("Turno", f"Início de {st.session_state.Treinadores[novo]['nome']}.")
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
