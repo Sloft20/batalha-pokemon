@@ -2,17 +2,15 @@
 
 # --- IMAGENS DE ENERGIA ---
 ENERGY_IMGS = {
-    "Planta 🌱": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/grass.png",
-    "Fogo 🔥": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fire.png",
-    "Água 💧": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/water.png",
-    "Elétrico ⚡": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/lightning.png",
-    "Psíquico 🌀": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/psychic.png",
-    "Luta 🥊": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fighting.png",
-    "Escuridão 🌙": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/darkness.png",
-    "Metal ⚙️": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/metal.png",
-    "Incolor ⭐": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/colorless.png",
-    "Dragão 🐉": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/dragon.png",
-    "Fada 🧚": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fairy.png"
+    "Planta 🌱": "https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/20px-Grass-attack.png",
+    "Fogo 🔥": "https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/20px-Fire-attack.png",
+    "Água 💧": "https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/20px-Water-attack.png",
+    "Elétrico ⚡": "https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/20px-Lightning-attack.png",
+    "Psíquico 🌀": "https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/20px-Psychic-attack.png",
+    "Luta 🥊": "https://archives.bulbagarden.net/media/upload/thumb/4/48/Fighting-attack.png/20px-Fighting-attack.png",
+    "Escuridão 🌙": "https://archives.bulbagarden.net/media/upload/thumb/a/ab/Darkness-attack.png/20px-Darkness-attack.png",
+    "Metal ⚙️": "https://archives.bulbagarden.net/media/upload/thumb/6/64/Metal-attack.png/20px-Metal-attack.png",
+    "Incolor ⭐": "https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png"
 }
 
 # --- POKÉDEX COMPLETA ---
@@ -54,4 +52,5 @@ TOOLS_DB = {
     "Skate de Resgate (-1 Recuo)": {"efeito": "util", "hp_bonus": 0},
     "MT: Evolução": {"efeito": "atk", "hp_bonus": 0},
     "MT: Devolução": {"efeito": "atk", "hp_bonus": 0},
+
 }
