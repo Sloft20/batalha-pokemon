@@ -120,20 +120,22 @@ configurar_visual()
 
 # --- 1. DADOS ---
 ENERGY_IMGS = {
-    "Planta 🌱": "https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/20px-Grass-attack.png",
-    "Fogo 🔥": "https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/20px-Fire-attack.png",
-    "Água 💧": "https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/20px-Water-attack.png",
-    "Elétrico ⚡": "https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/20px-Lightning-attack.png",
-    "Psíquico 🌀": "https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/20px-Psychic-attack.png",
-    "Luta 🥊": "https://archives.bulbagarden.net/media/upload/thumb/4/48/Fighting-attack.png/20px-Fighting-attack.png",
-    "Escuridão 🌙": "https://archives.bulbagarden.net/media/upload/thumb/a/ab/Darkness-attack.png/20px-Darkness-attack.png",
-    "Metal ⚙️": "https://archives.bulbagarden.net/media/upload/thumb/6/64/Metal-attack.png/20px-Metal-attack.png",
-    "Incolor ⭐": "https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png"
+    "Planta 🌱": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/grass.png",
+    "Fogo 🔥": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fire.png",
+    "Água 💧": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/water.png",
+    "Elétrico ⚡": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/lightning.png",
+    "Psíquico 🌀": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/psychic.png",
+    "Luta 🥊": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fighting.png",
+    "Escuridão 🌙": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/darkness.png",
+    "Metal ⚙️": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/metal.png",
+    "Incolor ⭐": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/colorless.png",
+    "Dragão 🐉": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/dragon.png",
+    "Fada 🧚": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fairy.png"
 }
 
 # ADICIONEI "custo" AOS POKÉMONS
 POKEDEX = {
-    "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "custo": ["Fogo 🔥", "Psíquico 🌀"], "img": "https://dz3we2x72f7ol.cloudfront.net/expansions/prismatic-evolutions/pt-br/SV8pt5_PTBR_73.png"},
+    "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "custo": ["Fogo 🔥", "Psíquico 🌀"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
     "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "custo": ["Fogo 🔥", "Psíquico 🌀"], "hab": "Reconhecimento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
     "Dreepy": {"hp": 70, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "custo": ["Psíquico 🌀"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN_PNG.png"},
     "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "custo": ["Psíquico 🌀", "Incolor ⭐"], "hab": "Sentido Clarividente", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
