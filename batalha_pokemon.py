@@ -8,11 +8,9 @@ import pandas as pd
 
 # Se estiver usando arquivo separado, mantenha a importação. 
 # Se não, os dados estão abaixo para garantir que o código rode completo aqui.
-try:
-    from cartas_db import POKEDEX, ENERGY_IMGS, LISTA_DECKS, TOOLS_DB
-except ImportError:
-    # DADOS INCLUSOS PARA RODAR DIRETO (Caso não tenha o arquivo)
+ from cartas_db import POKEDEX, ENERGY_IMGS, LISTA_DECKS, TOOLS_DB
 
+    # DADOS INCLUSOS PARA RODAR DIRETO (Caso não tenha o arquivo)
 st.set_page_config(page_title="PokéBattle 40.0 (Energy Rule)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
@@ -692,3 +690,4 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
+
