@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 31.0 (Compact)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 33.0 (Tiny Preview)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -23,21 +23,20 @@ def configurar_visual():
             background-color: #1e293b; border: 1px solid #334155; border-radius: 8px;
         }
         
-        /* --- SELECTBOX COMPACTO (NOVO) --- */
+        /* --- SELECTBOX COMPACTO --- */
         .stSelectbox div[data-baseweb="select"] > div {
             background-color: #0f172a !important; 
             color: #e2e8f0 !important; 
             border: 1px solid #475569 !important; 
             border-radius: 6px;
-            font-size: 13px !important;      /* Fonte menor */
-            min-height: 38px !important;     /* Altura menor */
+            font-size: 13px !important;
+            min-height: 38px !important;
             height: 38px !important;
             padding-top: 0px !important;
             padding-bottom: 0px !important;
             display: flex;
             align-items: center;
         }
-        /* Ajuste do label (título do select) */
         .stSelectbox label {
             font-size: 12px !important;
             margin-bottom: 2px !important;
@@ -92,12 +91,14 @@ def configurar_visual():
         .hp-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-in-out; }
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
         
+        /* CONTAINER DAS ENERGIAS (CARTAS) */
         .energy-container {
             display: flex; flex-wrap: wrap; gap: 3px; justify-content: center;
             background-color: rgba(15, 23, 42, 0.6); padding: 6px; border-radius: 20px;
             margin-top: 6px; border: 1px solid #334155; min-height: 32px;
         }
-        .energy-icon { width: 22px; height: 22px; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.6)); transition: transform 0.2s; }
+        /* Ícone na carta (pequeno) */
+        .energy-icon { width: 16px; height: 16px; filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.6)); transition: transform 0.2s; }
         .energy-icon:hover { transform: scale(1.2); }
         
         .stats-box {
@@ -112,16 +113,18 @@ def configurar_visual():
 configurar_visual()
 
 # --- 1. DADOS DE IMAGEM ---
-ENERGY_IMGS = ENERGY_IMGS = {
-    "Planta 🌱": "https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/20px-Grass-attack.png",
-    "Fogo 🔥": "https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/20px-Fire-attack.png",
-    "Água 💧": "https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/20px-Water-attack.png",
-    "Elétrico ⚡": "https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/20px-Lightning-attack.png",
-    "Psíquico 🌀": "https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/20px-Psychic-attack.png",
-    "Luta 🥊": "https://archives.bulbagarden.net/media/upload/thumb/4/48/Fighting-attack.png/20px-Fighting-attack.png",
-    "Escuridão 🌙": "https://archives.bulbagarden.net/media/upload/thumb/a/ab/Darkness-attack.png/20px-Darkness-attack.png",
-    "Metal ⚙️": "https://archives.bulbagarden.net/media/upload/thumb/6/64/Metal-attack.png/20px-Metal-attack.png",
-    "Incolor ⭐": "https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png"
+ENERGY_IMGS = {
+    "Planta 🌱": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/grass.png",
+    "Fogo 🔥": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fire.png",
+    "Água 💧": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/water.png",
+    "Elétrico ⚡": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/lightning.png",
+    "Psíquico 🌀": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/psychic.png",
+    "Luta 🥊": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fighting.png",
+    "Escuridão 🌙": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/darkness.png",
+    "Metal ⚙️": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/metal.png",
+    "Incolor ⭐": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/colorless.png",
+    "Dragão 🐉": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/dragon.png",
+    "Fada 🧚": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fairy.png"
 }
 
 POKEDEX = {
@@ -456,7 +459,7 @@ else:
                 color_hp = "#22c55e" if pct > 50 else ("#eab308" if pct > 20 else "#ef4444")
                 st.markdown(f"""<div class="hp-bar-bg"><div class="hp-fill" style="width:{pct}%; background-color:{color_hp};"></div></div>""", unsafe_allow_html=True)
                 
-                # --- STATS BOX (COM RECUO VISUAL) ---
+                # --- STATS BOX ---
                 if ativo.recuo > 0:
                     recuo_html = ""
                     img_recuo = ENERGY_IMGS["Incolor ⭐"]
@@ -521,12 +524,12 @@ else:
                     with st.popover("Energia / Status / Tool", icon=":material/flash_on:"):
                         t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"])
                         with t1:
-                            # SELECTBOX COM TEXTO, MAS COM PREVIEW VISUAL
+                            # SELECTBOX
                             escolha_e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"ae_{ativo.id_unico}")
                             
-                            # --- PREVIEW VISUAL DA ENERGIA SELECIONADA ---
+                            # --- PREVIEW REDUZIDO (20px) ---
                             img_preview = ENERGY_IMGS.get(escolha_e)
-                            if img_preview: st.image(img_preview, width=40)
+                            if img_preview: st.image(img_preview, width=20)
                             
                             c1, c2 = st.columns(2)
                             with c1: 
@@ -608,9 +611,9 @@ else:
                             with t1:
                                 eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"aeb_{bp.id_unico}")
                                 
-                                # PREVIEW NO BANCO
+                                # PREVIEW NO BANCO (REDUZIDO 20px)
                                 img_preview_b = ENERGY_IMGS.get(eb)
-                                if img_preview_b: st.image(img_preview_b, width=30)
+                                if img_preview_b: st.image(img_preview_b, width=20)
 
                                 if st.button("Add", icon=":material/add:", key=f"baeb_{bp.id_unico}"): 
                                     bp.anexar_energia(eb)
@@ -648,4 +651,3 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
-
