@@ -6,12 +6,14 @@ import json
 import os
 import pandas as pd
 
-# Se estiver usando arquivo separado, mantenha a importação. 
-# Se não, os dados estão abaixo para garantir que o código rode completo aqui.
-from cartas_db import POKEDEX, ENERGY_IMGS, LISTA_DECKS, TOOLS_DB
+# IMPORTAÇÃO OBRIGATÓRIA DO ARQUIVO DE DADOS
+try:
+    from cartas_db import POKEDEX, ENERGY_IMGS, LISTA_DECKS, TOOLS_DB
+except ImportError:
+    st.error("Erro: Arquivo 'cartas_db.py' não encontrado. Certifique-se de que ele está na mesma pasta.")
+    st.stop()
 
-    # DADOS INCLUSOS PARA RODAR DIRETO (Caso não tenha o arquivo)
-st.set_page_config(page_title="PokéBattle 40.0 (Energy Rule)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 41.0 (Energy/Poke Rule)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -277,7 +279,7 @@ def inicializar_jogo():
     if 'turno_atual' not in st.session_state: st.session_state.turno_atual = "Treinador 1"
     if 'habilidades_usadas' not in st.session_state: st.session_state.habilidades_usadas = []
     if 'evolucoes_turno' not in st.session_state: st.session_state.evolucoes_turno = []
-    if 'energia_anexada_turno' not in st.session_state: st.session_state.energia_anexada_turno = False # NOVO: CONTROLE DE ENERGIA
+    if 'energias_anexadas_neste_turno' not in st.session_state: st.session_state.energias_anexadas_neste_turno = [] # MUDANÇA AQUI
     if 'dmg_buffer' not in st.session_state: st.session_state.dmg_buffer = {}
     if 'tela_ranking' not in st.session_state: st.session_state.tela_ranking = False
 
@@ -355,7 +357,7 @@ else:
             for l in logs_check: adicionar_log("Status", l)
             st.session_state.habilidades_usadas = []
             st.session_state.evolucoes_turno = []
-            st.session_state.energia_anexada_turno = False # RESET DE ENERGIA
+            st.session_state.energias_anexadas_neste_turno = [] # RESET ENERGIAS
             ant = st.session_state.turno_atual
             novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
             st.session_state.turno_atual = novo
@@ -518,7 +520,7 @@ else:
 
                                 st.session_state.habilidades_usadas = []
                                 st.session_state.evolucoes_turno = []
-                                st.session_state.energia_anexada_turno = False
+                                st.session_state.energias_anexadas_neste_turno = []
                                 ant = st.session_state.turno_atual
                                 novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
                                 st.session_state.turno_atual = novo
@@ -536,11 +538,11 @@ else:
                             c1, c2 = st.columns(2)
                             with c1: 
                                 if st.button("", icon=":material/add:", key=f"ba_{ativo.id_unico}"): 
-                                    if st.session_state.energia_anexada_turno:
-                                        st.error("🚫 Já ligou energia neste turno!")
+                                    if ativo.id_unico in st.session_state.energias_anexadas_neste_turno:
+                                        st.error("🚫 Já recebeu energia!")
                                     else:
                                         ativo.anexar_energia(escolha_e)
-                                        st.session_state.energia_anexada_turno = True
+                                        st.session_state.energias_anexadas_neste_turno.append(ativo.id_unico)
                                         adicionar_log("Energia", f"Ligou {escolha_e}", p['nome'])
                                         st.rerun()
                             with c2:
@@ -634,11 +636,11 @@ else:
                                 c_b1, c_b2 = st.columns(2)
                                 with c_b1:
                                     if st.button("", icon=":material/add:", key=f"baeb_{bp.id_unico}"): 
-                                        if st.session_state.energia_anexada_turno:
-                                            st.error("🚫 Já ligou energia!")
+                                        if bp.id_unico in st.session_state.energias_anexadas_neste_turno:
+                                            st.error("🚫 Já recebeu energia!")
                                         else:
                                             bp.anexar_energia(eb)
-                                            st.session_state.energia_anexada_turno = True
+                                            st.session_state.energias_anexadas_neste_turno.append(bp.id_unico)
                                             adicionar_log("Energia", f"Ligou {eb} no banco", p['nome'])
                                             st.rerun()
                                 with c_b2:
@@ -690,5 +692,3 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
-
-
