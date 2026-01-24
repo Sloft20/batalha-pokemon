@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 36.0 (Field Evo)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 37.0 (Pro Stats)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -91,6 +91,7 @@ def configurar_visual():
         .hp-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-in-out; }
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
         
+        /* ENERGIAS (CARTAS) */
         .energy-container {
             display: flex; flex-wrap: wrap; gap: 3px; justify-content: center;
             background-color: rgba(15, 23, 42, 0.6); padding: 6px; border-radius: 20px;
@@ -99,12 +100,35 @@ def configurar_visual():
         .energy-icon { width: 16px; height: 16px; filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.6)); transition: transform 0.2s; }
         .energy-icon:hover { transform: scale(1.2); }
         
+        /* STATS BOX ATUALIZADO */
         .stats-box {
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 11px; color: #94a3b8; background: #0f172a; padding: 4px 8px; 
-            border-radius: 4px; border: 1px solid #334155; margin-top: 8px;
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center;
+            background: #0f172a; 
+            padding: 6px 4px; 
+            border-radius: 6px; 
+            border: 1px solid #334155; 
+            margin-top: 8px;
         }
-        .recuo-img { width: 14px; vertical-align: middle; margin-left: 1px; }
+        .stat-item {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 33%;
+        }
+        .stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .stat-icon {
+            height: 18px;
+            width: 18px;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -122,6 +146,7 @@ ENERGY_IMGS = {
     "Metal ⚙️": "https://archives.bulbagarden.net/media/upload/thumb/6/64/Metal-attack.png/20px-Metal-attack.png",
     "Incolor ⭐": "https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png"
 }
+
 POKEDEX = POKEDEX = {
     ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
     ##                                                                                 DECK DE DRAGAPULT EX
@@ -305,6 +330,7 @@ def inicializar_jogo():
     if 'vencedor' not in st.session_state: st.session_state.vencedor = None
     if 'turno_atual' not in st.session_state: st.session_state.turno_atual = "Treinador 1"
     if 'habilidades_usadas' not in st.session_state: st.session_state.habilidades_usadas = []
+    if 'evolucoes_turno' not in st.session_state: st.session_state.evolucoes_turno = [] # NOVO
     if 'dmg_buffer' not in st.session_state: st.session_state.dmg_buffer = {}
     if 'tela_ranking' not in st.session_state: st.session_state.tela_ranking = False
 
@@ -381,6 +407,7 @@ else:
                     r = st.session_state.Treinadores[p]['ativo'].resolver_checkup(); logs_check.extend(r)
             for l in logs_check: adicionar_log("Status", l)
             st.session_state.habilidades_usadas = []
+            st.session_state.evolucoes_turno = [] # LIMPA EVOLUÇÕES
             ant = st.session_state.turno_atual
             novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
             st.session_state.turno_atual = novo
@@ -412,6 +439,9 @@ else:
             local = st.radio("Local", ["Banco", "Ativo"], horizontal=True)
             if st.button("Adicionar", icon=":material/add_circle:"):
                 novo = Pokemon(escolha, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados.get("recuo", 1), dados["img"], dados.get("hab"))
+                # Registra que acabou de entrar, não pode evoluir
+                st.session_state.evolucoes_turno.append(novo.id_unico) 
+                
                 if local == "Ativo":
                     if not player['ativo']: 
                         adicionar_log("Inicio", f"Colocou {escolha} como Ativo.", player['nome'])
@@ -432,17 +462,28 @@ else:
             if opcoes:
                 alvo_str = st.selectbox("Quem?", opcoes); escolha_evo = st.selectbox("Evoluir Para", list(POKEDEX.keys()))
                 if st.button("Evoluir", icon=":material/upgrade:"):
-                    d = POKEDEX[escolha_evo]
                     obj = player['ativo'] if "[Ativo]" in alvo_str else player['banco'][int(alvo_str.split("]")[0].split(" ")[1])-1]
-                    obj.evoluir_para(escolha_evo, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo",1), d["img"], d.get("hab"))
-                    adicionar_log("Energia", f"{obj.nome} evoluiu!", player['nome'])
-                    st.rerun()
+                    # REGRA DE EVOLUÇÃO
+                    if obj.id_unico in st.session_state.evolucoes_turno:
+                        st.error("🚫 Este Pokémon já entrou ou evoluiu neste turno!")
+                    else:
+                        d = POKEDEX[escolha_evo]
+                        obj.evoluir_para(escolha_evo, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo",1), d["img"], d.get("hab"))
+                        st.session_state.evolucoes_turno.append(obj.id_unico) # Marca
+                        adicionar_log("Energia", f"{obj.nome} evoluiu!", player['nome'])
+                        st.rerun()
 
     def checar_vitoria(id_oponente_chave):
         if st.session_state.Treinadores[id_oponente_chave]['premios'] <= 0: return True
         oponente = st.session_state.Treinadores[id_oponente_chave]
         if oponente['ativo'] is None and len(oponente['banco']) == 0: return True
         return False
+
+    # --- NOVO HELPER PARA STATUS BOX ---
+    def get_icon_html(tipo_str):
+        url = ENERGY_IMGS.get(tipo_str)
+        if url: return f"<img src='{url}' class='stat-icon'>"
+        return "<span style='font-size:12px; color:#cbd5e1'>-</span>" if tipo_str == "Nenhuma" else f"<span style='font-size:12px'>{tipo_str}</span>"
 
     def render_player(key):
         p = st.session_state.Treinadores[key]
@@ -472,20 +513,21 @@ else:
                 color_hp = "#22c55e" if pct > 50 else ("#eab308" if pct > 20 else "#ef4444")
                 st.markdown(f"""<div class="hp-bar-bg"><div class="hp-fill" style="width:{pct}%; background-color:{color_hp};"></div></div>""", unsafe_allow_html=True)
                 
-                # --- STATS BOX (COM RECUO VISUAL) ---
+                # --- STATS BOX PROFISSIONAL ---
+                fraq_html = get_icon_html(ativo.fraqueza)
+                res_html = get_icon_html(ativo.resistencia)
+                
+                recuo_html = ""
                 if ativo.recuo > 0:
-                    recuo_html = ""
                     img_recuo = ENERGY_IMGS["Incolor ⭐"]
-                    for _ in range(ativo.recuo):
-                        recuo_html += f"<img src='{img_recuo}' class='recuo-img'>"
-                else:
-                    recuo_html = "Livre"
+                    for _ in range(ativo.recuo): recuo_html += f"<img src='{img_recuo}' class='stat-icon'>"
+                else: recuo_html = "<span style='font-size:10px; color:#cbd5e1'>LIVRE</span>"
 
                 stats_html = f"""
                 <div class="stats-box">
-                    <span>⚔️ {ativo.fraqueza}</span>
-                    <span>🛡️ {ativo.resistencia}</span>
-                    <span>🦶 {recuo_html}</span>
+                    <div class="stat-item"><div class="stat-label">Fraqueza</div>{fraq_html}</div>
+                    <div class="stat-item"><div class="stat-label">Resistência</div>{res_html}</div>
+                    <div class="stat-item"><div class="stat-label">Recuo</div><div>{recuo_html}</div></div>
                 </div>
                 """
                 st.markdown(stats_html, unsafe_allow_html=True)
@@ -527,6 +569,7 @@ else:
                             for l in logs_check: adicionar_log("Status", l)
 
                             st.session_state.habilidades_usadas = []
+                            st.session_state.evolucoes_turno = [] # LIMPA EVOLUÇÕES NO ATAQUE TBM
                             ant = st.session_state.turno_atual
                             novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
                             st.session_state.turno_atual = novo
@@ -566,10 +609,15 @@ else:
                         with t4:
                             evo_escolha = st.selectbox("Evoluir para:", list(POKEDEX.keys()), key=f"evo_sel_{ativo.id_unico}")
                             if st.button("Evoluir", icon=":material/upgrade:", key=f"btn_evo_{ativo.id_unico}"):
-                                d = POKEDEX[evo_escolha]
-                                ativo.evoluir_para(evo_escolha, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo", 1), d["img"], d.get("hab"))
-                                adicionar_log("Energia", f"{ativo.nome} evoluiu para {evo_escolha}!", p['nome'])
-                                st.rerun()
+                                # REGRA DE EVOLUÇÃO
+                                if ativo.id_unico in st.session_state.evolucoes_turno:
+                                    st.error("🚫 Já evoluiu ou entrou neste turno!")
+                                else:
+                                    d = POKEDEX[evo_escolha]
+                                    ativo.evoluir_para(evo_escolha, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo", 1), d["img"], d.get("hab"))
+                                    st.session_state.evolucoes_turno.append(ativo.id_unico)
+                                    adicionar_log("Energia", f"{ativo.nome} evoluiu para {evo_escolha}!", p['nome'])
+                                    st.rerun()
 
                     if ativo.habilidade:
                         ja = ativo.id_unico in st.session_state.habilidades_usadas
@@ -659,10 +707,15 @@ else:
                             with t4: # ABA EVOLUIR (NOVA)
                                 evo_escolha_b = st.selectbox("Para:", list(POKEDEX.keys()), key=f"evo_sel_b_{bp.id_unico}")
                                 if st.button("Evoluir", icon=":material/upgrade:", key=f"btn_evo_b_{bp.id_unico}"):
-                                    d = POKEDEX[evo_escolha_b]
-                                    bp.evoluir_para(evo_escolha_b, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo", 1), d["img"], d.get("hab"))
-                                    adicionar_log("Energia", f"{bp.nome} (Banco) evoluiu para {evo_escolha_b}!", p['nome'])
-                                    st.rerun()
+                                    # REGRA DE EVOLUÇÃO
+                                    if bp.id_unico in st.session_state.evolucoes_turno:
+                                        st.error("🚫 Já entrou/evoluiu!")
+                                    else:
+                                        d = POKEDEX[evo_escolha_b]
+                                        bp.evoluir_para(evo_escolha_b, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo", 1), d["img"], d.get("hab"))
+                                        st.session_state.evolucoes_turno.append(bp.id_unico)
+                                        adicionar_log("Energia", f"{bp.nome} (Banco) evoluiu para {evo_escolha_b}!", p['nome'])
+                                        st.rerun()
 
                         if bp.habilidade:
                             ja = bp.id_unico in st.session_state.habilidades_usadas
