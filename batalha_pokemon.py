@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 34.0 (Icons Only)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 35.0 (Bench Fix)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -123,6 +123,7 @@ ENERGY_IMGS = {
     "Metal ⚙️": "https://archives.bulbagarden.net/media/upload/thumb/6/64/Metal-attack.png/20px-Metal-attack.png",
     "Incolor ⭐": "https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png"
 }
+
 POKEDEX = POKEDEX = {
     ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
     ##                                                                                 DECK DE DRAGAPULT EX
@@ -165,6 +166,7 @@ POKEDEX = POKEDEX = {
     "Lugia V": {"hp": 220, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_138_R_EN_PNG.png"},
     "Archeops": {"hp": 150, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "hab": "Turbo Primitivo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_147_R_EN_PNG.png"},
 }
+
 TOOLS_DB = {
     "Nenhuma": {"efeito": "nada", "hp_bonus": 0},
     "Pingente de Bravura (+50 HP)": {"efeito": "hp", "hp_bonus": 50},
@@ -619,16 +621,17 @@ else:
                         with c_dmg: 
                             if st.button("💔", key=f"dmb_{bp.id_unico}"): bp.receber_dano(10); st.rerun()
                         
+                        # --- POPOVER DO BANCO ATUALIZADO ---
                         with st.popover("⚡", icon=":material/flash_on:", use_container_width=True):
-                            t1, t2, t3 = st.tabs(["Add", "Del", "Tool"])
-                            with t1:
+                            t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"]) # NOMES CORRETOS
+                            
+                            with t1: # ABA ENERGIA
                                 eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"aeb_{bp.id_unico}")
                                 
-                                # PREVIEW NO BANCO (REDUZIDO 20px)
+                                # PREVIEW NO BANCO (20px)
                                 img_preview_b = ENERGY_IMGS.get(eb)
                                 if img_preview_b: st.image(img_preview_b, width=20)
 
-                                # BOTÕES DO BANCO (LADO A LADO)
                                 c_b1, c_b2 = st.columns(2)
                                 with c_b1:
                                     if st.button("", icon=":material/add:", key=f"baeb_{bp.id_unico}"): 
@@ -640,11 +643,11 @@ else:
                                         bp.remover_energia(eb)
                                         adicionar_log("Energia", f"Removeu {eb} do banco", p['nome'])
                                         st.rerun()
-                            with t2:
-                                if bp.energias:
-                                    rb = st.selectbox("Rem", list(bp.energias.keys()), key=f"reb_{bp.id_unico}")
-                                    if st.button("Del", icon=":material/remove:", key=f"old_rem_{bp.id_unico}"): bp.remover_energia(rb); st.rerun()
-                            with t3:
+                            
+                            with t2: # ABA STATUS (NOVA)
+                                st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_b_{bp.id_unico}", on_change=lambda: setattr(bp, 'status', st.session_state[f"st_b_{bp.id_unico}"]))
+
+                            with t3: # ABA TOOL
                                 tlb = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tlb_{bp.id_unico}")
                                 if st.button("Eqp", icon=":material/build:", key=f"btlb_{bp.id_unico}"): bp.equipar_ferramenta(tlb); st.rerun()
 
@@ -672,4 +675,3 @@ else:
         st.subheader("📜 Registro")
         with st.container(height=300):
             st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
-
