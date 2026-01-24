@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 35.0 (Bench Fix)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 36.0 (Field Evo)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -91,7 +91,6 @@ def configurar_visual():
         .hp-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-in-out; }
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
         
-        /* ENERGIAS (CARTAS) */
         .energy-container {
             display: flex; flex-wrap: wrap; gap: 3px; justify-content: center;
             background-color: rgba(15, 23, 42, 0.6); padding: 6px; border-radius: 20px;
@@ -123,7 +122,6 @@ ENERGY_IMGS = {
     "Metal ⚙️": "https://archives.bulbagarden.net/media/upload/thumb/6/64/Metal-attack.png/20px-Metal-attack.png",
     "Incolor ⭐": "https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png"
 }
-
 POKEDEX = POKEDEX = {
     ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------##
     ##                                                                                 DECK DE DRAGAPULT EX
@@ -536,8 +534,8 @@ else:
                             st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                     
-                    with st.popover("Energia / Status / Tool", icon=":material/flash_on:"):
-                        t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"])
+                    with st.popover("Energia / Status / Tool / Evo", icon=":material/flash_on:"):
+                        t1, t2, t3, t4 = st.tabs(["Energia", "Status", "Tool", "Evoluir"])
                         with t1:
                             # SELECTBOX
                             escolha_e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"ae_{ativo.id_unico}")
@@ -564,6 +562,13 @@ else:
                             if st.button("Equipar", icon=":material/build:", key=f"btl_{ativo.id_unico}"): 
                                 ativo.equipar_ferramenta(tl)
                                 adicionar_log("Tool", f"Equipou {tl}", p['nome'])
+                                st.rerun()
+                        with t4:
+                            evo_escolha = st.selectbox("Evoluir para:", list(POKEDEX.keys()), key=f"evo_sel_{ativo.id_unico}")
+                            if st.button("Evoluir", icon=":material/upgrade:", key=f"btn_evo_{ativo.id_unico}"):
+                                d = POKEDEX[evo_escolha]
+                                ativo.evoluir_para(evo_escolha, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo", 1), d["img"], d.get("hab"))
+                                adicionar_log("Energia", f"{ativo.nome} evoluiu para {evo_escolha}!", p['nome'])
                                 st.rerun()
 
                     if ativo.habilidade:
@@ -623,7 +628,7 @@ else:
                         
                         # --- POPOVER DO BANCO ATUALIZADO ---
                         with st.popover("⚡", icon=":material/flash_on:", use_container_width=True):
-                            t1, t2, t3 = st.tabs(["Energia", "Status", "Tool"]) # NOMES CORRETOS
+                            t1, t2, t3, t4 = st.tabs(["Energia", "Status", "Tool", "Evoluir"]) # NOMES CORRETOS
                             
                             with t1: # ABA ENERGIA
                                 eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"aeb_{bp.id_unico}")
@@ -650,6 +655,14 @@ else:
                             with t3: # ABA TOOL
                                 tlb = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tlb_{bp.id_unico}")
                                 if st.button("Eqp", icon=":material/build:", key=f"btlb_{bp.id_unico}"): bp.equipar_ferramenta(tlb); st.rerun()
+
+                            with t4: # ABA EVOLUIR (NOVA)
+                                evo_escolha_b = st.selectbox("Para:", list(POKEDEX.keys()), key=f"evo_sel_b_{bp.id_unico}")
+                                if st.button("Evoluir", icon=":material/upgrade:", key=f"btn_evo_b_{bp.id_unico}"):
+                                    d = POKEDEX[evo_escolha_b]
+                                    bp.evoluir_para(evo_escolha_b, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo", 1), d["img"], d.get("hab"))
+                                    adicionar_log("Energia", f"{bp.nome} (Banco) evoluiu para {evo_escolha_b}!", p['nome'])
+                                    st.rerun()
 
                         if bp.habilidade:
                             ja = bp.id_unico in st.session_state.habilidades_usadas
