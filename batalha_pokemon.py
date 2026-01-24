@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 
-st.set_page_config(page_title="PokéBattle 38.0 (Atk Cost)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 38.1 (Fix)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -109,10 +109,13 @@ def configurar_visual():
         .stat-label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 2px; }
         .stat-icon { height: 18px; width: 18px; }
         
-        /* BOX CUSTO ATAQUE */
+        /* BOX CUSTO ATAQUE (CORRIGIDO) */
         .atk-cost-display {
-            display: flex; justify-content: center; gap: 2px; margin-bottom: 4px;
+            display: flex; justify-content: center; align-items: center; gap: 4px; 
+            margin-bottom: 6px; background-color: #1e293b; 
+            padding: 4px; border-radius: 6px; border: 1px solid #334155;
         }
+        .atk-cost-label { font-size: 11px; font-weight: bold; color: #94a3b8; margin-right: 4px;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -133,7 +136,6 @@ ENERGY_IMGS = {
     "Fada 🧚": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/web/energies/fairy.png"
 }
 
-# ADICIONEI "custo" AOS POKÉMONS
 POKEDEX = {
     "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "custo": ["Fogo 🔥", "Psíquico 🌀"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
     "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "custo": ["Fogo 🔥", "Psíquico 🌀"], "hab": "Reconhecimento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
@@ -276,25 +278,26 @@ class Pokemon:
             self.status = "Saudável"; return True, f"Pagou {custo}."
         return False, f"Falta energia ({total}/{custo})."
 
-    # --- LÓGICA DE CHECAGEM DE CUSTO ---
-    def tem_energia_para_ataque(self):
-        custo_lista = POKEDEX[self.nome].get("custo", ["Incolor ⭐"]) # Default 1 incolor
-        pool = self.energias.copy()
-        
-        # 1. Gastar energias específicas
-        for req in [c for c in custo_lista if "Incolor" not in c]:
-            if pool.get(req, 0) > 0:
-                pool[req] -= 1
-            else:
-                return False # Falta energia específica
-        
-        # 2. Gastar incolores com o que sobrou
-        incolores_nec = len([c for c in custo_lista if "Incolor" in c])
-        total_sobra = sum(pool.values())
-        
-        if total_sobra >= incolores_nec:
-            return True
-        return False
+# --- FUNÇÃO EXTERNA DE VERIFICAÇÃO DE CUSTO (FIX CRASH) ---
+def verificar_custo_ataque(pokemon):
+    # Pega o custo da Pokedex ou assume 1 incolor se não tiver
+    custo_lista = POKEDEX.get(pokemon.nome, {}).get("custo", ["Incolor ⭐"])
+    pool = pokemon.energias.copy()
+    
+    # 1. Gastar energias específicas (ex: Fogo, Agua)
+    for req in [c for c in custo_lista if "Incolor" not in c]:
+        if pool.get(req, 0) > 0:
+            pool[req] -= 1
+        else:
+            return False # Falta energia específica
+    
+    # 2. Gastar incolores com o que sobrou
+    incolores_nec = len([c for c in custo_lista if "Incolor" in c])
+    total_sobra = sum(pool.values())
+    
+    if total_sobra >= incolores_nec:
+        return True
+    return False
 
 def gerar_html_energia(energias_dict):
     if not energias_dict: return "<div class='energy-container' style='opacity:0'>.</div>"
@@ -315,8 +318,8 @@ def get_icon_html(tipo_str):
     return "<span style='font-size:12px; color:#cbd5e1'>-</span>" if tipo_str == "Nenhuma" else f"<span style='font-size:12px'>{tipo_str}</span>"
 
 def render_custo_html(nome_poke):
-    custo = POKEDEX[nome_poke].get("custo", ["Incolor ⭐"])
-    html = "<div class='atk-cost-display'>"
+    custo = POKEDEX.get(nome_poke, {}).get("custo", ["Incolor ⭐"])
+    html = "<div class='atk-cost-display'><span class='atk-cost-label'>Custo:</span>"
     for c in custo:
         url = ENERGY_IMGS.get(c)
         if url: html += f"<img src='{url}' style='width:16px; margin-right:1px'>"
@@ -553,8 +556,8 @@ else:
 
                     st.markdown('<div class="atk-btn">', unsafe_allow_html=True)
                     if st.button("ATACAR", icon=":material/swords:", key=f"atk_{ativo.id_unico}"):
-                        # --- CHECAGEM DE ENERGIA ---
-                        if not ativo.tem_energia_para_ataque():
+                        # --- CHECAGEM DE ENERGIA (FIXED CRASH) ---
+                        if not verificar_custo_ataque(ativo):
                             st.error("🚫 Falta Energia!")
                         else:
                             op_key = "Treinador 2" if key == "Treinador 1" else "Treinador 1"
@@ -678,6 +681,7 @@ else:
                         with c_dmg: 
                             if st.button("💔", key=f"dmb_{bp.id_unico}"): bp.receber_dano(10); st.rerun()
                         
+                        # --- POPOVER DO BANCO ATUALIZADO ---
                         with st.popover("⚡", icon=":material/flash_on:", use_container_width=True):
                             t1, t2, t3, t4 = st.tabs(["Energia", "Status", "Tool", "Evoluir"]) # NOMES CORRETOS
                             
@@ -700,16 +704,17 @@ else:
                                         adicionar_log("Energia", f"Removeu {eb} do banco", p['nome'])
                                         st.rerun()
                             
-                            with t2: # ABA STATUS
+                            with t2: # ABA STATUS (NOVA)
                                 st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_b_{bp.id_unico}", on_change=lambda: setattr(bp, 'status', st.session_state[f"st_b_{bp.id_unico}"]))
 
                             with t3: # ABA TOOL
                                 tlb = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tlb_{bp.id_unico}")
                                 if st.button("Eqp", icon=":material/build:", key=f"btlb_{bp.id_unico}"): bp.equipar_ferramenta(tlb); st.rerun()
 
-                            with t4: # ABA EVOLUIR
+                            with t4: # ABA EVOLUIR (NOVA)
                                 evo_escolha_b = st.selectbox("Para:", list(POKEDEX.keys()), key=f"evo_sel_b_{bp.id_unico}")
                                 if st.button("Evoluir", icon=":material/upgrade:", key=f"btn_evo_b_{bp.id_unico}"):
+                                    # REGRA DE EVOLUÇÃO
                                     if bp.id_unico in st.session_state.evolucoes_turno:
                                         st.error("🚫 Já entrou/evoluiu!")
                                     else:
