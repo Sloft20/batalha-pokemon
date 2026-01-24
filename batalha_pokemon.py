@@ -6,14 +6,14 @@ import json
 import os
 import pandas as pd
 
-# IMPORTAÇÃO DO ARQUIVO DE DADOS SEPARADO
+# Se estiver usando arquivo separado, mantenha a importação. 
+# Se não, os dados estão abaixo para garantir que o código rode completo aqui.
 try:
     from cartas_db import POKEDEX, ENERGY_IMGS, LISTA_DECKS, TOOLS_DB
 except ImportError:
-    st.error("Erro: Arquivo 'cartas_db.py' não encontrado. Crie o arquivo no mesmo diretório.")
-    st.stop()
+    # DADOS INCLUSOS PARA RODAR DIRETO (Caso não tenha o arquivo)
 
-st.set_page_config(page_title="PokéBattle 39.0 (DB Separado)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 40.0 (Energy Rule)", page_icon="⚔️", layout="wide")
 
 # --- 0. CONFIGURAÇÃO VISUAL ---
 def configurar_visual():
@@ -233,21 +233,14 @@ class Pokemon:
             self.status = "Saudável"; return True, f"Pagou {custo}."
         return False, f"Falta energia ({total}/{custo})."
 
-# --- FUNÇÃO EXTERNA DE VERIFICAÇÃO DE CUSTO (FIX CRASH) ---
 def verificar_custo_ataque(pokemon):
     custo_lista = POKEDEX.get(pokemon.nome, {}).get("custo", ["Incolor ⭐"])
     pool = pokemon.energias.copy()
-    
     for req in [c for c in custo_lista if "Incolor" not in c]:
-        if pool.get(req, 0) > 0:
-            pool[req] -= 1
-        else:
-            return False 
-    
+        if pool.get(req, 0) > 0: pool[req] -= 1
+        else: return False 
     incolores_nec = len([c for c in custo_lista if "Incolor" in c])
-    total_sobra = sum(pool.values())
-    
-    if total_sobra >= incolores_nec: return True
+    if sum(pool.values()) >= incolores_nec: return True
     return False
 
 def gerar_html_energia(energias_dict):
@@ -256,10 +249,8 @@ def gerar_html_energia(energias_dict):
     for tipo_chave, qtd in energias_dict.items():
         img_url = ENERGY_IMGS.get(tipo_chave, "")
         if img_url:
-            for _ in range(qtd):
-                html += f"<img src='{img_url}' class='energy-icon' title='{tipo_chave}'>"
-        else:
-            html += f"<span style='font-size:12px; margin:0 2px;'>{tipo_chave} x{qtd}</span>"
+            for _ in range(qtd): html += f"<img src='{img_url}' class='energy-icon' title='{tipo_chave}'>"
+        else: html += f"<span style='font-size:12px; margin:0 2px;'>{tipo_chave} x{qtd}</span>"
     html += "</div>"
     return html
 
@@ -288,6 +279,7 @@ def inicializar_jogo():
     if 'turno_atual' not in st.session_state: st.session_state.turno_atual = "Treinador 1"
     if 'habilidades_usadas' not in st.session_state: st.session_state.habilidades_usadas = []
     if 'evolucoes_turno' not in st.session_state: st.session_state.evolucoes_turno = []
+    if 'energia_anexada_turno' not in st.session_state: st.session_state.energia_anexada_turno = False # NOVO: CONTROLE DE ENERGIA
     if 'dmg_buffer' not in st.session_state: st.session_state.dmg_buffer = {}
     if 'tela_ranking' not in st.session_state: st.session_state.tela_ranking = False
 
@@ -364,7 +356,8 @@ else:
                     r = st.session_state.Treinadores[p]['ativo'].resolver_checkup(); logs_check.extend(r)
             for l in logs_check: adicionar_log("Status", l)
             st.session_state.habilidades_usadas = []
-            st.session_state.evolucoes_turno = [] 
+            st.session_state.evolucoes_turno = []
+            st.session_state.energia_anexada_turno = False # RESET DE ENERGIA
             ant = st.session_state.turno_atual
             novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
             st.session_state.turno_atual = novo
@@ -434,6 +427,11 @@ else:
         if oponente['ativo'] is None and len(oponente['banco']) == 0: return True
         return False
 
+    def get_icon_html(tipo_str):
+        url = ENERGY_IMGS.get(tipo_str)
+        if url: return f"<img src='{url}' class='stat-icon'>"
+        return "<span style='font-size:12px; color:#cbd5e1'>-</span>" if tipo_str == "Nenhuma" else f"<span style='font-size:12px'>{tipo_str}</span>"
+
     def render_player(key):
         p = st.session_state.Treinadores[key]
         eh_vez = (st.session_state.turno_atual == key)
@@ -497,12 +495,10 @@ else:
                     dmg = st.number_input("Dano do ataque", value=st.session_state.dmg_buffer[ativo.id_unico], step=10, key=f"d_{ativo.id_unico}", label_visibility="collapsed")
                     st.session_state.dmg_buffer[ativo.id_unico] = dmg
 
-                    # --- VISUALIZADOR DE CUSTO ---
                     st.markdown(render_custo_html(ativo.nome), unsafe_allow_html=True)
 
                     st.markdown('<div class="atk-btn">', unsafe_allow_html=True)
                     if st.button("ATACAR", icon=":material/swords:", key=f"atk_{ativo.id_unico}"):
-                        # --- CHECAGEM DE ENERGIA (FIXED CRASH) ---
                         if not verificar_custo_ataque(ativo):
                             st.error("🚫 Falta Energia!")
                         else:
@@ -524,6 +520,7 @@ else:
 
                                 st.session_state.habilidades_usadas = []
                                 st.session_state.evolucoes_turno = []
+                                st.session_state.energia_anexada_turno = False
                                 ant = st.session_state.turno_atual
                                 novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
                                 st.session_state.turno_atual = novo
@@ -534,19 +531,20 @@ else:
                     with st.popover("Energia / Status / Tool / Evo", icon=":material/flash_on:"):
                         t1, t2, t3, t4 = st.tabs(["Energia", "Status", "Tool", "Evoluir"])
                         with t1:
-                            # SELECTBOX
                             escolha_e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"ae_{ativo.id_unico}")
-                            
-                            # PREVIEW REDUZIDO (20px)
                             img_preview = ENERGY_IMGS.get(escolha_e)
                             if img_preview: st.image(img_preview, width=20)
                             
                             c1, c2 = st.columns(2)
                             with c1: 
                                 if st.button("", icon=":material/add:", key=f"ba_{ativo.id_unico}"): 
-                                    ativo.anexar_energia(escolha_e)
-                                    adicionar_log("Energia", f"Ligou {escolha_e}", p['nome'])
-                                    st.rerun()
+                                    if st.session_state.energia_anexada_turno:
+                                        st.error("🚫 Já ligou energia neste turno!")
+                                    else:
+                                        ativo.anexar_energia(escolha_e)
+                                        st.session_state.energia_anexada_turno = True
+                                        adicionar_log("Energia", f"Ligou {escolha_e}", p['nome'])
+                                        st.rerun()
                             with c2:
                                 if st.button("", icon=":material/remove:", key=f"br_{ativo.id_unico}"): 
                                     ativo.remover_energia(escolha_e)
@@ -627,40 +625,40 @@ else:
                         with c_dmg: 
                             if st.button("💔", key=f"dmb_{bp.id_unico}"): bp.receber_dano(10); st.rerun()
                         
-                        # --- POPOVER DO BANCO ATUALIZADO ---
                         with st.popover("⚡", icon=":material/flash_on:", use_container_width=True):
-                            t1, t2, t3, t4 = st.tabs(["Energia", "Status", "Tool", "Evoluir"]) # NOMES CORRETOS
+                            t1, t2, t3, t4 = st.tabs(["Energia", "Status", "Tool", "Evoluir"])
                             
-                            with t1: # ABA ENERGIA
+                            with t1: 
                                 eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"aeb_{bp.id_unico}")
-                                
-                                # PREVIEW NO BANCO (20px)
                                 img_preview_b = ENERGY_IMGS.get(eb)
                                 if img_preview_b: st.image(img_preview_b, width=20)
 
                                 c_b1, c_b2 = st.columns(2)
                                 with c_b1:
                                     if st.button("", icon=":material/add:", key=f"baeb_{bp.id_unico}"): 
-                                        bp.anexar_energia(eb)
-                                        adicionar_log("Energia", f"Ligou {eb} no banco", p['nome'])
-                                        st.rerun()
+                                        if st.session_state.energia_anexada_turno:
+                                            st.error("🚫 Já ligou energia!")
+                                        else:
+                                            bp.anexar_energia(eb)
+                                            st.session_state.energia_anexada_turno = True
+                                            adicionar_log("Energia", f"Ligou {eb} no banco", p['nome'])
+                                            st.rerun()
                                 with c_b2:
                                     if st.button("", icon=":material/remove:", key=f"breb_{bp.id_unico}"): 
                                         bp.remover_energia(eb)
                                         adicionar_log("Energia", f"Removeu {eb} do banco", p['nome'])
                                         st.rerun()
                             
-                            with t2: # ABA STATUS (NOVA)
+                            with t2:
                                 st.selectbox("Status", ["Saudável", "Envenenado 🧪", "Queimado 🔥", "Adormecido 💤", "Paralisado ⚡"], key=f"st_b_{bp.id_unico}", on_change=lambda: setattr(bp, 'status', st.session_state[f"st_b_{bp.id_unico}"]))
 
-                            with t3: # ABA TOOL
+                            with t3:
                                 tlb = st.selectbox("Tool", list(TOOLS_DB.keys()), key=f"tlb_{bp.id_unico}")
                                 if st.button("Eqp", icon=":material/build:", key=f"btlb_{bp.id_unico}"): bp.equipar_ferramenta(tlb); st.rerun()
 
-                            with t4: # ABA EVOLUIR (NOVA)
+                            with t4:
                                 evo_escolha_b = st.selectbox("Para:", list(POKEDEX.keys()), key=f"evo_sel_b_{bp.id_unico}")
                                 if st.button("Evoluir", icon=":material/upgrade:", key=f"btn_evo_b_{bp.id_unico}"):
-                                    # REGRA DE EVOLUÇÃO
                                     if bp.id_unico in st.session_state.evolucoes_turno:
                                         st.error("🚫 Já entrou/evoluiu!")
                                     else:
