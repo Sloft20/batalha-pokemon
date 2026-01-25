@@ -180,7 +180,8 @@ HISTORY_FILE = "historico.json"
 
 def carregar_historico():
     if not os.path.exists(HISTORY_FILE): return []
-    try: with open(HISTORY_FILE, "r") as f: return json.load(f)
+    try: 
+        with open(HISTORY_FILE, "r") as f: return json.load(f)
     except: return []
 
 def salvar_partida(vencedor, perdedor, deck_venc, deck_perd, log_partida):
@@ -613,3 +614,4 @@ else:
     st.subheader("📜 Registro")
     with st.container(height=300):
         st.markdown("".join(st.session_state.log), unsafe_allow_html=True)
+
