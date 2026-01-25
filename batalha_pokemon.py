@@ -6,123 +6,193 @@ import json
 import os
 import pandas as pd
 
-# IMPORTAÇÃO OBRIGATÓRIA DO ARQUIVO DE DADOS
+# IMPORTAÇÃO (Mantendo sua estrutura)
 try:
     from cartas_db import POKEDEX, ENERGY_IMGS, LISTA_DECKS, TOOLS_DB
 except ImportError:
-    st.error("Erro: Arquivo 'cartas_db.py' não encontrado. Certifique-se de que ele está na mesma pasta.")
-    st.stop()
+    # FALLBACK DE DADOS (Para garantir que rode se não achar o arquivo)
+    ENERGY_IMGS = {
+    "Planta 🌱": "https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/20px-Grass-attack.png",
+    "Fogo 🔥": "https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/20px-Fire-attack.png",
+    "Água 💧": "https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/20px-Water-attack.png",
+    "Elétrico ⚡": "https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/20px-Lightning-attack.png",
+    "Psíquico 🌀": "https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/20px-Psychic-attack.png",
+    "Luta 🥊": "https://archives.bulbagarden.net/media/upload/thumb/4/48/Fighting-attack.png/20px-Fighting-attack.png",
+    "Escuridão 🌙": "https://archives.bulbagarden.net/media/upload/thumb/a/ab/Darkness-attack.png/20px-Darkness-attack.png",
+    "Metal ⚙️": "https://archives.bulbagarden.net/media/upload/thumb/6/64/Metal-attack.png/20px-Metal-attack.png",
+    "Incolor ⭐": "https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png"
+}
+    POKEDEX = {
+        "Dragapult ex": {"hp": 320, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "custo": ["Fogo 🔥", "Psíquico 🌀"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_PNG.png"},
+        "Drakloak": {"hp": 90, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "custo": ["Fogo 🔥", "Psíquico 🌀"], "hab": "Reconhecimento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_129_R_EN_PNG.png"},
+        "Dreepy": {"hp": 70, "tipo": "Dragão 🐉", "fraq": "Nenhuma", "res": "Nenhuma", "recuo": 1, "custo": ["Psíquico 🌀"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN_PNG.png"},
+        "Xatu": {"hp": 100, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "custo": ["Psíquico 🌀", "Incolor ⭐"], "hab": "Sentido Clarividente", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_072_R_EN_PNG.png"},
+        "Natu": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "custo": ["Psíquico 🌀"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_071_R_EN_PNG.png"},
+        "Fezandipiti ex": {"hp": 210, "tipo": "Psíquico 🌀", "fraq": "Metal ⚙️", "res": "Nenhuma", "recuo": 1, "custo": ["Incolor ⭐", "Incolor ⭐", "Incolor ⭐"], "hab": "Virar o Jogo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SFA/SFA_038_R_EN_PNG.png"},
+        "Charizard ex": {"hp": 330, "tipo": "Escuridão 🌙", "fraq": "Planta 🌱", "res": "Nenhuma", "recuo": 2, "custo": ["Fogo 🔥", "Fogo 🔥"], "hab": "Reino Infernal", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_125_R_EN_PNG.png"},
+        "Charmeleon": {"hp": 90, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 2, "custo": ["Fogo 🔥", "Fogo 🔥"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_027_R_EN_PNG.png"},
+        "Charmander": {"hp": 70, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "custo": ["Fogo 🔥"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_026_R_EN_PNG.png"},
+        "Pidgeot ex": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 0, "custo": ["Incolor ⭐", "Incolor ⭐"], "hab": "Busca Rápida", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_164_R_EN_PNG.png"},
+        "Pidgey": {"hp": 60, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "custo": ["Incolor ⭐"], "hab": "Chamar a Família", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/OBF/OBF_162_R_EN_PNG.png"},
+        "Moltres": {"hp": 120, "tipo": "Fogo 🔥", "fraq": "Água 💧", "res": "Nenhuma", "recuo": 1, "custo": ["Fogo 🔥", "Fogo 🔥", "Incolor ⭐"], "hab": "Símbolo de Fogo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_021_R_EN_PNG.png"},
+        "Gardevoir ex": {"hp": 310, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "custo": ["Psíquico 🌀", "Psíquico 🌀", "Incolor ⭐"], "hab": "Abraço Psíquico", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_086_R_EN_PNG.png"},
+        "Kirlia": {"hp": 80, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 2, "custo": ["Psíquico 🌀", "Incolor ⭐"], "hab": "Refinamento", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_085_R_EN_PNG.png"},
+        "Ralts": {"hp": 60, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "custo": ["Psíquico 🌀"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_084_R_EN_PNG.png"},
+        "Drifloon": {"hp": 70, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "custo": ["Incolor ⭐", "Incolor ⭐"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVI/SVI_089_R_EN_PNG.png"},
+        "Scream Tail": {"hp": 90, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 1, "custo": ["Psíquico 🌀", "Incolor ⭐"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PAR/PAR_086_R_EN_PNG.png"},
+        "Mew ex": {"hp": 180, "tipo": "Psíquico 🌀", "fraq": "Escuridão 🌙", "res": "Luta 🥊", "recuo": 0, "custo": ["Incolor ⭐", "Incolor ⭐", "Incolor ⭐"], "hab": "Reinício", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/MEW/MEW_151_R_EN_PNG.png"},
+        "Radiant Greninja": {"hp": 130, "tipo": "Água 💧", "fraq": "Elétrico ⚡", "res": "Nenhuma", "recuo": 1, "custo": ["Água 💧", "Água 💧", "Incolor ⭐"], "hab": "Cartas Ocultas", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/ASR/ASR_046_R_EN_PNG.png"},
+        "Lugia VSTAR": {"hp": 280, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "custo": ["Incolor ⭐", "Incolor ⭐", "Incolor ⭐", "Incolor ⭐"], "hab": "Astro Invocador", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_139_R_EN_PNG.png"},
+        "Lugia V": {"hp": 220, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 2, "custo": ["Incolor ⭐", "Incolor ⭐", "Incolor ⭐", "Incolor ⭐"], "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_138_R_EN_PNG.png"},
+        "Archeops": {"hp": 150, "tipo": "Normal ⚪", "fraq": "Elétrico ⚡", "res": "Luta 🥊", "recuo": 1, "custo": ["Incolor ⭐", "Incolor ⭐", "Incolor ⭐"], "hab": "Turbo Primitivo", "img": "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SIT/SIT_147_R_EN_PNG.png"},
+    }
+    TOOLS_DB = {
+        "Nenhuma": {"efeito": "nada", "hp_bonus": 0},
+        "Pingente de Bravura (+50 HP)": {"efeito": "hp", "hp_bonus": 50},
+        "Capa do Herói (+100 HP)": {"efeito": "hp", "hp_bonus": 100},
+        "Cinto Máximo (+50 Dano ex)": {"efeito": "dmg", "hp_bonus": 0},
+        "Faixa de Desafio (+30 Dano)": {"efeito": "dmg", "hp_bonus": 0},
+        "Skate de Resgate (-1 Recuo)": {"efeito": "util", "hp_bonus": 0},
+        "MT: Evolução": {"efeito": "atk", "hp_bonus": 0},
+        "MT: Devolução": {"efeito": "atk", "hp_bonus": 0},
+    }
+    LISTA_DECKS = ["Charizard ex", "Dragapult ex", "Lugia VSTAR", "Gardevoir ex", "Raging Bolt ex", "Iron Thorns ex", "Outro"]
 
-st.set_page_config(page_title="PokéBattle 41.0 (Energy/Poke Rule)", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="PokéBattle 42.0 (Neon UI)", page_icon="⚔️", layout="wide")
 
-# --- 0. CONFIGURAÇÃO VISUAL ---
+# --- 0. CONFIGURAÇÃO VISUAL (NEON CYBERPUNK) ---
 def configurar_visual():
     st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;800&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
 
-        html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
-        [data-testid="stAppViewContainer"] { background-color: #0f172a; color: #f1f5f9; }
+        /* RESET GERAL */
+        html, body, [class*="css"] { 
+            font-family: 'Exo 2', sans-serif; 
+            background-color: #050b14;
+        }
+
+        /* FUNDO COM GRADIENTE FUTURISTA */
+        [data-testid="stAppViewContainer"] {
+            background-color: #050b14;
+            background-image: 
+                linear-gradient(rgba(5, 11, 20, 0.9), rgba(5, 11, 20, 0.9)),
+                url("https://pokemonrevolution.net/forum/uploads/monthly_2021_03/DVMT-6OXcAE2rZY.jpg.afab972f972bd7fbd4253bc7aa1cf27f.jpg");
+            background-size: cover;
+            background-attachment: fixed;
+            color: #e2e8f0;
+        }
         [data-testid="stHeader"] { background-color: rgba(0,0,0,0); }
-        
+
+        /* CONTAINERS DE VIDRO (NEON BORDER) */
         [data-testid="stSidebar"], div[data-testid="stVerticalBlockBorderWrapper"], div[data-testid="stExpander"] {
-            background-color: #1e293b; border: 1px solid #334155; border-radius: 8px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.1); /* Azul bem fraco */
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            transition: border 0.3s ease;
+        }
+        /* Efeito de brilho ao passar o mouse no container */
+        div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
+        }
+
+        /* INPUTS MODERNOS (AFUNDADOS) */
+        .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
+            background-color: #020617 !important;
+            color: #38bdf8 !important; /* Texto Azul Neon */
+            border: 1px solid #1e293b !important;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
         }
         
-        /* SELECTBOX COMPACTO */
-        .stSelectbox div[data-baseweb="select"] > div {
-            background-color: #0f172a !important; 
-            color: #e2e8f0 !important; 
-            border: 1px solid #475569 !important; 
-            border-radius: 6px;
-            font-size: 13px !important;
-            min-height: 38px !important;
-            height: 38px !important;
-            padding-top: 0px !important;
-            padding-bottom: 0px !important;
-            display: flex;
-            align-items: center;
-        }
-        .stSelectbox label {
-            font-size: 12px !important;
-            margin-bottom: 2px !important;
+        /* BOTÕES GERAIS */
+        .stButton > button {
+            border-radius: 8px;
+            font-weight: 700;
+            border: none !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
         }
 
-        .stTextInput input, .stNumberInput input {
-            background-color: #0f172a !important; color: #e2e8f0 !important; border: 1px solid #475569 !important; border-radius: 6px;
+        /* BOTÃO MENU / FIM TURNO (Gradient Gold) */
+        div[data-testid="stPopover"] > div > button, .turn-btn button, .atk-btn > button {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+            color: #0f172a !important;
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3) !important;
+            height: 48px !important;
+            margin-top: 0 !important;
         }
-
-        .stButton > button { border-radius: 6px; font-weight: 600; border: none !important; width: 100%; }
+        div[data-testid="stPopover"] > div > button:hover, .turn-btn button:hover, .atk-btn > button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(245, 158, 11, 0.5) !important;
+            filter: brightness(1.1);
+        }
         
-        /* Botões Topo */
-        div[data-testid="stPopover"] > div > button, .turn-btn button {
-            min-height: 45px !important; height: 45px !important; width: 100% !important;
-            border-radius: 8px !important; font-size: 15px !important; margin-bottom: 5px !important;
+        /* BOTÃO PADRÃO (Gradient Dark Blue) */
+        .stButton > button {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important;
+            color: #f1f5f9 !important;
+            border: 1px solid rgba(255,255,255,0.05) !important;
         }
-        div[data-testid="stPopover"] > div > button {
-            background-color: #1e293b !important; border: 1px solid #475569 !important; color: #e2e8f0 !important;
-        }
-        div[data-testid="stPopover"] > div > button:hover { background-color: #334155 !important; }
-        .turn-btn button { 
-            background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold !important; border: 1px solid #FFC107 !important;
-        }
-        .turn-btn button:hover { background-color: #FFD54F !important; }
-
-        /* Botão Atacar */
-        .atk-btn > button { 
-            background-color: #FFC107 !important; color: #0f172a !important; font-weight: bold; 
-            min-height: 45px !important; margin-top: 5px !important; width: 100% !important;
+        .stButton > button:hover {
+            background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+            border-color: #38bdf8 !important;
         }
 
-        .menu-item button { background-color: #1e293b !important; border: 1px solid #475569 !important; min-height: 40px; }
-        .btn-red > button { background-color: #EF4444 !important; color: white; }
-        .game-btn > button { background-color: #334155 !important; color: white; }
-
-        .log-container { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #cbd5e1; padding: 4px 0; border-bottom: 1px solid #334155; }
-        .tag-log { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-right: 8px; width: 70px; text-align: center; }
-        .tag-inicio { background-color: #22c55e; color: #0f172a; } .tag-turno { background-color: #3b82f6; color: #fff; } 
-        .tag-ataque { background-color: #ef4444; color: #fff; } .tag-energia { background-color: #eab308; color: #0f172a; } 
-        .tag-tool { background-color: #a855f7; color: #fff; } .tag-ko { background-color: #000; color: #ef4444; border: 1px solid #ef4444; } 
-        .tag-status { background-color: #f97316; color: #fff; }
-
-        .rank-card { background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
-        .rank-name { font-size: 16px; font-weight: bold; color: #f1f5f9; margin-bottom: 5px; }
-        .rank-stats { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
-        .rank-bar-bg { width: 100%; height: 6px; background-color: #334155; border-radius: 3px; }
-        .rank-bar-fill { height: 100%; border-radius: 3px; }
+        /* BOTÃO KO/DELETAR (Gradient Red) */
+        .btn-red > button {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+            color: white !important;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3) !important;
+        }
         
-        .main-title { font-size: 26px; font-weight: 800; color: #f1f5f9; line-height: 1.2; }
-        .turn-display { font-size: 16px; font-weight: bold; color: #FFC107; margin-bottom: 10px; }
-        .hp-bar-bg { width: 100%; background-color: #334155; border-radius: 4px; height: 10px; margin-bottom: 15px; display: block; }
-        .hp-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-in-out; }
+        /* TEXTOS */
+        h1, h2, h3, p, span, div, label {
+            color: #e2e8f0 !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        /* LOG TÁTICO (CONSOLE STYLE) */
+        .log-container {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #94a3b8;
+            padding: 6px 8px;
+            border-left: 2px solid #334155;
+            background: rgba(0,0,0,0.2);
+            margin-bottom: 2px;
+        }
+        
+        /* BADGES */
+        .tag-log { border-radius: 4px; padding: 2px 6px; font-weight: bold; font-size: 10px; margin-right: 8px; text-transform: uppercase; }
+        .tag-ataque { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid #ef4444; }
+        .tag-energia { background: rgba(234, 179, 8, 0.2); color: #fde047; border: 1px solid #eab308; }
+        .tag-turno { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid #3b82f6; }
+        
+        /* BARRA DE VIDA (NEON) */
+        .hp-bar-bg { width: 100%; background: #0f172a; border-radius: 6px; height: 8px; margin-bottom: 12px; border: 1px solid #334155; }
+        .hp-fill { height: 100%; border-radius: 6px; box-shadow: 0 0 10px currentColor; transition: width 0.5s ease; }
+        
+        /* ENERGIAS E STATUS */
+        .energy-container { background: rgba(0,0,0,0.4); border: 1px solid #334155; border-radius: 20px; padding: 4px 10px; display: inline-flex; gap: 4px; }
+        .energy-icon { width: 18px; filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); }
+        
+        .stats-box { background: rgba(0,0,0,0.4); border: 1px solid #334155; border-radius: 6px; padding: 5px; font-family: 'JetBrains Mono'; font-size: 10px; display: flex; justify-content: space-around; margin-top: 8px; }
+
+        /* AJUSTES DE ALINHAMENTO */
         div[data-testid="column"] { display: flex; flex-direction: column; justify-content: center; }
         
-        /* ENERGIAS (CARTAS) */
-        .energy-container {
-            display: flex; flex-wrap: wrap; gap: 3px; justify-content: center;
-            background-color: rgba(15, 23, 42, 0.6); padding: 6px; border-radius: 20px;
-            margin-top: 6px; border: 1px solid #334155; min-height: 32px;
-        }
-        .energy-icon { width: 16px; height: 16px; filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.6)); transition: transform 0.2s; }
-        .energy-icon:hover { transform: scale(1.2); }
+        /* Títulos */
+        .main-title { font-size: 32px; font-weight: 800; background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .turn-display { font-size: 18px; font-weight: bold; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+
+        .game-btn > button { background: linear-gradient(135deg, #475569 0%, #334155 100%) !important; border: 1px solid rgba(255,255,255,0.1) !important; }
         
-        /* STATS BOX */
-        .stats-box {
-            display: flex; justify-content: space-around; align-items: center;
-            background: #0f172a; padding: 6px 4px; border-radius: 6px; border: 1px solid #334155; margin-top: 8px;
-        }
-        .stat-item { text-align: center; display: flex; flex-direction: column; align-items: center; width: 33%; }
-        .stat-label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 2px; }
-        .stat-icon { height: 18px; width: 18px; }
-        
-        /* BOX CUSTO ATAQUE */
-        .atk-cost-display {
-            display: flex; justify-content: center; align-items: center; gap: 4px; 
-            margin-bottom: 6px; background-color: #1e293b; 
-            padding: 4px; border-radius: 6px; border: 1px solid #334155;
-        }
-        .atk-cost-label { font-size: 11px; font-weight: bold; color: #94a3b8; margin-right: 4px;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -233,6 +303,7 @@ class Pokemon:
             self.status = "Saudável"; return True, f"Pagou {custo}."
         return False, f"Falta energia ({total}/{custo})."
 
+# --- FUNÇÃO EXTERNA DE VERIFICAÇÃO DE CUSTO ---
 def verificar_custo_ataque(pokemon):
     custo_lista = POKEDEX.get(pokemon.nome, {}).get("custo", ["Incolor ⭐"])
     pool = pokemon.energias.copy()
@@ -244,27 +315,28 @@ def verificar_custo_ataque(pokemon):
     return False
 
 def gerar_html_energia(energias_dict):
-    if not energias_dict: return "<div class='energy-container' style='opacity:0'>.</div>"
+    if not energias_dict: return "<div class='energy-container' style='opacity:0; min-height:32px'></div>"
     html = "<div class='energy-container'>"
     for tipo_chave, qtd in energias_dict.items():
         img_url = ENERGY_IMGS.get(tipo_chave, "")
         if img_url:
             for _ in range(qtd): html += f"<img src='{img_url}' class='energy-icon' title='{tipo_chave}'>"
-        else: html += f"<span style='font-size:12px; margin:0 2px;'>{tipo_chave} x{qtd}</span>"
+        else:
+            html += f"<span style='font-size:12px; margin:0 2px;'>{tipo_chave} x{qtd}</span>"
     html += "</div>"
     return html
 
 def get_icon_html(tipo_str):
     url = ENERGY_IMGS.get(tipo_str)
     if url: return f"<img src='{url}' class='stat-icon'>"
-    return "<span style='font-size:12px; color:#cbd5e1'>-</span>" if tipo_str == "Nenhuma" else f"<span style='font-size:12px'>{tipo_str}</span>"
+    return "<span style='font-size:12px; color:#64748b'>-</span>" if tipo_str == "Nenhuma" else f"<span style='font-size:12px'>{tipo_str}</span>"
 
 def render_custo_html(nome_poke):
     custo = POKEDEX.get(nome_poke, {}).get("custo", ["Incolor ⭐"])
-    html = "<div class='atk-cost-display'><span class='atk-cost-label'>Custo:</span>"
+    html = "<div class='atk-cost-display'><span class='atk-cost-label'>COST:</span>"
     for c in custo:
         url = ENERGY_IMGS.get(c)
-        if url: html += f"<img src='{url}' style='width:16px; margin-right:1px'>"
+        if url: html += f"<img src='{url}' style='width:16px; margin-right:2px'>"
     html += "</div>"
     return html
 
@@ -279,7 +351,7 @@ def inicializar_jogo():
     if 'turno_atual' not in st.session_state: st.session_state.turno_atual = "Treinador 1"
     if 'habilidades_usadas' not in st.session_state: st.session_state.habilidades_usadas = []
     if 'evolucoes_turno' not in st.session_state: st.session_state.evolucoes_turno = []
-    if 'energias_anexadas_neste_turno' not in st.session_state: st.session_state.energias_anexadas_neste_turno = [] # MUDANÇA AQUI
+    if 'energias_anexadas_neste_turno' not in st.session_state: st.session_state.energias_anexadas_neste_turno = [] 
     if 'dmg_buffer' not in st.session_state: st.session_state.dmg_buffer = {}
     if 'tela_ranking' not in st.session_state: st.session_state.tela_ranking = False
 
@@ -357,7 +429,7 @@ else:
             for l in logs_check: adicionar_log("Status", l)
             st.session_state.habilidades_usadas = []
             st.session_state.evolucoes_turno = []
-            st.session_state.energias_anexadas_neste_turno = [] # RESET ENERGIAS
+            st.session_state.energias_anexadas_neste_turno = []
             ant = st.session_state.turno_atual
             novo = "Treinador 2" if ant == "Treinador 1" else "Treinador 1"
             st.session_state.turno_atual = novo
@@ -390,7 +462,6 @@ else:
             if st.button("Adicionar", icon=":material/add_circle:"):
                 novo = Pokemon(escolha, dados["hp"], dados["tipo"], dados["fraq"], dados["res"], dados.get("recuo", 1), dados["img"], dados.get("hab"))
                 st.session_state.evolucoes_turno.append(novo.id_unico) 
-                
                 if local == "Ativo":
                     if not player['ativo']: 
                         adicionar_log("Inicio", f"Colocou {escolha} como Ativo.", player['nome'])
@@ -411,11 +482,11 @@ else:
             if opcoes:
                 alvo_str = st.selectbox("Quem?", opcoes); escolha_evo = st.selectbox("Evoluir Para", list(POKEDEX.keys()))
                 if st.button("Evoluir", icon=":material/upgrade:"):
+                    d = POKEDEX[escolha_evo]
                     obj = player['ativo'] if "[Ativo]" in alvo_str else player['banco'][int(alvo_str.split("]")[0].split(" ")[1])-1]
                     if obj.id_unico in st.session_state.evolucoes_turno:
                         st.error("🚫 Já evoluiu ou entrou neste turno!")
                     else:
-                        d = POKEDEX[escolha_evo]
                         obj.evoluir_para(escolha_evo, d["hp"], d["tipo"], d["fraq"], d["res"], d.get("recuo",1), d["img"], d.get("hab"))
                         st.session_state.evolucoes_turno.append(obj.id_unico)
                         adicionar_log("Energia", f"{obj.nome} evoluiu!", player['nome'])
@@ -531,7 +602,10 @@ else:
                     with st.popover("Energia / Status / Tool / Evo", icon=":material/flash_on:"):
                         t1, t2, t3, t4 = st.tabs(["Energia", "Status", "Tool", "Evoluir"])
                         with t1:
+                            # SELECTBOX
                             escolha_e = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"ae_{ativo.id_unico}")
+                            
+                            # PREVIEW REDUZIDO (20px)
                             img_preview = ENERGY_IMGS.get(escolha_e)
                             if img_preview: st.image(img_preview, width=20)
                             
@@ -626,7 +700,7 @@ else:
                             if st.button("💔", key=f"dmb_{bp.id_unico}"): bp.receber_dano(10); st.rerun()
                         
                         with st.popover("⚡", icon=":material/flash_on:", use_container_width=True):
-                            t1, t2, t3, t4 = st.tabs(["Energia", "Status", "Tool", "Evoluir"])
+                            t1, t2, t3, t4 = st.tabs(["Add", "Del", "Tool", "Evoluir"])
                             
                             with t1: 
                                 eb = st.selectbox("Tipo", ["Fogo 🔥", "Água 💧", "Planta 🌱", "Elétrico ⚡", "Psíquico 🌀", "Luta 🥊", "Escuridão 🌙", "Metal ⚙️", "Incolor ⭐", "Dragão 🐉", "Fada 🧚"], key=f"aeb_{bp.id_unico}")
